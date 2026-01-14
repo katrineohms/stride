@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../model/clients.dart'; // your Client class
-
+import '../view_model/create_client_view_model.dart';
 class CreateClientPage extends StatefulWidget {
-  final void Function(Client) onCreate; // callback to pass new client back
+  final Function(Client) onCreate;
 
   const CreateClientPage({super.key, required this.onCreate});
 
@@ -12,12 +12,10 @@ class CreateClientPage extends StatefulWidget {
 
 class _CreateClientPageState extends State<CreateClientPage> {
   final _formKey = GlobalKey<FormState>();
+  final CreateClientViewModel viewModel = CreateClientViewModel();
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
-  String _gender = 'Male';
-  int _active = 0; // 0 = green, 1 = yellow, 2 = red
-  DateTime? _nextAppointment;
   final TextEditingController _motivationController = TextEditingController();
 
   @override
@@ -28,93 +26,83 @@ class _CreateClientPageState extends State<CreateClientPage> {
     super.dispose();
   }
 
+  void _updateViewModel() {
+    viewModel.name = _nameController.text;
+    viewModel.age = int.tryParse(_ageController.text);
+    viewModel.motivation = _motivationController.text;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Client'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Create Client')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Name
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Name'),
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Enter a name' : null,
+                validator: (_) {
+                  _updateViewModel();
+                  return viewModel.validateName();
+                },
               ),
               const SizedBox(height: 12),
-
-              // Age
               TextFormField(
                 controller: _ageController,
                 decoration: const InputDecoration(labelText: 'Age'),
                 keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Enter age';
-                  final age = int.tryParse(value);
-                  if (age == null || age <= 0) return 'Enter valid age';
-                  return null;
+                validator: (_) {
+                  _updateViewModel();
+                  return viewModel.validateAge();
                 },
               ),
               const SizedBox(height: 12),
-
-              // Gender
               DropdownButtonFormField<String>(
-                initialValue: _gender,
+                initialValue: viewModel.gender,
                 decoration: const InputDecoration(labelText: 'Gender'),
                 items: ['Male', 'Female', 'Other']
                     .map((g) => DropdownMenuItem(value: g, child: Text(g)))
                     .toList(),
-                onChanged: (value) {
-                  if (value != null) setState(() => _gender = value);
+                onChanged: (v) {
+                  if (v != null) setState(() => viewModel.gender = v);
                 },
               ),
               const SizedBox(height: 12),
-
-              // Status
               DropdownButtonFormField<int>(
-                initialValue: _active,
+                initialValue: viewModel.active,
                 decoration: const InputDecoration(labelText: 'Status'),
                 items: const [
                   DropdownMenuItem(value: 0, child: Text('Active (Green)')),
                   DropdownMenuItem(value: 1, child: Text('Caution (Yellow)')),
                   DropdownMenuItem(value: 2, child: Text('Inactive (Red)')),
                 ],
-                onChanged: (value) {
-                  if (value != null) setState(() => _active = value);
+                onChanged: (v) {
+                  if (v != null) setState(() => viewModel.active = v);
                 },
               ),
               const SizedBox(height: 12),
-
-              // Next appointment
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text(_nextAppointment == null
+                title: Text(viewModel.nextAppointment == null
                     ? 'Select Next Appointment'
-                    : 'Next Appointment: ${_nextAppointment!.toLocal()}'.split(' ')[0]),
+                    : 'Next: ${viewModel.nextAppointment!.toLocal()}'
+                        .split(' ')[0]),
                 trailing: const Icon(Icons.calendar_today),
                 onTap: () async {
                   final picked = await showDatePicker(
                     context: context,
-                    initialDate: _nextAppointment ?? DateTime.now(),
+                    initialDate: viewModel.nextAppointment ?? DateTime.now(),
                     firstDate: DateTime.now(),
                     lastDate: DateTime(2030),
                   );
-                  if (picked != null) {
-                    setState(() => _nextAppointment = picked);
-                  }
+                  if (picked != null) setState(() => viewModel.nextAppointment = picked);
                 },
               ),
               const SizedBox(height: 12),
-
-              // Motivation
               TextFormField(
                 controller: _motivationController,
                 decoration: const InputDecoration(
@@ -124,30 +112,13 @@ class _CreateClientPageState extends State<CreateClientPage> {
                 maxLines: 3,
               ),
               const SizedBox(height: 24),
-
-              // Create Button
               ElevatedButton(
                 onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    if (_nextAppointment == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Pick a next appointment')));
-                      return;
-                    }
-
-                    final newClient = Client(
-                      clientId: DateTime.now().millisecondsSinceEpoch.toString(),
-                      name: _nameController.text,
-                      age: int.parse(_ageController.text),
-                      gender: _gender,
-                      active: _active,
-                      nextAppointment:
-                          _nextAppointment!.millisecondsSinceEpoch ~/ 1000,
-                      motivation: _motivationController.text,
-                    );
-
-                    widget.onCreate(newClient); // pass back new client
-                    Navigator.pop(context); // close form
+                  _updateViewModel();
+                  if (_formKey.currentState!.validate() && viewModel.validateAll()) {
+                    final client = viewModel.createClient();
+                    widget.onCreate(client);
+                    Navigator.pop(context);
                   }
                 },
                 child: const Text('Create Client'),
