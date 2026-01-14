@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         appBarTheme: const AppBarTheme(
           backgroundColor: Color.fromARGB(255, 97, 164, 97),
-          foregroundColor: Colors.white, // title & icons
+          foregroundColor: Colors.white,
           centerTitle: true,
           titleTextStyle: TextStyle(
             fontSize: 30,
@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const HomePage(), // <-- your HomePage from home_view.dart
+      home: const HomePage(), //home_view.dart
     );
   }
 }

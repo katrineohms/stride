@@ -3,9 +3,8 @@ import 'package:stride/model/clients.dart';
 import 'package:stride/view/create_client_view.dart';
 import 'package:stride/view/client_card_view.dart';
 import 'package:stride/view_model/client_list_view_model.dart';
-// import 'widgets/client_card_widget.dart'; // reuse your client card if you want
 
-
+/// Page displaying a list of all clients
 class ClientOverviewPage extends StatefulWidget {
   final List<Client> clients;
 
@@ -15,13 +14,13 @@ class ClientOverviewPage extends StatefulWidget {
   State<ClientOverviewPage> createState() => _ClientOverviewPageState();
 }
 
-
 class _ClientOverviewPageState extends State<ClientOverviewPage> {
   late ClientOverviewViewModel viewModel;
 
   @override
   void initState() {
     super.initState();
+    // Initialize view model with provided clients
     viewModel = ClientOverviewViewModel(initialClients: widget.clients);
   }
 
@@ -35,6 +34,7 @@ class _ClientOverviewPageState extends State<ClientOverviewPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // ======= Action Buttons =======
           // Create client button
           ElevatedButton.icon(
             onPressed: () {
@@ -56,7 +56,7 @@ class _ClientOverviewPageState extends State<ClientOverviewPage> {
           ),
           const SizedBox(height: 8),
 
-          // Search button (example, will require your search logic later)
+          // Search button (placeholder)
           ElevatedButton.icon(
             onPressed: () {
               // TODO: implement search functionality
@@ -66,7 +66,7 @@ class _ClientOverviewPageState extends State<ClientOverviewPage> {
           ),
           const SizedBox(height: 16),
 
-          // Display clients
+          // ======= Client List =======
           ...viewModel.clients.map((client) {
             return Card(
               elevation: 2,
@@ -74,6 +74,7 @@ class _ClientOverviewPageState extends State<ClientOverviewPage> {
                   borderRadius: BorderRadius.circular(12)),
               margin: const EdgeInsets.symmetric(vertical: 6),
               child: ListTile(
+                // Avatar
                 leading: CircleAvatar(
                   backgroundColor: Theme.of(context).colorScheme.primary,
                   child: Text(
@@ -81,16 +82,21 @@ class _ClientOverviewPageState extends State<ClientOverviewPage> {
                     style: const TextStyle(color: Colors.white),
                   ),
                 ),
+                // Name
                 title: Text(client.name),
+                // Status indicator
                 trailing: Icon(
                   Icons.circle,
                   color: viewModel.getStatusColor(client.active),
                 ),
+                // Tap to view details
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ClientDetailPage(viewModel: ClientDetailViewModel(client: client)),
+                      builder: (context) => ClientDetailPage(
+                        viewModel: ClientDetailViewModel(client: client),
+                      ),
                     ),
                   );
                 },

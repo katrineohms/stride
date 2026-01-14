@@ -7,15 +7,15 @@ class ClientOverviewViewModel {
   ClientOverviewViewModel({List<Client>? initialClients})
       : _clients = initialClients ?? [];
 
-  /// Expose clients as read-only
+  // Expose clients as read-only
   List<Client> get clients => List.unmodifiable(_clients);
 
-  /// Add a new client
+  // Add a new client
   void addClient(Client client) {
     _clients.add(client);
   }
 
-  /// Optional: search/filter clients by name
+  // TODO search/filter clients by name
   List<Client> searchClients(String query) {
     if (query.isEmpty) return clients;
     return _clients

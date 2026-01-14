@@ -14,8 +14,10 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  // ======= ViewModel =======
   late HomeViewModel viewModel;
 
+  // ======= Lifecycle =======
   @override
   void initState() {
     super.initState();
@@ -52,14 +54,16 @@ class _HomePageState extends State<HomePage> {
     ]);
   }
 
+  // ======= Build UI =======
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // ======= AppBar =======
       appBar: AppBar(
         title: const Text('Stride'),
       ),
 
-      // Hamburger menu
+      // ======= Drawer / Hamburger Menu =======
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -76,6 +80,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
+            // Client list in drawer
             ...viewModel.clients.map((client) {
               return ListTile(
                 leading: const Icon(Icons.person),
@@ -89,7 +94,9 @@ class _HomePageState extends State<HomePage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ClientDetailPage(viewModel: ClientDetailViewModel(client: client)),
+                      builder: (context) => ClientDetailPage(
+                        viewModel: ClientDetailViewModel(client: client),
+                      ),
                     ),
                   );
                 },
@@ -99,11 +106,13 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
 
+      // ======= Body =======
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // ======= Header =======
             const Text(
               'Welcome',
               style: TextStyle(
@@ -111,10 +120,9 @@ class _HomePageState extends State<HomePage> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 8),
 
-            // Client list button
+            // ======= Client List Button =======
             ElevatedButton.icon(
               onPressed: () {
                 Navigator.push(
@@ -140,10 +148,9 @@ class _HomePageState extends State<HomePage> {
               icon: const Icon(Icons.people),
               label: const Text('Client list'),
             ),
-
             const SizedBox(height: 8),
 
-            // WhatsApp button
+            // ======= WhatsApp Button =======
             ElevatedButton.icon(
               onPressed: () {
                 // TODO: handle WhatsApp action
@@ -151,10 +158,9 @@ class _HomePageState extends State<HomePage> {
               icon: const Icon(Icons.message),
               label: const Text('WhatsApp'),
             ),
-
             const SizedBox(height: 24),
 
-            // Calendar
+            // ======= Calendar =======
             TableCalendar(
               firstDay: DateTime.utc(2020, 1, 1),
               lastDay: DateTime.utc(2030, 12, 31),
@@ -174,11 +180,11 @@ class _HomePageState extends State<HomePage> {
                 titleCentered: true,
               ),
             ),
-
             const SizedBox(height: 16),
 
-            // Clients for the day
-            ...viewModel.getClientsForDay(viewModel.selectedDay ?? DateTime.now())
+            // ======= Clients for Selected Day =======
+            ...viewModel
+                .getClientsForDay(viewModel.selectedDay ?? DateTime.now())
                 .map((client) {
               return ClientCard(
                 client: client,
@@ -186,7 +192,9 @@ class _HomePageState extends State<HomePage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ClientDetailPage(viewModel: ClientDetailViewModel(client: client)),
+                      builder: (context) => ClientDetailPage(
+                        viewModel: ClientDetailViewModel(client: client),
+                      ),
                     ),
                   );
                 },
@@ -199,6 +207,8 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
+// ======= Helper Methods =======
+/// Convert client activity to color
 Color getStatusColor(int active) {
   switch (active) {
     case 0:

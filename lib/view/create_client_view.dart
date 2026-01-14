@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../model/clients.dart'; // your Client class
 import '../view_model/create_client_view_model.dart';
+
+/// Page for creating a new client
 class CreateClientPage extends StatefulWidget {
   final Function(Client) onCreate;
 
@@ -14,6 +16,7 @@ class _CreateClientPageState extends State<CreateClientPage> {
   final _formKey = GlobalKey<FormState>();
   final CreateClientViewModel viewModel = CreateClientViewModel();
 
+  // ======= Controllers =======
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _motivationController = TextEditingController();
@@ -26,6 +29,7 @@ class _CreateClientPageState extends State<CreateClientPage> {
     super.dispose();
   }
 
+  // ======= Sync form fields with view model =======
   void _updateViewModel() {
     viewModel.name = _nameController.text;
     viewModel.age = int.tryParse(_ageController.text);
@@ -42,6 +46,7 @@ class _CreateClientPageState extends State<CreateClientPage> {
           key: _formKey,
           child: Column(
             children: [
+              // ======= Name =======
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Name'),
@@ -51,6 +56,8 @@ class _CreateClientPageState extends State<CreateClientPage> {
                 },
               ),
               const SizedBox(height: 12),
+
+              // ======= Age =======
               TextFormField(
                 controller: _ageController,
                 decoration: const InputDecoration(labelText: 'Age'),
@@ -61,6 +68,8 @@ class _CreateClientPageState extends State<CreateClientPage> {
                 },
               ),
               const SizedBox(height: 12),
+
+              // ======= Gender =======
               DropdownButtonFormField<String>(
                 initialValue: viewModel.gender,
                 decoration: const InputDecoration(labelText: 'Gender'),
@@ -72,6 +81,8 @@ class _CreateClientPageState extends State<CreateClientPage> {
                 },
               ),
               const SizedBox(height: 12),
+
+              // ======= Status =======
               DropdownButtonFormField<int>(
                 initialValue: viewModel.active,
                 decoration: const InputDecoration(labelText: 'Status'),
@@ -85,6 +96,8 @@ class _CreateClientPageState extends State<CreateClientPage> {
                 },
               ),
               const SizedBox(height: 12),
+
+              // ======= Next Appointment =======
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(viewModel.nextAppointment == null
@@ -103,6 +116,8 @@ class _CreateClientPageState extends State<CreateClientPage> {
                 },
               ),
               const SizedBox(height: 12),
+
+              // ======= Motivation =======
               TextFormField(
                 controller: _motivationController,
                 decoration: const InputDecoration(
@@ -112,6 +127,8 @@ class _CreateClientPageState extends State<CreateClientPage> {
                 maxLines: 3,
               ),
               const SizedBox(height: 24),
+
+              // ======= Create Button =======
               ElevatedButton(
                 onPressed: () {
                   _updateViewModel();

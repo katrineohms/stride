@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import '../model/clients.dart';
 
+/// ViewModel for client details
 class ClientDetailViewModel {
   final Client client;
 
   ClientDetailViewModel({required this.client});
 
+  /// Status color based on client activity
   Color get statusColor {
     switch (client.active) {
       case 0:
@@ -19,14 +21,15 @@ class ClientDetailViewModel {
     }
   }
 
-  // Convert timestamp to readable DateTime
+  /// Formatted next appointment date
   String get nextAppointmentFormatted {
     final dt =
         DateTime.fromMillisecondsSinceEpoch(client.nextAppointment * 1000);
-    return '${dt.toLocal()}'.split(' ')[0]; // Just YYYY-MM-DD
+    return '${dt.toLocal()}'.split(' ')[0]; // YYYY-MM-DD
   }
 }
 
+/// Client detail page UI
 class ClientDetailPage extends StatelessWidget {
   final ClientDetailViewModel viewModel;
 
@@ -46,7 +49,7 @@ class ClientDetailPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header: avatar and status
+            // Header: Avatar and Status
             Row(
               children: [
                 CircleAvatar(
@@ -84,7 +87,7 @@ class ClientDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Client details
+            // Client Info
             Text('Age: ${client.age}'),
             const SizedBox(height: 8),
             Text('Gender: ${client.gender}'),

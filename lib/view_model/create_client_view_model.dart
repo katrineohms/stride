@@ -8,7 +8,7 @@ class CreateClientViewModel {
   DateTime? nextAppointment;
   String motivation = '';
 
-  // Optional: validation error messages
+  // Validation methods
   String? validateName() {
     if (name.isEmpty) return 'Enter a name';
     return null;
@@ -30,6 +30,8 @@ class CreateClientViewModel {
         validateNextAppointment() == null;
   }
 
+
+  // Create new Client object
   Client createClient() {
     if (!validateAll()) {
       throw Exception('Cannot create client: invalid data');
