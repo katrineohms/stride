@@ -24,7 +24,13 @@ class MyApp extends StatelessWidget {
         appBarTheme: const AppBarTheme(
           backgroundColor: Color.fromARGB(255, 97, 164, 97),
           foregroundColor: Colors.white, // title & icons
-          centerTitle: true,),
+          centerTitle: true,
+        titleTextStyle: TextStyle(
+          fontSize: 30,
+          //fontFamily: 'Roboto', TODO import font
+          fontWeight: FontWeight.bold,
+          color: Colors.white,),
+        ),
       ),
       home: const HomePage(),
     );
@@ -71,10 +77,10 @@ class _HomePageState extends State<HomePage> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const Text(
-              'Welcome 👋',
+              'Welcome',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
