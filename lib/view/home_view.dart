@@ -3,7 +3,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'widgets/client_card_widget.dart';
 import 'package:stride/view/client_list_view.dart';
 import 'package:stride/model/clients.dart';
-
+import 'package:stride/view/client_card_view.dart';
 
 void main() {
   runApp(const MyApp());
@@ -160,7 +160,12 @@ class _HomePageState extends State<HomePage> {
               return ClientCard(
                 client: client,
                 onTap: () {
-                  // TODO: navigate to client detail page
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                      builder: (context) => ClientDetailPage(client: client),
+                    ),
+                  );
                 },
               );
             }).toList(),
