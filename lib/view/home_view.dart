@@ -5,6 +5,9 @@ import 'package:stride/view/client_list_view.dart';
 import 'package:stride/model/clients.dart';
 import 'package:stride/view/client_card_view.dart';
 
+// TODO integrate with backend
+// TODO save data persistently
+
 void main() {
   runApp(const MyApp());
 }
@@ -47,7 +50,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<Client> _dummyClients = [
+  final List<Client> _dummyClients = [
     Client(clientId: '1', name: 'AnnaDummy', age: 25, gender: 'Female', active: 0, nextAppointment: 1672531200, motivation: 'Motivated'),
     Client(clientId: '2', name: 'MarkDummy', age: 30, gender: 'Male', active: 1, nextAppointment: 1672531200, motivation: 'Needs support'),
     Client(clientId: '3', name: 'SophiaDummy', age: 28, gender: 'Female', active: 2, nextAppointment: 1672531200, motivation: 'Struggling'),
@@ -84,7 +87,6 @@ class _HomePageState extends State<HomePage> {
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                // TODO center
               ),
             ),
 
@@ -168,7 +170,7 @@ class _HomePageState extends State<HomePage> {
                   );
                 },
               );
-            }).toList(),
+            }),
           ],
         ),
       ),

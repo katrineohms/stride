@@ -67,7 +67,7 @@ class _CreateClientPageState extends State<CreateClientPage> {
 
               // Gender
               DropdownButtonFormField<String>(
-                value: _gender,
+                initialValue: _gender,
                 decoration: const InputDecoration(labelText: 'Gender'),
                 items: ['Male', 'Female', 'Other']
                     .map((g) => DropdownMenuItem(value: g, child: Text(g)))
@@ -80,7 +80,7 @@ class _CreateClientPageState extends State<CreateClientPage> {
 
               // Status
               DropdownButtonFormField<int>(
-                value: _active,
+                initialValue: _active,
                 decoration: const InputDecoration(labelText: 'Status'),
                 items: const [
                   DropdownMenuItem(value: 0, child: Text('Active (Green)')),

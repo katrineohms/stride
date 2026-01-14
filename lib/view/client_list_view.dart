@@ -92,10 +92,9 @@ class _ClientOverviewPageState extends State<ClientOverviewPage> {
                   },
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
-
     );
   }
 }
