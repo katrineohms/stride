@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:stride/model/clients.dart';
 import 'package:stride/view/create_client_view.dart';
 import 'package:stride/view/client_card_view.dart';
+import 'package:stride/view_model/client_list_view_model.dart';
 // import 'widgets/client_card_widget.dart'; // reuse your client card if you want
 
 
@@ -16,14 +17,14 @@ class ClientOverviewPage extends StatefulWidget {
 
 
 class _ClientOverviewPageState extends State<ClientOverviewPage> {
-  late List<Client> clients;
+  late ClientOverviewViewModel viewModel;
 
   @override
   void initState() {
     super.initState();
-    clients = List.from(widget.clients); // copy initial clients
+    viewModel = ClientOverviewViewModel(initialClients: widget.clients);
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,36 +35,39 @@ class _ClientOverviewPageState extends State<ClientOverviewPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // Create client button
           ElevatedButton.icon(
             onPressed: () {
               Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => CreateClientPage(
-                        onCreate: (newClient) {
-                          setState(() {
-                            clients.add(newClient); // add new client to list
-                          });
-                        },
-                      ),
-                    ),
-                  );
-                },
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CreateClientPage(
+                    onCreate: (newClient) {
+                      setState(() {
+                        viewModel.addClient(newClient);
+                      });
+                    },
+                  ),
+                ),
+              );
+            },
             label: const Text('Create Client'),
             icon: const Icon(Icons.add),
           ),
           const SizedBox(height: 8),
+
+          // Search button (example, will require your search logic later)
           ElevatedButton.icon(
             onPressed: () {
-              // TODO handle search
+              // TODO: implement search functionality
             },
             label: const Text('Search'),
             icon: const Icon(Icons.search),
           ),
           const SizedBox(height: 16),
 
-          // Map your clients to cards
-          ...clients.map((client) {
+          // Display clients
+          ...viewModel.clients.map((client) {
             return Card(
               elevation: 2,
               shape: RoundedRectangleBorder(
@@ -80,34 +84,21 @@ class _ClientOverviewPageState extends State<ClientOverviewPage> {
                 title: Text(client.name),
                 trailing: Icon(
                   Icons.circle,
-                  color: getStatusColor(client.active),
+                  color: viewModel.getStatusColor(client.active),
                 ),
-                onTap: () {  
+                onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ClientDetailPage(client: client),
+                      builder: (context) => ClientDetailPage(viewModel: ClientDetailViewModel(client: client)),
                     ),
                   );
-                  },
+                },
               ),
             );
           }),
         ],
       ),
     );
-  }
-}
-
-Color getStatusColor(int active) {
-  switch (active) {
-    case 0:
-      return Colors.green;
-    case 1:
-      return Colors.yellow;
-    case 2:
-      return Colors.red;
-    default:
-      return Colors.grey;
   }
 }

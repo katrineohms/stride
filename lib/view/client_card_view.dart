@@ -1,14 +1,41 @@
 import 'package:flutter/material.dart';
 import '../model/clients.dart';
-//import '../view/widgets/client_card_widget.dart'; // optional if you want status helpers
 
-class ClientDetailPage extends StatelessWidget {
+class ClientDetailViewModel {
   final Client client;
 
-  const ClientDetailPage({super.key, required this.client});
+  ClientDetailViewModel({required this.client});
+
+  Color get statusColor {
+    switch (client.active) {
+      case 0:
+        return Colors.green;
+      case 1:
+        return Colors.yellow;
+      case 2:
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  // Convert timestamp to readable DateTime
+  String get nextAppointmentFormatted {
+    final dt =
+        DateTime.fromMillisecondsSinceEpoch(client.nextAppointment * 1000);
+    return '${dt.toLocal()}'.split(' ')[0]; // Just YYYY-MM-DD
+  }
+}
+
+class ClientDetailPage extends StatelessWidget {
+  final ClientDetailViewModel viewModel;
+
+  const ClientDetailPage({super.key, required this.viewModel});
 
   @override
   Widget build(BuildContext context) {
+    final client = viewModel.client;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(client.name),
@@ -47,7 +74,7 @@ class ClientDetailPage extends StatelessWidget {
                         const Text('Status: '),
                         Icon(
                           Icons.circle,
-                          color: getStatusColor(client.active),
+                          color: viewModel.statusColor,
                         ),
                       ],
                     ),
@@ -62,9 +89,7 @@ class ClientDetailPage extends StatelessWidget {
             const SizedBox(height: 8),
             Text('Gender: ${client.gender}'),
             const SizedBox(height: 8),
-            Text(
-              'Next Appointment: ${DateTime.fromMillisecondsSinceEpoch(client.nextAppointment * 1000).toLocal()}',
-            ),
+            Text('Next Appointment: ${viewModel.nextAppointmentFormatted}'),
             const SizedBox(height: 16),
 
             // Motivation
@@ -80,18 +105,5 @@ class ClientDetailPage extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-Color getStatusColor(int active) {
-  switch (active) {
-    case 0:
-      return Colors.green;
-    case 1:
-      return Colors.yellow;
-    case 2:
-      return Colors.red;
-    default:
-      return Colors.grey;
   }
 }

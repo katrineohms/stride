@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'widgets/client_card_widget.dart';
+import '../widgets/client_card_widget.dart';
 import 'package:stride/view/client_list_view.dart';
 import 'package:stride/model/clients.dart';
 import 'package:stride/view/client_card_view.dart';
@@ -89,7 +89,7 @@ class _HomePageState extends State<HomePage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ClientDetailPage(client: client),
+                      builder: (context) => ClientDetailPage(viewModel: ClientDetailViewModel(client: client)),
                     ),
                   );
                 },
@@ -186,7 +186,7 @@ class _HomePageState extends State<HomePage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ClientDetailPage(client: client),
+                      builder: (context) => ClientDetailPage(viewModel: ClientDetailViewModel(client: client)),
                     ),
                   );
                 },
