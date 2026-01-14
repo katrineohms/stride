@@ -52,3 +52,44 @@ Color getStatusColor(int active) {
       return Colors.grey; // fallback
   }
 }
+
+String getStatusText(int active) {
+  switch (active) {
+    case 0:
+      return 'Active';
+    case 1:
+      return 'Caution';
+    case 2:
+      return 'Inactive';
+    default:
+      return 'Unknown';
+  }
+}
+
+class ClientDetailPage extends StatelessWidget {
+  final Client client;
+
+  const ClientDetailPage({super.key, required this.client});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(client.name)),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Name: ${client.name}', style: const TextStyle(fontSize: 22)),
+            Text('Age: ${client.age}'),
+            Text('Gender: ${client.gender}'),
+            Text('Status: ${getStatusText(client.active)}'),
+            Text(
+                'Next Appointment: ${DateTime.fromMillisecondsSinceEpoch(client.nextAppointment * 1000).toLocal()}'),
+            Text('Motivation: ${client.motivation}'),
+          ],
+        ),
+      ),
+    );
+  }
+}
