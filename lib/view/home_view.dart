@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'widgets/client_card_widget.dart';
+import 'package:stride/view/client_list_view.dart';
 import 'package:stride/model/clients.dart';
 
 
 void main() {
   runApp(const MyApp());
 }
-
-
 
 
 class MyApp extends StatelessWidget {
@@ -87,7 +86,25 @@ class _HomePageState extends State<HomePage> {
 
             ElevatedButton.icon(
               onPressed: () {
-                // TODO handle button press
+                Navigator.push(
+                  context,
+                  PageRouteBuilder(
+                    transitionDuration: const Duration(milliseconds: 400),
+                    pageBuilder: (context, animation, secondaryAnimation) => ClientOverviewPage(
+                      clients: _dummyClients,
+                    ),
+                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                      // Slide from bottom
+                      final tween = Tween(begin: const Offset(0, 1), end: Offset.zero)
+                          .chain(CurveTween(curve: Curves.easeOutQuad));
+
+                      return SlideTransition(
+                        position: animation.drive(tween),
+                        child: child,
+                      );
+                    },
+                  ),
+                );
               },
               icon: const Icon(Icons.people),
               label: const Text('Client list'),
@@ -141,7 +158,6 @@ class _HomePageState extends State<HomePage> {
                 },
               );
             }).toList(),
-
           ],
         ),
       ),
