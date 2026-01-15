@@ -188,7 +188,7 @@ class _HomePageState extends State<HomePage> {
               lastDay: DateTime.utc(2030, 12, 31),
               focusedDay: viewModel.focusedDay,
               selectedDayPredicate: (day) =>
-                  isSameDay(viewModel.selectedDay, day),
+                  isSameDay(viewModel.selectedDay ?? DateTime.now(), day),
               onDaySelected: (selectedDay, focusedDay) {
                 setState(() {
                   viewModel.selectDay(selectedDay);

@@ -28,19 +28,43 @@ class ClientDetailViewModel {
     return '${dt.toLocal()}'.split(' ')[0]; // YYYY-MM-DD
   }
 
-    /// Client exercises
+  /// Client exercises
   List<Exercise> get exercises => client.exercises;
 }
 
-/// Client detail page UI
-class ClientDetailPage extends StatelessWidget {
+/// Client detail page UI (stateful so we can check off exercises)
+class ClientDetailPage extends StatefulWidget {
   final ClientDetailViewModel viewModel;
 
   const ClientDetailPage({super.key, required this.viewModel});
 
   @override
+  State<ClientDetailPage> createState() => _ClientDetailPageState();
+}
+
+class _ClientDetailPageState extends State<ClientDetailPage> {
+  // Track done state for countable exercises by exerciseId
+  final Map<String, bool> _exerciseDone = {};
+
+  @override
+  void initState() {
+    super.initState();
+    // initialize map (default false)
+    for (final ex in widget.viewModel.client.exercises) {
+      _exerciseDone[ex.exerciseId] = _exerciseDone[ex.exerciseId] ?? false;
+    }
+  }
+
+  void _toggleDone(String exerciseId, bool? value) {
+    setState(() {
+      _exerciseDone[exerciseId] = value ?? false;
+    });
+    // OPTIONAL: persist this change (e.g., update a DB or viewModel) if desired.
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final client = viewModel.client;
+    final client = widget.viewModel.client;
 
     return Scaffold(
       appBar: AppBar(
@@ -80,7 +104,7 @@ class ClientDetailPage extends StatelessWidget {
                         const Text('Status: '),
                         Icon(
                           Icons.circle,
-                          color: viewModel.statusColor,
+                          color: widget.viewModel.statusColor,
                         ),
                       ],
                     ),
@@ -95,7 +119,7 @@ class ClientDetailPage extends StatelessWidget {
             const SizedBox(height: 8),
             Text('Gender: ${client.gender}'),
             const SizedBox(height: 8),
-            Text('Next Appointment: ${viewModel.nextAppointmentFormatted}'),
+            Text('Next Appointment: ${widget.viewModel.nextAppointmentFormatted}'),
             const SizedBox(height: 16),
 
             // Motivation
@@ -109,7 +133,7 @@ class ClientDetailPage extends StatelessWidget {
                 : 'No motivation notes added.'),
 
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'Exercises:',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
@@ -117,8 +141,12 @@ class ClientDetailPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
+
+            // Exercises list
             Column(
-              children: viewModel.client.exercises.map((exercise) {
+              children: widget.viewModel.client.exercises.map((exercise) {
+                final done = _exerciseDone[exercise.exerciseId] ?? false;
+
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 4),
                   elevation: 2,
@@ -126,24 +154,42 @@ class ClientDetailPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: ListTile(
-                    leading: const Icon(Icons.fitness_center, color: Colors.green),
+                    // leading: checkbox for countable, timer icon for timed
+                    leading: exercise.isCountable
+                        ? Checkbox(
+                            value: done,
+                            onChanged: (val) => _toggleDone(exercise.exerciseId, val),
+                          )
+                        : const Icon(Icons.timer, color: Colors.orange),
+
                     title: Text(
                       exercise.name,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        decoration: done ? TextDecoration.lineThrough : null,
+                        color: done ? Colors.grey : null,
+                      ),
                     ),
+
+                    // Subtitle: show sets/reps or time depending on type
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (exercise.sets > 0) Text('Sets: ${exercise.sets}'),
-                        if (exercise.reps > 0) Text('Reps: ${exercise.reps}'),
-                        if (exercise.time > 0) Text('Time: ${exercise.time}s'),
+                        if (exercise.isCountable) ...[
+                          Text('Sets: ${exercise.sets}'),
+                          Text('Reps: ${exercise.reps}'),
+                        ] else ...[
+                          Text('Time: ${exercise.time}s'),
+                        ]
                       ],
                     ),
+
+                    // optional: show trailing icon or actions
+                    // trailing: Icon(Icons.more_horiz),
                   ),
                 );
               }).toList(),
             ),
-
           ],
         ),
       ),
