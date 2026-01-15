@@ -154,42 +154,37 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: ListTile(
-                    // leading: checkbox for countable, timer icon for timed
                     leading: exercise.isCountable
                         ? Checkbox(
                             value: done,
                             onChanged: (val) => _toggleDone(exercise.exerciseId, val),
                           )
                         : const Icon(Icons.timer, color: Colors.orange),
-
-                    title: Text(
-                      exercise.name,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        decoration: done ? TextDecoration.lineThrough : null,
-                        color: done ? Colors.grey : null,
-                      ),
-                    ),
-
-                    // Subtitle: show sets/reps or time depending on type
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    title: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        if (exercise.isCountable) ...[
-                          Text('Sets: ${exercise.sets}'),
-                          Text('Reps: ${exercise.reps}'),
-                        ] else ...[
+                        Expanded(
+                          child: Text(
+                            exercise.name,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              decoration: done ? TextDecoration.lineThrough : null,
+                              color: done ? Colors.grey : null,
+                            ),
+                          ),
+                        ),
+                        if (exercise.isCountable)
+                          Text('${exercise.sets} sets • ${exercise.reps} reps')
+                        else
                           Text('Time: ${exercise.time}s'),
-                        ]
                       ],
                     ),
-
-                    // optional: show trailing icon or actions
-                    // trailing: Icon(Icons.more_horiz),
+                    // remove subtitle entirely
                   ),
                 );
               }).toList(),
             ),
+
           ],
         ),
       ),
