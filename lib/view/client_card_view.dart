@@ -108,13 +108,42 @@ class ClientDetailPage extends StatelessWidget {
                 ? client.motivation
                 : 'No motivation notes added.'),
 
-          const SizedBox(height: 10),
-          Text('Exercises:', style: TextStyle(fontWeight: FontWeight.bold),),
-          ...viewModel.client.exercises.map((exercise) => ListTile(
-                title: Text(exercise.name),
-                subtitle: Text(
-                    'Reps: ${exercise.reps}, Sets: ${exercise.sets}'),
-              )),
+            const SizedBox(height: 16),
+            Text(
+              'Exercises:',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Column(
+              children: viewModel.client.exercises.map((exercise) {
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: ListTile(
+                    leading: const Icon(Icons.fitness_center, color: Colors.green),
+                    title: Text(
+                      exercise.name,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (exercise.sets > 0) Text('Sets: ${exercise.sets}'),
+                        if (exercise.reps > 0) Text('Reps: ${exercise.reps}'),
+                        if (exercise.time > 0) Text('Time: ${exercise.time}s'),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+
           ],
         ),
       ),
