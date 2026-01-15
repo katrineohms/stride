@@ -5,6 +5,7 @@ class Exercise {
   final int sets;
   final int reps;
   final int time;
+  final bool isCountable; // true = reps/sets, false = time-based
 
   Exercise({
     required this.exerciseId,
@@ -13,6 +14,7 @@ class Exercise {
     required this.sets,
     required this.reps,
     required this.time,
+    required this.isCountable
   });
 }
 

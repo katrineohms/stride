@@ -49,7 +49,6 @@ class CreateClientViewModel {
     );
   }
 }
-
 class CreateExerciseViewModel {
   String name = '';
   String description = '';
@@ -57,17 +56,41 @@ class CreateExerciseViewModel {
   int reps = 0;
   int time = 0; // in seconds
 
-  // Validation methods
+  /// true = repetition-based (sets & reps)
+  /// false = time-based (time)
+  bool isCountable = true;
+
+  // Validation
   String? validateName() {
     if (name.isEmpty) return 'Enter an exercise name';
     return null;
   }
 
-  bool validateAll() {
-    return validateName() == null;
+  String? validateSets() {
+    if (!isCountable) return null;
+    if (sets <= 0) return 'Enter sets';
+    return null;
   }
 
-  // Create new Exercise object
+  String? validateReps() {
+    if (!isCountable) return null;
+    if (reps <= 0) return 'Enter reps';
+    return null;
+  }
+
+  String? validateTime() {
+    if (isCountable) return null;
+    if (time <= 0) return 'Enter time in seconds';
+    return null;
+  }
+
+  bool validateAll() {
+    return validateName() == null &&
+        validateSets() == null &&
+        validateReps() == null &&
+        validateTime() == null;
+  }
+
   Exercise createExercise() {
     if (!validateAll()) {
       throw Exception('Cannot create exercise: invalid data');
@@ -77,9 +100,10 @@ class CreateExerciseViewModel {
       exerciseId: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
       description: description,
-      sets: sets,
-      reps: reps,
-      time: time,
+      sets: isCountable ? sets : 0,
+      reps: isCountable ? reps : 0,
+      time: isCountable ? 0 : time,
+      isCountable: isCountable,
     );
   }
 }

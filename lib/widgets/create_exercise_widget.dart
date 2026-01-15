@@ -33,18 +33,35 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
     super.dispose();
   }
 
-  void _addExercise() {
-    if (_formKey.currentState!.validate()) {
-      viewModel.name = _nameController.text;
-      viewModel.description = _descriptionController.text;
-      viewModel.sets = int.tryParse(_setsController.text) ?? 0;
-      viewModel.reps = int.tryParse(_repsController.text) ?? 0;
-      viewModel.time = int.tryParse(_timeController.text) ?? 0;
+  void _clearRelevantFieldsOnToggle() {
+    // When toggling type, clear the irrelevant fields so validation won't trip
+    if (viewModel.isCountable) {
+      // switched to countable -> clear time
+      _timeController.clear();
+      viewModel.time = 0;
+    } else {
+      // switched to time-based -> clear sets/reps
+      _setsController.clear();
+      _repsController.clear();
+      viewModel.sets = 0;
+      viewModel.reps = 0;
+    }
+  }
 
+  void _addExercise() {
+    // sync current text fields into the viewModel before validating
+    viewModel.name = _nameController.text.trim();
+    viewModel.description = _descriptionController.text.trim();
+    viewModel.sets = int.tryParse(_setsController.text) ?? 0;
+    viewModel.reps = int.tryParse(_repsController.text) ?? 0;
+    viewModel.time = int.tryParse(_timeController.text) ?? 0;
+
+    if (_formKey.currentState!.validate()) {
       final exercise = viewModel.createExercise();
 
       setState(() {
         _addedExercises.add(exercise);
+        // clear form fields for next entry
         _nameController.clear();
         _descriptionController.clear();
         _setsController.clear();
@@ -52,6 +69,7 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
         _timeController.clear();
       });
 
+      // notify parent (e.g., CreateClientPage) so it can also keep the exercise list
       widget.onCreate(exercise);
     }
   }
@@ -67,41 +85,63 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Section title
-            const Text(
-              'Exercises',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+            // Title + toggle
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Exercises',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                // simple switch to choose type
+                Row(
+                  children: [
+                    const Text('Timed'),
+                    Switch(
+                      value: viewModel.isCountable,
+                      onChanged: (val) {
+                        setState(() {
+                          viewModel.isCountable = val;
+                          _clearRelevantFieldsOnToggle();
+                        });
+                      },
+                    ),
+                    const Text('Countable'),
+                  ],
+                ),
+              ],
             ),
             const SizedBox(height: 12),
 
-            // List of added exercises
-            if (_addedExercises.isNotEmpty)
+            // Existing added exercises
+            if (_addedExercises.isNotEmpty) ...[
               Column(
                 children: _addedExercises
-                    .map(
-                      (ex) => Card(
-                        color: Colors.grey[100],
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                        child: ListTile(
-                          title: Text(ex.name),
-                          subtitle: Text(
-                              'Sets: ${ex.sets}, Reps: ${ex.reps}, Time: ${ex.time}s'),
-                        ),
-                      ),
-                    )
+                    .map((ex) => Card(
+                          color: Colors.grey[100],
+                          margin: const EdgeInsets.symmetric(vertical: 4),
+                          child: ListTile(
+                            leading: const Icon(Icons.fitness_center,
+                                color: Colors.green),
+                            title: Text(ex.name),
+                            subtitle: Text(
+                              ex.isCountable
+                                  ? 'Sets: ${ex.sets}, Reps: ${ex.reps}'
+                                  : 'Time: ${ex.time}s',
+                            ),
+                          ),
+                        ))
                     .toList(),
               ),
+              const SizedBox(height: 8),
+            ],
 
-            const SizedBox(height: 8),
-
-            // Exercise form
+            // Form
             Form(
               key: _formKey,
               child: Column(
                 children: [
+                  // name
                   TextFormField(
                     controller: _nameController,
                     decoration: const InputDecoration(
@@ -109,9 +149,11 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
                       border: OutlineInputBorder(),
                     ),
                     validator: (v) =>
-                        v?.isEmpty ?? true ? 'Enter exercise name' : null,
+                        v?.trim().isEmpty ?? true ? 'Enter exercise name' : null,
                   ),
                   const SizedBox(height: 8),
+
+                  // description - bigger multiline box
                   TextFormField(
                     controller: _descriptionController,
                     decoration: const InputDecoration(
@@ -119,47 +161,56 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
                       border: OutlineInputBorder(),
                       alignLabelWithHint: true,
                     ),
-                    minLines: 4,
-                    maxLines: 12,
+                    minLines: 2,
+                    maxLines: 4,
                   ),
                   const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _setsController,
-                          decoration: const InputDecoration(
-                            labelText: 'Sets',
-                            border: OutlineInputBorder(),
+
+                  // conditional fields
+                  if (viewModel.isCountable) ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _setsController,
+                            decoration: const InputDecoration(
+                              labelText: 'Sets',
+                              border: OutlineInputBorder(),
+                            ),
+                            keyboardType: TextInputType.number,
+                            validator: (_) =>
+                                viewModel.validateSets(), // only validates when countable
                           ),
-                          keyboardType: TextInputType.number,
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _repsController,
-                          decoration: const InputDecoration(
-                            labelText: 'Reps',
-                            border: OutlineInputBorder(),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _repsController,
+                            decoration: const InputDecoration(
+                              labelText: 'Reps',
+                              border: OutlineInputBorder(),
+                            ),
+                            keyboardType: TextInputType.number,
+                            validator: (_) => viewModel.validateReps(),
                           ),
-                          keyboardType: TextInputType.number,
                         ),
+                      ],
+                    ),
+                  ] else ...[
+                    // time-based
+                    TextFormField(
+                      controller: _timeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Time (seconds)',
+                        border: OutlineInputBorder(),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _timeController,
-                          decoration: const InputDecoration(
-                            labelText: 'Time (s)',
-                            border: OutlineInputBorder(),
-                          ),
-                          keyboardType: TextInputType.number,
-                        ),
-                      ),
-                    ],
-                  ),
+                      keyboardType: TextInputType.number,
+                      validator: (_) => viewModel.validateTime(),
+                    ),
+                  ],
                   const SizedBox(height: 12),
+
+                  // full width add button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(

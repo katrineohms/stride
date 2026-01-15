@@ -42,6 +42,7 @@ class _HomePageState extends State<HomePage> {
             sets: 3,
             reps: 12,
             time: 0,
+            isCountable: true,
           ),
           Exercise(
             exerciseId: 'e2',
@@ -50,6 +51,7 @@ class _HomePageState extends State<HomePage> {
             sets: 3,
             reps: 0,
             time: 30,
+            isCountable: false,
           ),
         ],
       ),
