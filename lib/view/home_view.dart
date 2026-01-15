@@ -5,6 +5,8 @@ import 'package:stride/view/client_list_view.dart';
 import 'package:stride/model/clients.dart';
 import 'package:stride/view/client_card_view.dart';
 import 'package:stride/view_model/home_view_model.dart';
+//import 'package:stride/model/clients.dart';
+
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -32,6 +34,24 @@ class _HomePageState extends State<HomePage> {
         active: 0,
         nextAppointment: 1672531200,
         motivation: 'Motivated',
+        exercises: [
+          Exercise(
+            exerciseId: 'e1',
+            name: 'Squats',
+            description: 'Bodyweight squats',
+            sets: 3,
+            reps: 12,
+            time: 0,
+          ),
+          Exercise(
+            exerciseId: 'e2',
+            name: 'Plank',
+            description: 'Core stability hold',
+            sets: 3,
+            reps: 0,
+            time: 30,
+          ),
+        ],
       ),
       Client(
         clientId: '2',

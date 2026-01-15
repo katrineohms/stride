@@ -27,6 +27,9 @@ class ClientDetailViewModel {
         DateTime.fromMillisecondsSinceEpoch(client.nextAppointment * 1000);
     return '${dt.toLocal()}'.split(' ')[0]; // YYYY-MM-DD
   }
+
+    /// Client exercises
+  List<Exercise> get exercises => client.exercises;
 }
 
 /// Client detail page UI
@@ -104,6 +107,14 @@ class ClientDetailPage extends StatelessWidget {
             Text(client.motivation.isNotEmpty
                 ? client.motivation
                 : 'No motivation notes added.'),
+
+          const SizedBox(height: 10),
+          Text('Exercises:', style: TextStyle(fontWeight: FontWeight.bold),),
+          ...viewModel.client.exercises.map((exercise) => ListTile(
+                title: Text(exercise.name),
+                subtitle: Text(
+                    'Reps: ${exercise.reps}, Sets: ${exercise.sets}'),
+              )),
           ],
         ),
       ),
