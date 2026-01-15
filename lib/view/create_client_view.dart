@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../model/clients.dart'; // your Client class
 import '../view_model/create_client_view_model.dart';
+import '../widgets/create_exercise_widget.dart';
 
 /// Page for creating a new client
 class CreateClientPage extends StatefulWidget {
@@ -126,7 +127,16 @@ class _CreateClientPageState extends State<CreateClientPage> {
                 ),
                 maxLines: 3,
               ),
-              const SizedBox(height: 24),
+              // Exercise form
+              ExerciseFormWidget(
+                onCreate: (exercise) {
+                  setState(() {
+                    // Add the exercise to the client in the view model
+                    viewModel.exercises.add(exercise);
+                  });
+                },
+              ),
+              SizedBox(height: 4),
 
               // ======= Create Button =======
               ElevatedButton(
@@ -136,6 +146,12 @@ class _CreateClientPageState extends State<CreateClientPage> {
                     final client = viewModel.createClient();
                     widget.onCreate(client);
                     Navigator.pop(context);
+                  }
+                  else {
+                    // Show error snackbar
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please fix the errors in the form')),
+                    );
                   }
                 },
                 child: const Text('Create Client'),

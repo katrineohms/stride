@@ -8,7 +8,9 @@ class CreateClientViewModel {
   DateTime? nextAppointment;
   String motivation = '';
 
-  // Validation methods
+  // Define a list to hold exercises
+  List<Exercise> exercises = []; // Ensure Exercise is the correct type
+
   String? validateName() {
     if (name.isEmpty) return 'Enter a name';
     return null;
@@ -30,8 +32,6 @@ class CreateClientViewModel {
         validateNextAppointment() == null;
   }
 
-
-  // Create new Client object
   Client createClient() {
     if (!validateAll()) {
       throw Exception('Cannot create client: invalid data');
@@ -45,6 +45,41 @@ class CreateClientViewModel {
       active: active,
       nextAppointment: nextAppointment!.millisecondsSinceEpoch ~/ 1000,
       motivation: motivation,
+      exercises: exercises
+    );
+  }
+}
+
+class CreateExerciseViewModel {
+  String name = '';
+  String description = '';
+  int sets = 0;
+  int reps = 0;
+  int time = 0; // in seconds
+
+  // Validation methods
+  String? validateName() {
+    if (name.isEmpty) return 'Enter an exercise name';
+    return null;
+  }
+
+  bool validateAll() {
+    return validateName() == null;
+  }
+
+  // Create new Exercise object
+  Exercise createExercise() {
+    if (!validateAll()) {
+      throw Exception('Cannot create exercise: invalid data');
+    }
+
+    return Exercise(
+      exerciseId: DateTime.now().millisecondsSinceEpoch.toString(),
+      name: name,
+      description: description,
+      sets: sets,
+      reps: reps,
+      time: time,
     );
   }
 }
