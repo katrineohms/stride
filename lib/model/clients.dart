@@ -2,21 +2,39 @@ class Exercise {
   final String exerciseId;
   final String name;
   final String description;
-  final int sets;
-  final int reps;
-  final int time;
-  final bool isCountable; // true = reps/sets, false = time-based
 
   Exercise({
     required this.exerciseId,
     required this.name,
     required this.description,
-    required this.sets,
-    required this.reps,
-    required this.time,
-    required this.isCountable
   });
 }
+
+class CountableExercise extends Exercise {
+  final int reps;
+  final int sets;
+
+  CountableExercise({
+    required super.exerciseId,
+    required super.name,
+    required super.description,
+    required this.reps,
+    required this.sets,
+  });
+}
+
+class TimeableExercise extends Exercise {
+  final int time; // e.g. reps, steps, etc.
+
+  TimeableExercise({
+    required super.exerciseId,
+    required super.name,
+    required super.description,
+    required this.time,
+  });
+
+}
+
 
 
 class Client {

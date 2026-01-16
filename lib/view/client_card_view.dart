@@ -49,9 +49,9 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
   void initState() {
     super.initState();
     for (final ex in widget.viewModel.client.exercises) {
-      _exerciseDone[ex.exerciseId] = false;
-
-      if (!ex.isCountable) {
+      if (ex is CountableExercise) {
+        _exerciseDone[ex.exerciseId] = false;
+      } else if (ex is TimeableExercise) {
         _stopWatches[ex.exerciseId] = StopWatchTimer(
           mode: StopWatchMode.countDown,
           presetMillisecond: ex.time * 1000,
@@ -164,16 +164,16 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
                                 ),
                               ),
                             ),
-                            if (exercise.isCountable)
+                            if (exercise is CountableExercise)
                               Text('${exercise.sets} sets • ${exercise.reps} reps')
-                            else
+                            else if (exercise is TimeableExercise)
                               Text('Time: ${exercise.time}s'),
                           ],
                         ),
                         const SizedBox(height: 8),
 
                         // Second row: checkbox or stopwatch
-                        if (exercise.isCountable)
+                        if (exercise is CountableExercise)
                           Row(
                             children: [
                               Checkbox(
@@ -182,7 +182,7 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
                               ),
                             ],
                           )
-                        else if (stopWatch != null)
+                        else if (exercise is TimeableExercise && stopWatch != null)
                           Row(
                             children: [
                               const Icon(Icons.timer, color: Colors.orange),

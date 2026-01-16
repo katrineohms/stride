@@ -125,9 +125,9 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
                                 color: Colors.green),
                             title: Text(ex.name),
                             subtitle: Text(
-                              ex.isCountable
+                              ex is CountableExercise
                                   ? 'Sets: ${ex.sets}, Reps: ${ex.reps}'
-                                  : 'Time: ${ex.time}s',
+                                  : 'Time: ${(ex as TimeableExercise).time}s',
                             ),
                           ),
                         ))

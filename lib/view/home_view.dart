@@ -35,23 +35,18 @@ class _HomePageState extends State<HomePage> {
         nextAppointment: 1672531200,
         motivation: 'Motivated',
         exercises: [
-          Exercise(
+          CountableExercise(
             exerciseId: 'e1',
             name: 'Squats',
             description: 'Bodyweight squats',
             sets: 3,
             reps: 12,
-            time: 0,
-            isCountable: true,
           ),
-          Exercise(
+          TimeableExercise(
             exerciseId: 'e2',
             name: 'Plank',
             description: 'Core stability hold',
-            sets: 3,
-            reps: 0,
             time: 30,
-            isCountable: false,
           ),
         ],
       ),

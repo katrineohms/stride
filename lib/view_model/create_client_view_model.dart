@@ -96,14 +96,23 @@ class CreateExerciseViewModel {
       throw Exception('Cannot create exercise: invalid data');
     }
 
-    return Exercise(
-      exerciseId: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: name,
-      description: description,
-      sets: isCountable ? sets : 0,
-      reps: isCountable ? reps : 0,
-      time: isCountable ? 0 : time,
-      isCountable: isCountable,
-    );
+    final exerciseId = DateTime.now().millisecondsSinceEpoch.toString();
+
+    if (isCountable) {
+      return CountableExercise(
+        exerciseId: exerciseId,
+        name: name,
+        description: description,
+        sets: sets,
+        reps: reps,
+      );
+    } else {
+      return TimeableExercise(
+        exerciseId: exerciseId,
+        name: name,
+        description: description,
+        time: time,
+      );
+    }
   }
 }
