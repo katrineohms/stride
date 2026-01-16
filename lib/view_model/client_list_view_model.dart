@@ -1,42 +1,41 @@
+// lib/view_model/client_list_view_model.dart
+import 'package:flutter/foundation.dart';
 import '../model/clients.dart';
-import 'package:flutter/material.dart';
 
-class ClientOverviewViewModel {
-  final List<Client> _clients;
-
-  ClientOverviewViewModel({List<Client>? initialClients})
-      : _clients = initialClients ?? [];
-
-  // Expose clients as read-only
+class ClientListViewModel extends ChangeNotifier {
+  final List<Client> _clients = [];
   List<Client> get clients => List.unmodifiable(_clients);
 
-  // Add a new client
   void addClient(Client client) {
     _clients.add(client);
+    notifyListeners();
   }
 
-  // TODO search/filter clients by name
-  List<Client> searchClients(String query) {
-    if (query.isEmpty) return clients;
-    return _clients
-        .where((c) => c.name.toLowerCase().contains(query.toLowerCase()))
-        .toList();
+  void removeClient(String clientId) {
+    _clients.removeWhere((c) => c.clientId == clientId);
+    notifyListeners();
   }
 
-  // in ClientOverviewViewModel
-  Color getStatusColor(int active) {
-    switch (active) {
-      case 0:
-        return Colors.green;
-      case 1:
-        return Colors.yellow;
-      case 2:
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
+  void updateClient(Client updated) {
+    final index = _clients.indexWhere((c) => c.clientId == updated.clientId);
+    if (index == -1) return;
+    _clients[index] = updated;
+    notifyListeners();
+  }
+
+  /// ✅ Helper to update Movesense association after creation if needed
+  void setMovesenseForClient({
+    required String clientId,
+    required String? deviceId,
+    required String? deviceName,
+  }) {
+    final index = _clients.indexWhere((c) => c.clientId == clientId);
+    if (index == -1) return;
+
+    _clients[index] = _clients[index].copyWith(
+      movesenseDeviceId: deviceId,
+      movesenseDeviceName: deviceName,
+    );
+    notifyListeners();
   }
 }
-
-
-

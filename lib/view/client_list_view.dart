@@ -1,110 +1,108 @@
 import 'package:flutter/material.dart';
-import 'package:stride/model/clients.dart';
-import 'package:stride/view/create_client_view.dart';
-import 'package:stride/view/client_card_view.dart';
-import 'package:stride/view_model/client_list_view_model.dart';
 
-/// Page displaying a list of all clients
-class ClientOverviewPage extends StatefulWidget {
-  final List<Client> clients;
+import '../model/clients.dart';
+import '../view_model/client_list_view_model.dart';
+import '../widgets/client_card_widget.dart';
+import 'create_client_view.dart';
+import 'client_detail_view.dart';
 
-  const ClientOverviewPage({super.key, required this.clients});
+class ClientListView extends StatelessWidget {
+  final ClientListViewModel clientListVM;
 
-  @override
-  State<ClientOverviewPage> createState() => _ClientOverviewPageState();
-}
-
-class _ClientOverviewPageState extends State<ClientOverviewPage> {
-  late ClientOverviewViewModel viewModel;
-
-  @override
-  void initState() {
-    super.initState();
-    // Initialize view model with provided clients
-    viewModel = ClientOverviewViewModel(initialClients: widget.clients);
-  }
+  const ClientListView({super.key, required this.clientListVM});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Clients'),
-        centerTitle: true,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // ======= Action Buttons =======
-          // Create client button
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => CreateClientPage(
-                    onCreate: (newClient) {
-                      setState(() {
-                        viewModel.addClient(newClient);
-                      });
+    return AnimatedBuilder(
+      animation: clientListVM,
+      builder: (_, __) {
+        final clients = clientListVM.clients;
+
+        if (clients.isEmpty) {
+          return const Center(child: Text('No clients yet.'));
+        }
+
+        return ListView.builder(
+          itemCount: clients.length,
+          itemBuilder: (context, index) {
+            final client = clients[index];
+
+            return Dismissible(
+              key: ValueKey(client.clientId),
+              direction: DismissDirection.endToStart,
+              background: Container(
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                color: Colors.red,
+                child: const Icon(Icons.delete, color: Colors.white),
+              ),
+              confirmDismiss: (_) async {
+                return await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Delete client?'),
+                        content: Text('Delete ${client.name}? This cannot be undone.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('Cancel'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('Delete'),
+                          ),
+                        ],
+                      ),
+                    ) ??
+                    false;
+              },
+              onDismissed: (_) {
+                clientListVM.removeClient(client.clientId);
+              },
+              child: Stack(
+                children: [
+                  ClientCardWidget(
+                    client: client,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ClientDetailPage(client: client),
+                        ),
+                      );
                     },
                   ),
-                ),
-              );
-            },
-            label: const Text('Create Client'),
-            icon: const Icon(Icons.add),
-          ),
-          const SizedBox(height: 8),
 
-          // Search button (placeholder)
-          ElevatedButton.icon(
-            onPressed: () {
-              // TODO: implement search functionality
-            },
-            label: const Text('Search'),
-            icon: const Icon(Icons.search),
-          ),
-          const SizedBox(height: 16),
-
-          // ======= Client List =======
-          ...viewModel.clients.map((client) {
-            return Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-              margin: const EdgeInsets.symmetric(vertical: 6),
-              child: ListTile(
-                // Avatar
-                leading: CircleAvatar(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  child: Text(
-                    client.name[0],
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ),
-                // Name
-                title: Text(client.name),
-                // Status indicator
-                trailing: Icon(
-                  Icons.circle,
-                  color: viewModel.getStatusColor(client.active),
-                ),
-                // Tap to view details
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ClientDetailPage(
-                        viewModel: ClientDetailViewModel(client: client),
-                      ),
+                  // Edit button overlay (top-right)
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () async {
+                        // Open CreateClientPage in edit mode (needs edit support)
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => CreateClientPage(
+                              onCreate: (Client updatedClient) {
+                                // Ensure the ID stays the same when editing
+                                clientListVM.updateClient(
+                                  updatedClient.copyWith(clientId: client.clientId),
+                                );
+                              },
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
+                  ),
+                ],
               ),
             );
-          }),
-        ],
-      ),
+          },
+        );
+      },
     );
   }
 }

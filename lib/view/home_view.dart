@@ -17,7 +17,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   // ======= ViewModel =======
-  late HomeViewModel viewModel;
+  late CalendarViewModel viewModel;
 
   // ======= Lifecycle =======
   @override
@@ -25,7 +25,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
 
     // Initialize view model with dummy clients
-    viewModel = HomeViewModel(initialClients: [
+    viewModel = CalendarViewModel(initialClients: [
       Client(
         clientId: '1',
         name: 'AnnaDummy',
@@ -63,6 +63,7 @@ class _HomePageState extends State<HomePage> {
         active: 1,
         nextAppointment: 1672531200,
         motivation: 'Needs support',
+        exercises: [],
       ),
       Client(
         clientId: '3',
@@ -72,6 +73,7 @@ class _HomePageState extends State<HomePage> {
         active: 2,
         nextAppointment: 1672531200,
         motivation: 'Struggling',
+        exercises: [],
       ),
     ]);
   }
@@ -152,7 +154,7 @@ class _HomePageState extends State<HomePage> {
                   PageRouteBuilder(
                     transitionDuration: const Duration(milliseconds: 400),
                     pageBuilder: (context, animation, secondaryAnimation) =>
-                        ClientOverviewPage(clients: viewModel.clients),
+                        MovesenseViewModel(clients: viewModel.clients),
                     transitionsBuilder:
                         (context, animation, secondaryAnimation, child) {
                       final tween =

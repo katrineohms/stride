@@ -1,3 +1,4 @@
+// lib/view_model/create_client_view_model.dart
 import '../model/clients.dart';
 
 class CreateClientViewModel {
@@ -8,8 +9,12 @@ class CreateClientViewModel {
   DateTime? nextAppointment;
   String motivation = '';
 
-  // Define a list to hold exercises
-  List<Exercise> exercises = []; // Ensure Exercise is the correct type
+  /// Exercises added while creating client
+  final List<Exercise> exercises = [];
+
+  /// ✅ Movesense association captured during client creation
+  String? movesenseDeviceId;
+  String? movesenseDeviceName;
 
   String? validateName() {
     if (name.isEmpty) return 'Enter a name';
@@ -45,65 +50,9 @@ class CreateClientViewModel {
       active: active,
       nextAppointment: nextAppointment!.millisecondsSinceEpoch ~/ 1000,
       motivation: motivation,
-      exercises: exercises
-    );
-  }
-}
-class CreateExerciseViewModel {
-  String name = '';
-  String description = '';
-  int sets = 0;
-  int reps = 0;
-  int time = 0; // in seconds
-
-  /// true = repetition-based (sets & reps)
-  /// false = time-based (time)
-  bool isCountable = true;
-
-  // Validation
-  String? validateName() {
-    if (name.isEmpty) return 'Enter an exercise name';
-    return null;
-  }
-
-  String? validateSets() {
-    if (!isCountable) return null;
-    if (sets <= 0) return 'Enter sets';
-    return null;
-  }
-
-  String? validateReps() {
-    if (!isCountable) return null;
-    if (reps <= 0) return 'Enter reps';
-    return null;
-  }
-
-  String? validateTime() {
-    if (isCountable) return null;
-    if (time <= 0) return 'Enter time in seconds';
-    return null;
-  }
-
-  bool validateAll() {
-    return validateName() == null &&
-        validateSets() == null &&
-        validateReps() == null &&
-        validateTime() == null;
-  }
-
-  Exercise createExercise() {
-    if (!validateAll()) {
-      throw Exception('Cannot create exercise: invalid data');
-    }
-
-    return Exercise(
-      exerciseId: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: name,
-      description: description,
-      sets: isCountable ? sets : 0,
-      reps: isCountable ? reps : 0,
-      time: isCountable ? 0 : time,
-      isCountable: isCountable,
+      exercises: List.unmodifiable(exercises),
+      movesenseDeviceId: movesenseDeviceId,
+      movesenseDeviceName: movesenseDeviceName,
     );
   }
 }

@@ -2,22 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:stride/view/home_view.dart'; // import your HomePage
 
 void main() {
-  runApp(const MyApp());
+  runApp(const StrideApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class StrideApp extends StatelessWidget {
+  const StrideApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Stride',
+      // Custom theme for the app to match branding ideas
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
+            // Customized colored AppBar
             seedColor: const Color.fromARGB(255, 97, 164, 97)),
         useMaterial3: true,
+
         appBarTheme: const AppBarTheme(
+          // Customized colored AppBar
           backgroundColor: Color.fromARGB(255, 97, 164, 97),
+          // Color of text and icons
           foregroundColor: Colors.white,
           centerTitle: true,
           titleTextStyle: TextStyle(
@@ -27,7 +32,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const HomePage(), //home_view.dart
+      home: const HomePage(),
     );
   }
 }
