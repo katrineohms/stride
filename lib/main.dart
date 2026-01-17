@@ -17,10 +17,11 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(
             seedColor: const Color.fromARGB(255, 97, 164, 97)),
         useMaterial3: true,
+        scaffoldBackgroundColor: const Color.fromARGB(255, 235, 235, 235), 
         appBarTheme: const AppBarTheme(
           backgroundColor: Color.fromARGB(255, 97, 164, 97),
           foregroundColor: Colors.white,
-          centerTitle: true,
+          centerTitle: true,  
           titleTextStyle: TextStyle(
             fontSize: 30,
             fontWeight: FontWeight.w600,

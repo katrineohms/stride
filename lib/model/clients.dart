@@ -35,7 +35,17 @@ class TimeableExercise extends Exercise {
 
 }
 
+class Appointment {
+  final int timestamp; // Unix timestamp (seconds since epoch)
+  final String? notes; // optional notes
 
+  Appointment({
+    required this.timestamp,
+    this.notes,
+  });
+
+  DateTime get dateTime => DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+}
 
 class Client {
   final String clientId;
@@ -43,7 +53,7 @@ class Client {
   final int age;
   final String gender;
   final int active;
-  final int nextAppointment; // Unix timestamp
+  final List<Appointment> appointments; // <-- multiple
   final String motivation;
   final List<Exercise> exercises;
 
@@ -53,8 +63,9 @@ class Client {
     required this.age,
     required this.gender,
     required this.active,
-    required this.nextAppointment,
+    List<Appointment>? appointments,
     required this.motivation,
-     List<Exercise>? exercises,
-  }) : exercises = exercises ?? [];
+    List<Exercise>? exercises,
+  })  : appointments = appointments ?? [],
+        exercises = exercises ?? [];
 }

@@ -5,7 +5,7 @@ class CreateClientViewModel {
   int? age;
   String gender = 'Male';
   int active = 0; // 0 = green, 1 = yellow, 2 = red
-  DateTime? nextAppointment;
+  List<Appointment> appointments = []; // multiple appointments
   String motivation = '';
 
   // Define a list to hold exercises
@@ -22,7 +22,7 @@ class CreateClientViewModel {
   }
 
   String? validateNextAppointment() {
-    if (nextAppointment == null) return 'Pick a next appointment';
+    if (appointments.isEmpty) return 'Pick a next appointment';
     return null;
   }
 
@@ -43,7 +43,7 @@ class CreateClientViewModel {
       age: age!,
       gender: gender,
       active: active,
-      nextAppointment: nextAppointment!.millisecondsSinceEpoch ~/ 1000,
+      appointments: appointments,
       motivation: motivation,
       exercises: exercises
     );

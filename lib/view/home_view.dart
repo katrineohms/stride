@@ -35,7 +35,6 @@ class _HomePageState extends State<HomePage> {
           age: 25,
           gender: 'Female',
           active: 0,
-          nextAppointment: DateTime(2026, 1, 18, 16).millisecondsSinceEpoch ~/ 1000,
           motivation: 'Motivated',
           exercises: [
             CountableExercise(
@@ -52,6 +51,16 @@ class _HomePageState extends State<HomePage> {
               time: 30,
             ),
           ],
+          appointments: [
+            Appointment(
+              timestamp:
+                  DateTime(2026, 1, 19, 16).millisecondsSinceEpoch ~/ 1000,
+            ),
+            Appointment(
+              timestamp:
+                  DateTime(2026, 1, 26, 16).millisecondsSinceEpoch ~/ 1000,
+            ),
+          ],
         ),
         Client(
           clientId: '2',
@@ -59,8 +68,14 @@ class _HomePageState extends State<HomePage> {
           age: 30,
           gender: 'Male',
           active: 1,
-          nextAppointment: DateTime(2026, 1, 18, 14, 30).millisecondsSinceEpoch ~/ 1000,
           motivation: 'Needs support',
+          exercises: [],
+          appointments: [
+            Appointment(
+              timestamp:
+                  DateTime(2026, 1, 21, 14, 30).millisecondsSinceEpoch ~/ 1000,
+            ),
+          ],
         ),
         Client(
           clientId: '3',
@@ -68,8 +83,18 @@ class _HomePageState extends State<HomePage> {
           age: 28,
           gender: 'Female',
           active: 2,
-          nextAppointment: DateTime(2026, 1, 19, 10, 15).millisecondsSinceEpoch ~/ 1000,
           motivation: 'Struggling',
+          exercises: [],
+          appointments: [
+            Appointment(
+              timestamp:
+                  DateTime(2026, 1, 21, 10, 15).millisecondsSinceEpoch ~/ 1000,
+            ),
+            Appointment(
+              timestamp:
+                  DateTime(2026, 1, 28, 11, 0).millisecondsSinceEpoch ~/ 1000,
+            ),
+          ],
         ),
       ],
     );

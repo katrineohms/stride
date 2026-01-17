@@ -10,7 +10,7 @@ class HomeViewModel {
 
   // ======= Constructor =======
   HomeViewModel({List<Client>? initialClients})
-      : _clients = initialClients ?? [];
+    : _clients = initialClients ?? [];
 
   // ======= Public Accessors =======
   List<Client> get clients => _clients;
@@ -31,11 +31,15 @@ class HomeViewModel {
   /// Get clients who have an appointment on the given day
   List<Client> getClientsForDay(DateTime day) {
     return _clients.where((client) {
-      final appointmentDate =
-          DateTime.fromMillisecondsSinceEpoch(client.nextAppointment * 1000);
-      return appointmentDate.year == day.year &&
-             appointmentDate.month == day.month &&
-             appointmentDate.day == day.day;
+      // Check if any of the client's appointments fall on the given day
+      return client.appointments.any((appointment) {
+        final appointmentDate = DateTime.fromMillisecondsSinceEpoch(
+          appointment.timestamp * 1000,
+        );
+        return appointmentDate.year == day.year &&
+            appointmentDate.month == day.month &&
+            appointmentDate.day == day.day;
+      });
     }).toList();
   }
 }
