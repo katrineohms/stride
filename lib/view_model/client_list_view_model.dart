@@ -15,7 +15,7 @@ class ClientOverviewViewModel {
     _clients.add(client);
   }
 
-  // TODO search/filter clients by name
+  // TO DO search/filter clients by name
   List<Client> searchClients(String query) {
     if (query.isEmpty) return clients;
     return _clients

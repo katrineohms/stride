@@ -12,16 +12,24 @@ class ClientCard extends StatelessWidget {
     this.onTap,
   });
 
-  // ======= Build UI =======
   @override
   Widget build(BuildContext context) {
+    // Convert Unix timestamp to DateTime
+    final appointmentDateTime =
+        DateTime.fromMillisecondsSinceEpoch(client.nextAppointment * 1000);
+
+    // Format HH:MM
+    final timeStr =
+        '${appointmentDateTime.hour.toString().padLeft(2, '0')}:'
+        '${appointmentDateTime.minute.toString().padLeft(2, '0')}';
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
-        // ======= Avatar =======
+        // ===== Avatar =====
         leading: CircleAvatar(
           backgroundColor: Theme.of(context).colorScheme.primary,
           child: Text(
@@ -30,25 +38,39 @@ class ClientCard extends StatelessWidget {
           ),
         ),
 
-        // ======= Title & Subtitle =======
-        title: Text(client.name),
+        // ===== Title with HH:MM inline =====
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(child: Text(client.name)),
+            Text(
+              timeStr,
+              style: const TextStyle(
+                fontSize: 12,
+                fontStyle: FontStyle.italic,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+
+        // ===== Subtitle =====
         subtitle: Text('${client.age} years old, ${client.gender}'),
 
-        // ======= Status Icon =======
+        // ===== Status Icon =====
         trailing: Icon(
           Icons.circle,
           color: getStatusColor(client.active),
         ),
 
-        // ======= OnTap Handler =======
-        onTap: onTap, // navigation handled outside
+        // ===== OnTap Handler =====
+        onTap: onTap,
       ),
     );
   }
 }
 
-// ======= Helper Methods =======
-/// Convert client activity to color
+// ===== Helper =====
 Color getStatusColor(int active) {
   switch (active) {
     case 0:
@@ -59,19 +81,5 @@ Color getStatusColor(int active) {
       return Colors.red;
     default:
       return Colors.grey;
-  }
-}
-
-/// Convert client activity to text
-String getStatusText(int active) {
-  switch (active) {
-    case 0:
-      return 'Active';
-    case 1:
-      return 'Caution';
-    case 2:
-      return 'Inactive';
-    default:
-      return 'Unknown';
   }
 }

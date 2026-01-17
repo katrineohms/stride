@@ -35,7 +35,7 @@ class _HomePageState extends State<HomePage> {
           age: 25,
           gender: 'Female',
           active: 0,
-          nextAppointment: 1672531200,
+          nextAppointment: DateTime(2026, 1, 18, 16).millisecondsSinceEpoch ~/ 1000,
           motivation: 'Motivated',
           exercises: [
             CountableExercise(
@@ -59,7 +59,7 @@ class _HomePageState extends State<HomePage> {
           age: 30,
           gender: 'Male',
           active: 1,
-          nextAppointment: 1672531200,
+          nextAppointment: DateTime(2026, 1, 18, 14, 30).millisecondsSinceEpoch ~/ 1000,
           motivation: 'Needs support',
         ),
         Client(
@@ -68,7 +68,7 @@ class _HomePageState extends State<HomePage> {
           age: 28,
           gender: 'Female',
           active: 2,
-          nextAppointment: 1672531200,
+          nextAppointment: DateTime(2026, 1, 19, 10, 15).millisecondsSinceEpoch ~/ 1000,
           motivation: 'Struggling',
         ),
       ],
@@ -217,23 +217,43 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 16),
 
             // ======= Clients for Selected Day =======
-            ...viewModel
-                .getClientsForDay(viewModel.selectedDay ?? DateTime.now())
-                .map((client) {
-                  return ClientCard(
-                    client: client,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ClientDetailPage(
-                            viewModel: ClientDetailViewModel(client: client),
-                          ),
-                        ),
-                      );
-                    },
+            Builder(
+              builder: (context) {
+                final selectedDay = viewModel.selectedDay ?? DateTime.now();
+                final clientsForDay = viewModel.getClientsForDay(selectedDay);
+
+                if (clientsForDay.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Text(
+                      'No appointments today',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
                   );
-                }),
+                }
+
+                return Column(
+                  children: clientsForDay.map((client) {
+                    return ClientCard(
+                      client: client,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ClientDetailPage(
+                              viewModel: ClientDetailViewModel(client: client),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  }).toList(),
+                );
+              },
+            ),
           ],
         ),
       ),

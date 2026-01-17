@@ -28,10 +28,14 @@ class HomeViewModel {
     focusedDay = day;
   }
 
-  /// Get clients for a specific day (placeholder logic)
+  /// Get clients who have an appointment on the given day
   List<Client> getClientsForDay(DateTime day) {
-    // TODO: Replace with real filtering logic by date
-    if (selectedDay != null) return _clients;
-    return [];
+    return _clients.where((client) {
+      final appointmentDate =
+          DateTime.fromMillisecondsSinceEpoch(client.nextAppointment * 1000);
+      return appointmentDate.year == day.year &&
+             appointmentDate.month == day.month &&
+             appointmentDate.day == day.day;
+    }).toList();
   }
 }

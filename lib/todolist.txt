@@ -2,13 +2,16 @@ ToDo list:
 
 Frontend
 - Improve look of client card view
-- Get clients by date
 
 Both: 
 - Edit clients
 
+
 Backend
 - Connect to MotionSense
 - Create HRR (recovery) function?
+    -- Call on model to collect values 
+    -- Collect values for x time
+    -- Calculate HRR
 
 
