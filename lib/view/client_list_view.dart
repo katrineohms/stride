@@ -5,6 +5,7 @@ import 'package:stride/view/create_client_view.dart';
 import 'package:stride/view/client_card_view.dart';
 import 'package:stride/view_model/client_list_view_model.dart';
 import 'package:stride/widgets/movesense_status_widget.dart';
+import '../widgets/client_card_widget.dart';
 
 /// Page displaying a list of all clients
 class ClientOverviewPage extends StatefulWidget {
@@ -93,7 +94,7 @@ class _ClientOverviewPageState extends State<ClientOverviewPage> {
                 // Status indicator
                 trailing: Icon(
                   Icons.circle,
-                  color: viewModel.getStatusColor(client.active),
+                  color: getStatusColor(client.active),
                 ),
                 // Tap to view details
                 onTap: () {

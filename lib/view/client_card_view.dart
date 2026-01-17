@@ -9,19 +9,6 @@ class ClientDetailViewModel {
   final Client client;
 
   ClientDetailViewModel({required this.client});
-
-  Color get statusColor {
-    switch (client.active) {
-      case 0:
-        return Colors.green;
-      case 1:
-        return Colors.yellow;
-      case 2:
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
 }
 
 /// Client detail page UI

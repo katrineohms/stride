@@ -286,17 +286,3 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// ======= Helper Methods =======
-/// Convert client activity to color
-Color getStatusColor(int active) {
-  switch (active) {
-    case 0:
-      return Colors.green;
-    case 1:
-      return Colors.yellow;
-    case 2:
-      return Colors.red;
-    default:
-      return Colors.grey;
-  }
-}

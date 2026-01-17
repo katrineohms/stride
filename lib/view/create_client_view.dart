@@ -54,68 +54,142 @@ class _CreateClientPageState extends State<CreateClientPage> {
           key: _formKey,
           child: Column(
             children: [
-              // ======= Name =======
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Name'),
-                validator: (_) {
-                  _updateViewModel();
-                  return viewModel.validateName();
-                },
-              ),
-              const SizedBox(height: 12),
-
-              // ======= Age =======
-              TextFormField(
-                controller: _ageController,
-                decoration: const InputDecoration(labelText: 'Age'),
-                keyboardType: TextInputType.number,
-                validator: (_) {
-                  _updateViewModel();
-                  return viewModel.validateAge();
-                },
-              ),
-              const SizedBox(height: 12),
-
-              // ======= Gender =======
-              DropdownButtonFormField<String>(
-                initialValue: viewModel.gender,
-                decoration: const InputDecoration(labelText: 'Gender'),
-                items: ['Male', 'Female', 'Other']
-                    .map((g) => DropdownMenuItem(value: g, child: Text(g)))
-                    .toList(),
-                onChanged: (v) {
-                  if (v != null) setState(() => viewModel.gender = v);
-                },
-              ),
-              const SizedBox(height: 12),
-
-              // ======= Status =======
-              DropdownButtonFormField<int>(
-                initialValue: viewModel.active,
-                decoration: const InputDecoration(labelText: 'Status'),
-                items: const [
-                  DropdownMenuItem(value: 0, child: Text('Active (Green)')),
-                  DropdownMenuItem(value: 1, child: Text('Caution (Yellow)')),
-                  DropdownMenuItem(value: 2, child: Text('Inactive (Red)')),
-                ],
-                onChanged: (v) {
-                  if (v != null) setState(() => viewModel.active = v);
-                },
-              ),
-              const SizedBox(height: 12),
-
-              // ======= Motivation =======
-              TextFormField(
-                controller: _motivationController,
-                decoration: const InputDecoration(
-                  labelText: 'Motivation',
-                  hintText: 'Optional motivation notes',
+              Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                maxLines: 3,
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Personal Info',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Name + Age
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _nameController,
+                              decoration: const InputDecoration(
+                                labelText: 'Name',
+                                border: OutlineInputBorder(),
+                              ),
+                              validator: (_) {
+                                _updateViewModel();
+                                return viewModel.validateName();
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _ageController,
+                              decoration: const InputDecoration(
+                                labelText: 'Age',
+                                border: OutlineInputBorder(),
+                              ),
+                              keyboardType: TextInputType.number,
+                              validator: (_) {
+                                _updateViewModel();
+                                return viewModel.validateAge();
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Gender + Status
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<int>(
+                              value: viewModel.active,
+                              decoration: const InputDecoration(
+                                labelText: 'Status',
+                                border: OutlineInputBorder(),
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 0,
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.circle,
+                                        color: Colors.green,
+                                        size: 14,
+                                      ),
+                                      SizedBox(width: 6),
+                                      Text('Active'),
+                                    ],
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: 1,
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.circle,
+                                        color: Colors.yellow,
+                                        size: 14,
+                                      ),
+                                      SizedBox(width: 6),
+                                      Text('Caution'),
+                                    ],
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: 2,
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.circle,
+                                        color: Colors.red,
+                                        size: 14,
+                                      ),
+                                      SizedBox(width: 6),
+                                      Text('Inactive'),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              onChanged: (v) {
+                                if (v != null)
+                                  setState(() => viewModel.active = v);
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Motivation
+                      TextFormField(
+                        controller: _motivationController,
+                        decoration: const InputDecoration(
+                          labelText: 'Motivation',
+                          hintText: 'Optional motivation notes',
+                          border: OutlineInputBorder(),
+                          alignLabelWithHint: true,
+                        ),
+                        maxLines: 3,
+                      ),
+                    ],
+                  ),
+                ),
               ),
 
-                            // ======= Appointments =======
+              // ======= Appointments =======
               AppointmentFormWidget(
                 onCreate: (appointment) {
                   setState(() {
@@ -126,7 +200,6 @@ class _CreateClientPageState extends State<CreateClientPage> {
 
               const SizedBox(height: 12),
 
-              
               // Exercise form
               ExerciseFormWidget(
                 onCreate: (exercise) {

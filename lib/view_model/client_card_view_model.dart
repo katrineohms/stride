@@ -1,25 +1,10 @@
 import '../model/clients.dart';
-import 'package:flutter/material.dart';
 
 /// ViewModel for the Client Detail Page
 class ClientDetailViewModel {
   final Client client;
 
   ClientDetailViewModel({required this.client});
-
-  // ===== Client status color =====
-  Color get statusColor {
-    switch (client.active) {
-      case 0:
-        return Colors.green;   // Active
-      case 1:
-        return Colors.yellow;  // Caution
-      case 2:
-        return Colors.red;     // Inactive
-      default:
-        return Colors.grey;    // Unknown
-    }
-  }
 
   // ===== Next Appointment =====
   /// Returns the soonest future appointment, or null if none
