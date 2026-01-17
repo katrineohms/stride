@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:stride/model/clients.dart';
+
 import 'package:stride/view/create_client_view.dart';
 import 'package:stride/view/client_card_view.dart';
 import 'package:stride/view_model/client_list_view_model.dart';

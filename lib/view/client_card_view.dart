@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../model/clients.dart';
 import 'package:stop_watch_timer/stop_watch_timer.dart';
 import '../widgets/stop_watch_timer_widget.dart';
+import '../widgets/movesense_status_widget.dart';
 
 /// ViewModel for client details
 class ClientDetailViewModel {
@@ -121,6 +122,14 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
                 ),
               ],
             ),
+            const SizedBox(height:4),
+            MoveSenseStatusCard(
+              connected: true,
+              heartRate: 72,
+              batteryOk: true,
+            ), //TODO make dynamic
+
+            // Client details
             const SizedBox(height: 24),
             Text('Age: ${client.age}'),
             const SizedBox(height: 8),

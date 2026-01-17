@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../widgets/client_card_widget.dart';
+import '../widgets/movesense_status_widget.dart';
+
 import 'package:stride/view/client_list_view.dart';
 import 'package:stride/model/clients.dart';
 import 'package:stride/view/client_card_view.dart';
 import 'package:stride/view_model/home_view_model.dart';
+
 //import 'package:stride/model/clients.dart';
 
 
@@ -78,6 +81,12 @@ class _HomePageState extends State<HomePage> {
       // ======= AppBar =======
       appBar: AppBar(
         title: const Text('Stride'),
+        actions: [
+          MovesenseStatusIcon(
+            connected: true,   // TODO: bind to real data
+            heartRate: 72,     // TODO: live HR
+          ),
+        ],
       ),
 
       // ======= Drawer / Hamburger Menu =======
@@ -175,7 +184,17 @@ class _HomePageState extends State<HomePage> {
               icon: const Icon(Icons.message),
               label: const Text('WhatsApp'),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 4),
+
+            // ======= Movesense Status =======
+            MoveSenseStatusCard(
+              connected: true,   // TODO: bind to real data
+              heartRate: 72,     // TODO: live HR
+              batteryOk: true,   // TODO: bind to real data
+            ),
+
+            const SizedBox(height: 4),
+
 
             // ======= Calendar =======
             TableCalendar(
