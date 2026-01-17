@@ -24,8 +24,9 @@ class ClientDetailViewModel {
   }
 
   String get nextAppointmentFormatted {
-    final dt =
-        DateTime.fromMillisecondsSinceEpoch(client.nextAppointment * 1000);
+    final dt = DateTime.fromMillisecondsSinceEpoch(
+      client.nextAppointment * 1000,
+    );
     return '${dt.toLocal()}'.split(' ')[0]; // YYYY-MM-DD
   }
 
@@ -80,7 +81,13 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
     final client = widget.viewModel.client;
 
     return Scaffold(
-      appBar: AppBar(title: Text(client.name), centerTitle: true),
+      appBar: AppBar(
+        title: Text(client.name),
+        centerTitle: true,
+        actions: [
+          MovesenseStatusIcon(connected: true, heartRate: 72),
+        ], // TODO make dynamic
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -112,17 +119,14 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
                     Row(
                       children: [
                         const Text('Status: '),
-                        Icon(
-                          Icons.circle,
-                          color: widget.viewModel.statusColor,
-                        ),
+                        Icon(Icons.circle, color: widget.viewModel.statusColor),
                       ],
                     ),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height:4),
+            const SizedBox(height: 4),
             MoveSenseStatusCard(
               connected: true,
               heartRate: 72,
@@ -131,20 +135,31 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
                 //TODO add functionality
               },
             ), //TODO make dynamic
-
             // Client details
             const SizedBox(height: 24),
             Text('Age: ${client.age}'),
             const SizedBox(height: 8),
             Text('Gender: ${client.gender}'),
             const SizedBox(height: 8),
-            Text('Next Appointment: ${widget.viewModel.nextAppointmentFormatted}'),
+            Text(
+              'Next Appointment: ${widget.viewModel.nextAppointmentFormatted}',
+            ),
             const SizedBox(height: 16),
-            const Text('Motivation:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'Motivation:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 4),
-            Text(client.motivation.isNotEmpty ? client.motivation : 'No motivation notes added.'),
+            Text(
+              client.motivation.isNotEmpty
+                  ? client.motivation
+                  : 'No motivation notes added.',
+            ),
             const SizedBox(height: 16),
-            const Text('Exercises:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const Text(
+              'Exercises:',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
             const SizedBox(height: 8),
 
             // Exercises list
@@ -156,7 +171,9 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 4),
                   elevation: 2,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(12),
                     child: Column(
@@ -171,13 +188,17 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
                                 exercise.name,
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  decoration: done ? TextDecoration.lineThrough : null,
+                                  decoration: done
+                                      ? TextDecoration.lineThrough
+                                      : null,
                                   color: done ? Colors.grey : null,
                                 ),
                               ),
                             ),
                             if (exercise is CountableExercise)
-                              Text('${exercise.sets} sets • ${exercise.reps} reps')
+                              Text(
+                                '${exercise.sets} sets • ${exercise.reps} reps',
+                              )
                             else if (exercise is TimeableExercise)
                               Text('Time: ${exercise.time}s'),
                           ],
@@ -190,17 +211,21 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
                             children: [
                               Checkbox(
                                 value: done,
-                                onChanged: (val) => _toggleDone(exercise.exerciseId, val),
+                                onChanged: (val) =>
+                                    _toggleDone(exercise.exerciseId, val),
                               ),
                             ],
                           )
-                        else if (exercise is TimeableExercise && stopWatch != null)
+                        else if (exercise is TimeableExercise &&
+                            stopWatch != null)
                           Row(
                             children: [
                               const Icon(Icons.timer, color: Colors.orange),
                               const SizedBox(width: 8),
                               Expanded(
-                                child: StopwatchWidget(stopWatchTimer: stopWatch),
+                                child: StopwatchWidget(
+                                  stopWatchTimer: stopWatch,
+                                ),
                               ),
                             ],
                           ),

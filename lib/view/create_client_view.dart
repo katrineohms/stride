@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stride/widgets/movesense_status_widget.dart';
 import '../model/clients.dart'; // your Client class
 import '../view_model/create_client_view_model.dart';
 import '../widgets/create_exercise_widget.dart';
@@ -40,7 +41,12 @@ class _CreateClientPageState extends State<CreateClientPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Client')),
+      appBar: AppBar(
+        title: const Text('Create Client'),
+        actions: [
+          MovesenseStatusIcon(connected: true, heartRate: 72),
+        ], // TODO make dynamic
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -101,10 +107,13 @@ class _CreateClientPageState extends State<CreateClientPage> {
               // ======= Next Appointment =======
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text(viewModel.nextAppointment == null
-                    ? 'Select Next Appointment'
-                    : 'Next: ${viewModel.nextAppointment!.toLocal()}'
-                        .split(' ')[0]),
+                title: Text(
+                  viewModel.nextAppointment == null
+                      ? 'Select Next Appointment'
+                      : 'Next: ${viewModel.nextAppointment!.toLocal()}'.split(
+                          ' ',
+                        )[0],
+                ),
                 trailing: const Icon(Icons.calendar_today),
                 onTap: () async {
                   final picked = await showDatePicker(
@@ -113,7 +122,8 @@ class _CreateClientPageState extends State<CreateClientPage> {
                     firstDate: DateTime.now(),
                     lastDate: DateTime(2030),
                   );
-                  if (picked != null) setState(() => viewModel.nextAppointment = picked);
+                  if (picked != null)
+                    setState(() => viewModel.nextAppointment = picked);
                 },
               ),
               const SizedBox(height: 12),
@@ -142,15 +152,17 @@ class _CreateClientPageState extends State<CreateClientPage> {
               ElevatedButton(
                 onPressed: () {
                   _updateViewModel();
-                  if (_formKey.currentState!.validate() && viewModel.validateAll()) {
+                  if (_formKey.currentState!.validate() &&
+                      viewModel.validateAll()) {
                     final client = viewModel.createClient();
                     widget.onCreate(client);
                     Navigator.pop(context);
-                  }
-                  else {
+                  } else {
                     // Show error snackbar
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please fix the errors in the form')),
+                      const SnackBar(
+                        content: Text('Please fix the errors in the form'),
+                      ),
                     );
                   }
                 },

@@ -10,7 +10,6 @@ import 'package:stride/view_model/home_view_model.dart';
 
 //import 'package:stride/model/clients.dart';
 
-
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -28,50 +27,52 @@ class _HomePageState extends State<HomePage> {
     super.initState();
 
     // Initialize view model with dummy clients
-    viewModel = HomeViewModel(initialClients: [
-      Client(
-        clientId: '1',
-        name: 'AnnaDummy',
-        age: 25,
-        gender: 'Female',
-        active: 0,
-        nextAppointment: 1672531200,
-        motivation: 'Motivated',
-        exercises: [
-          CountableExercise(
-            exerciseId: 'e1',
-            name: 'Squats',
-            description: 'Bodyweight squats',
-            sets: 3,
-            reps: 12,
-          ),
-          TimeableExercise(
-            exerciseId: 'e2',
-            name: 'Plank',
-            description: 'Core stability hold',
-            time: 30,
-          ),
-        ],
-      ),
-      Client(
-        clientId: '2',
-        name: 'MarkDummy',
-        age: 30,
-        gender: 'Male',
-        active: 1,
-        nextAppointment: 1672531200,
-        motivation: 'Needs support',
-      ),
-      Client(
-        clientId: '3',
-        name: 'SophiaDummy',
-        age: 28,
-        gender: 'Female',
-        active: 2,
-        nextAppointment: 1672531200,
-        motivation: 'Struggling',
-      ),
-    ]);
+    viewModel = HomeViewModel(
+      initialClients: [
+        Client(
+          clientId: '1',
+          name: 'AnnaDummy',
+          age: 25,
+          gender: 'Female',
+          active: 0,
+          nextAppointment: 1672531200,
+          motivation: 'Motivated',
+          exercises: [
+            CountableExercise(
+              exerciseId: 'e1',
+              name: 'Squats',
+              description: 'Bodyweight squats',
+              sets: 3,
+              reps: 12,
+            ),
+            TimeableExercise(
+              exerciseId: 'e2',
+              name: 'Plank',
+              description: 'Core stability hold',
+              time: 30,
+            ),
+          ],
+        ),
+        Client(
+          clientId: '2',
+          name: 'MarkDummy',
+          age: 30,
+          gender: 'Male',
+          active: 1,
+          nextAppointment: 1672531200,
+          motivation: 'Needs support',
+        ),
+        Client(
+          clientId: '3',
+          name: 'SophiaDummy',
+          age: 28,
+          gender: 'Female',
+          active: 2,
+          nextAppointment: 1672531200,
+          motivation: 'Struggling',
+        ),
+      ],
+    );
   }
 
   // ======= Build UI =======
@@ -83,8 +84,8 @@ class _HomePageState extends State<HomePage> {
         title: const Text('Stride'),
         actions: [
           MovesenseStatusIcon(
-            connected: true,   // TODO: bind to real data
-            heartRate: 72,     // TODO: live HR
+            connected: true, // TODO: bind to real data
+            heartRate: 72, // TODO: live HR
           ),
         ],
       ),
@@ -100,10 +101,7 @@ class _HomePageState extends State<HomePage> {
               ),
               child: Text(
                 'Clients',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
+                style: TextStyle(color: Colors.white, fontSize: 24),
               ),
             ),
             // Client list in drawer
@@ -112,7 +110,7 @@ class _HomePageState extends State<HomePage> {
                 leading: const Icon(Icons.person),
                 title: Text(client.name),
                 trailing: Icon(
-                  Icons.circle, 
+                  Icons.circle,
                   color: getStatusColor(client.active),
                 ),
                 onTap: () {
@@ -141,10 +139,7 @@ class _HomePageState extends State<HomePage> {
             // ======= Header =======
             const Text(
               'Welcome',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
 
@@ -159,15 +154,16 @@ class _HomePageState extends State<HomePage> {
                         ClientOverviewPage(clients: viewModel.clients),
                     transitionsBuilder:
                         (context, animation, secondaryAnimation, child) {
-                      final tween =
-                          Tween(begin: const Offset(0, 1), end: Offset.zero)
-                              .chain(CurveTween(curve: Curves.easeOutQuad));
+                          final tween = Tween(
+                            begin: const Offset(0, 1),
+                            end: Offset.zero,
+                          ).chain(CurveTween(curve: Curves.easeOutQuad));
 
-                      return SlideTransition(
-                        position: animation.drive(tween),
-                        child: child,
-                      );
-                    },
+                          return SlideTransition(
+                            position: animation.drive(tween),
+                            child: child,
+                          );
+                        },
                   ),
                 );
               },
@@ -178,26 +174,25 @@ class _HomePageState extends State<HomePage> {
 
             // ======= WhatsApp Button =======
             //ElevatedButton.icon(
-              //onPressed: () {
-                // TO DO: handle WhatsApp action
-              //},
-              //icon: const Icon(Icons.message),
-              //label: const Text('WhatsApp'),
+            //onPressed: () {
+            // TO DO: handle WhatsApp action
+            //},
+            //icon: const Icon(Icons.message),
+            //label: const Text('WhatsApp'),
             //),
             //const SizedBox(height: 4),
 
             // ======= Movesense Status =======
             MoveSenseStatusCard(
-              connected: true,   // TODO: bind to real data
-              heartRate: 72,     // TODO: live HR
-              batteryOk: true,   // TODO: bind to real data
+              connected: true, // TODO: bind to real data
+              heartRate: 72, // TODO: live HR
+              batteryOk: true, // TODO: bind to real data
               onTap: () {
                 // TO DO: handle tap action
               },
             ),
 
             const SizedBox(height: 4),
-
 
             // ======= Calendar =======
             TableCalendar(
@@ -225,20 +220,20 @@ class _HomePageState extends State<HomePage> {
             ...viewModel
                 .getClientsForDay(viewModel.selectedDay ?? DateTime.now())
                 .map((client) {
-              return ClientCard(
-                client: client,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ClientDetailPage(
-                        viewModel: ClientDetailViewModel(client: client),
-                      ),
-                    ),
+                  return ClientCard(
+                    client: client,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ClientDetailPage(
+                            viewModel: ClientDetailViewModel(client: client),
+                          ),
+                        ),
+                      );
+                    },
                   );
-                },
-              );
-            }),
+                }),
           ],
         ),
       ),

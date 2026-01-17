@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
           centerTitle: true,
           titleTextStyle: TextStyle(
             fontSize: 30,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w600,
             color: Colors.white,
           ),
         ),

@@ -4,6 +4,7 @@ import 'package:stride/model/clients.dart';
 import 'package:stride/view/create_client_view.dart';
 import 'package:stride/view/client_card_view.dart';
 import 'package:stride/view_model/client_list_view_model.dart';
+import 'package:stride/widgets/movesense_status_widget.dart';
 
 /// Page displaying a list of all clients
 class ClientOverviewPage extends StatefulWidget {
@@ -31,6 +32,9 @@ class _ClientOverviewPageState extends State<ClientOverviewPage> {
       appBar: AppBar(
         title: const Text('Clients'),
         centerTitle: true,
+        actions: [
+          MovesenseStatusIcon(connected: true, heartRate: 72),
+        ], // TODO make dynamic
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -59,11 +63,11 @@ class _ClientOverviewPageState extends State<ClientOverviewPage> {
 
           // Search button (placeholder)
           //ElevatedButton.icon(
-            //onPressed: () {
-              // TO DO: implement search functionality
-            //},
-            //label: const Text('Search'),
-            //icon: const Icon(Icons.search),
+          //onPressed: () {
+          // TO DO: implement search functionality
+          //},
+          //label: const Text('Search'),
+          //icon: const Icon(Icons.search),
           //),
           //const SizedBox(height: 16),
 
@@ -72,7 +76,8 @@ class _ClientOverviewPageState extends State<ClientOverviewPage> {
             return Card(
               elevation: 2,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                borderRadius: BorderRadius.circular(12),
+              ),
               margin: const EdgeInsets.symmetric(vertical: 6),
               child: ListTile(
                 // Avatar

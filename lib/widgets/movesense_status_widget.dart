@@ -128,27 +128,30 @@ class MovesenseStatusIcon extends StatelessWidget {
               size: 25,
               color: const Color.fromARGB(255, 255, 255, 255), // your blue
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 0),
           ],
 
           // Heart rate overlay
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              Icon(
-                Icons.favorite_outline,
-                size: 30, // slightly larger for overlay text
-                color: heartRate > 0 ? const Color.fromARGB(255, 255, 255, 255) : Colors.grey,
-              ),
-              Text(
-                heartRate > 0 ? heartRate.toString() : "",
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 10,
+          Padding(
+            padding: const EdgeInsets.only(right: 5),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Icon(
+                  Icons.favorite_outline,
+                  size: 30, // slightly larger for overlay text
+                  color: heartRate > 0 ? const Color.fromARGB(255, 255, 255, 255) : Colors.grey,
                 ),
-              ),
-            ],
+                Text(
+                  heartRate > 0 ? heartRate.toString() : "",
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
           )
         ],
       ),
