@@ -58,14 +58,14 @@ class _ClientOverviewPageState extends State<ClientOverviewPage> {
           const SizedBox(height: 8),
 
           // Search button (placeholder)
-          ElevatedButton.icon(
-            onPressed: () {
-              // TODO: implement search functionality
-            },
-            label: const Text('Search'),
-            icon: const Icon(Icons.search),
-          ),
-          const SizedBox(height: 16),
+          //ElevatedButton.icon(
+            //onPressed: () {
+              // TO DO: implement search functionality
+            //},
+            //label: const Text('Search'),
+            //icon: const Icon(Icons.search),
+          //),
+          //const SizedBox(height: 16),
 
           // ======= Client List =======
           ...viewModel.clients.map((client) {

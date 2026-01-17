@@ -174,23 +174,26 @@ class _HomePageState extends State<HomePage> {
               icon: const Icon(Icons.people),
               label: const Text('Client list'),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
 
             // ======= WhatsApp Button =======
-            ElevatedButton.icon(
-              onPressed: () {
-                // TODO: handle WhatsApp action
-              },
-              icon: const Icon(Icons.message),
-              label: const Text('WhatsApp'),
-            ),
-            const SizedBox(height: 4),
+            //ElevatedButton.icon(
+              //onPressed: () {
+                // TO DO: handle WhatsApp action
+              //},
+              //icon: const Icon(Icons.message),
+              //label: const Text('WhatsApp'),
+            //),
+            //const SizedBox(height: 4),
 
             // ======= Movesense Status =======
             MoveSenseStatusCard(
               connected: true,   // TODO: bind to real data
               heartRate: 72,     // TODO: live HR
               batteryOk: true,   // TODO: bind to real data
+              onTap: () {
+                // TO DO: handle tap action
+              },
             ),
 
             const SizedBox(height: 4),

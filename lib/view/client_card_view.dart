@@ -127,6 +127,9 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
               connected: true,
               heartRate: 72,
               batteryOk: true,
+              onTap: () {
+                //TODO add functionality
+              },
             ), //TODO make dynamic
 
             // Client details
