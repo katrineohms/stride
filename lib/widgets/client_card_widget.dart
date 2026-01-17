@@ -222,7 +222,7 @@ class ClientDetailViewWidget extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(vertical: 2),
                           child: Text('$dateStr $hour:$minute'),
                         );
-                      }).toList(),
+                      }),
                   ],
                 ),
               ),

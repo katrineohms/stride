@@ -7,7 +7,7 @@ import 'package:stride/view/client_list_view.dart';
 import 'package:stride/model/clients.dart';
 import 'package:stride/view/client_card_view.dart';
 import 'package:stride/view_model/home_view_model.dart';
-
+import 'package:stride/view/movesense_connect_view.dart';
 //import 'package:stride/model/clients.dart';
 
 class HomePage extends StatefulWidget {
@@ -213,7 +213,12 @@ class _HomePageState extends State<HomePage> {
               heartRate: 72, // TODO: live HR
               batteryOk: true, // TODO: bind to real data
               onTap: () {
-                // TO DO: handle tap action
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MovesenseConnectView(),
+                  ),
+                );
               },
             ),
 
@@ -285,4 +290,3 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
-

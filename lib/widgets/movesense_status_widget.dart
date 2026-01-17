@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 class MoveSenseStatusCard extends StatelessWidget {
   // ======= Properties =======
   final bool connected;
@@ -20,18 +19,14 @@ class MoveSenseStatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         // ===== Leading Avatar, Bluetooth Icon =====
         leading: CircleAvatar(
-          backgroundColor:
-              connected ? Theme.of(context).colorScheme.primary : Colors.grey,
-          child: const Icon(
-            Icons.bluetooth,
-            color: Colors.white,
-          ),
+          backgroundColor: connected
+              ? Theme.of(context).colorScheme.primary
+              : Colors.grey,
+          child: const Icon(Icons.bluetooth, color: Colors.white),
         ),
 
         // ===== Title & Subtitle =====
@@ -85,10 +80,7 @@ class MoveSenseStatusCard extends StatelessWidget {
                       : Colors.grey,
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'HR',
-                  style: TextStyle(fontSize: 11),
-                ),
+                const Text('HR', style: TextStyle(fontSize: 11)),
               ],
             ),
           ],
@@ -100,12 +92,8 @@ class MoveSenseStatusCard extends StatelessWidget {
     );
   }
 }
-
-
-
 // ======= Movesense Status Icon Widget =======
 class MovesenseStatusIcon extends StatelessWidget {
-  // ======= Properties =======
   final bool connected;
   final int heartRate;
 
@@ -115,35 +103,33 @@ class MovesenseStatusIcon extends StatelessWidget {
     required this.heartRate,
   });
 
-  // ======= Build UI =======
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return Padding(
+      padding: const EdgeInsets.only(right: 5),
       child: Row(
-        mainAxisSize: MainAxisSize.min, // so the row doesn't stretch full width
+        mainAxisSize: MainAxisSize.min,
         children: [
-          if (connected) ...[
-            Icon(
-              Icons.bluetooth,
-              size: 25,
-              color: const Color.fromARGB(255, 255, 255, 255), // your blue
-            ),
-            const SizedBox(width: 0),
-          ],
+          // ===== Connection status =====
+          Icon(
+            connected ? Icons.bluetooth : Icons.error,
+            size: 25,
+            color: connected ? Colors.white : Colors.red,
+          ),
+          const SizedBox(width: 4),
 
-          // Heart rate overlay
-          Padding(
-            padding: const EdgeInsets.only(right: 5),
-            child: Stack(
+          // ===== Heart rate (optional) =====
+          if (heartRate > 0)
+            Stack(
               alignment: Alignment.center,
               children: [
-                Icon(
+                const Icon(
                   Icons.favorite_outline,
-                  size: 30, // slightly larger for overlay text
-                  color: heartRate > 0 ? const Color.fromARGB(255, 255, 255, 255) : Colors.grey,
+                  size: 30,
+                  color: Colors.white,
                 ),
                 Text(
-                  heartRate > 0 ? heartRate.toString() : "",
+                  heartRate.toString(),
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -152,11 +138,11 @@ class MovesenseStatusIcon extends StatelessWidget {
                 ),
               ],
             ),
-          )
         ],
       ),
     );
   }
 }
+
 
 // TODO make stateful with live data
