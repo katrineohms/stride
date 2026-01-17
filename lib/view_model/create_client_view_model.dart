@@ -21,7 +21,7 @@ class CreateClientViewModel {
     return null;
   }
 
-  String? validateNextAppointment() {
+  String? validateAppointments() {
     if (appointments.isEmpty) return 'Pick a next appointment';
     return null;
   }
@@ -29,7 +29,7 @@ class CreateClientViewModel {
   bool validateAll() {
     return validateName() == null &&
         validateAge() == null &&
-        validateNextAppointment() == null;
+        validateAppointments() == null;
   }
 
   Client createClient() {
