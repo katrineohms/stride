@@ -31,11 +31,16 @@ class ClientDetailViewModel {
     final dt = DateTime.fromMillisecondsSinceEpoch(appointment.timestamp * 1000);
     final hour = dt.hour.toString().padLeft(2, '0');
     final minute = dt.minute.toString().padLeft(2, '0');
-    final dateStr = '${dt.toLocal().toIso8601String().split('T')[0]}';
+    final dateStr = dt.toLocal().toIso8601String().split('T')[0];
 
     return '$dateStr $hour:$minute';
   }
 
   /// Exercises remain tied to the client
   List<Exercise> get exercises => client.exercises;
+
+  /// Update the client with a new object (used after editing)
+  void updateClient(Client updatedClient) {
+    //client = updatedClient; TODO
+  }
 }

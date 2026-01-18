@@ -1,10 +1,18 @@
 ToDo list: 
+I morgen:
+- Snak med Viktor om mutable/inmutable
+- Snak med Viktor om UI placering af HRR
+- UI placement
+- Dummy data collection
+- Implement snackbar, etc.
 
-Frontend
-- Improve look of client card view
+
+Frontend:
+- When stopwatch runs out, blank out exercise 
 
 Both: 
 - Edit clients
+- Edit exercises
 
 
 Backend

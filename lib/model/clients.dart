@@ -46,14 +46,13 @@ class Appointment {
 
   DateTime get dateTime => DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
 }
-
 class Client {
   final String clientId;
   final String name;
   final int age;
   final String gender;
   final int active;
-  final List<Appointment> appointments; // <-- multiple
+  final List<Appointment> appointments;
   final String motivation;
   final List<Exercise> exercises;
 
@@ -66,6 +65,28 @@ class Client {
     List<Appointment>? appointments,
     required this.motivation,
     List<Exercise>? exercises,
-  })  : appointments = appointments ?? [],
-        exercises = exercises ?? [];
+  })  : appointments = List.unmodifiable(appointments ?? []),
+        exercises = List.unmodifiable(exercises ?? []);
+
+  Client copyWith({
+    String? clientId,
+    String? name,
+    int? age,
+    String? gender,
+    int? active,
+    List<Appointment>? appointments,
+    String? motivation,
+    List<Exercise>? exercises,
+  }) {
+    return Client(
+      clientId: clientId ?? this.clientId,
+      name: name ?? this.name,
+      age: age ?? this.age,
+      gender: gender ?? this.gender,
+      active: active ?? this.active,
+      appointments: appointments ?? this.appointments,
+      motivation: motivation ?? this.motivation,
+      exercises: exercises ?? this.exercises,
+    );
+  }
 }

@@ -2,37 +2,46 @@ import 'package:flutter/material.dart';
 import '../model/clients.dart';
 
 class AppointmentFormWidget extends StatefulWidget {
+  final List<Appointment> initialAppointments;
   final Function(Appointment) onCreate;
+  final Function(Appointment)? onRemove;
 
-  const AppointmentFormWidget({super.key, required this.onCreate});
+  const AppointmentFormWidget({
+    super.key,
+    this.initialAppointments = const [],
+    required this.onCreate,
+    this.onRemove,
+  });
 
   @override
-  State<AppointmentFormWidget> createState() => _AppointmentFormWidgetState();
+  State<AppointmentFormWidget> createState() =>
+      _AppointmentFormWidgetState();
 }
 
 class _AppointmentFormWidgetState extends State<AppointmentFormWidget> {
-  final List<Appointment> _addedAppointments = [];
+  late List<Appointment> _appointments;
+
+  @override
+  void initState() {
+    super.initState();
+    _appointments = List.from(widget.initialAppointments);
+  }
 
   void _addAppointment() async {
-    // Pick a date
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime(2030),
     );
-
     if (pickedDate == null) return;
 
-    // Pick a time
     final pickedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
     );
-
     if (pickedTime == null) return;
 
-    // Combine date + time to timestamp
     final timestamp = DateTime(
       pickedDate.year,
       pickedDate.month,
@@ -41,34 +50,36 @@ class _AppointmentFormWidgetState extends State<AppointmentFormWidget> {
       pickedTime.minute,
     ).millisecondsSinceEpoch ~/ 1000;
 
-    final newAppointment = Appointment(timestamp: timestamp);
+    final appointment = Appointment(timestamp: timestamp);
 
     setState(() {
-      _addedAppointments.add(newAppointment);
+      _appointments.add(appointment);
     });
 
-    // Pass to parent viewModel (CreateClientPage)
-    widget.onCreate(newAppointment);
+    widget.onCreate(appointment);
   }
 
   void _removeAppointment(Appointment a) {
     setState(() {
-      _addedAppointments.remove(a);
+      _appointments.remove(a);
     });
+
+    widget.onRemove?.call(a);
   }
 
   String _formatTimestamp(int timestamp) {
     final dt = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
-    final date = '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
-    final time = '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-    return '$date $time';
+    return
+        '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
+        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       margin: const EdgeInsets.symmetric(vertical: 12),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -81,21 +92,19 @@ class _AppointmentFormWidgetState extends State<AppointmentFormWidget> {
             ),
             const SizedBox(height: 8),
 
-            // List of added appointments
-            if (_addedAppointments.isNotEmpty)
-              Column(
-                children: _addedAppointments.map((a) {
-                  return ListTile(
-                    title: Text(_formatTimestamp(a.timestamp)),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => _removeAppointment(a),
-                    ),
-                  );
-                }).toList(),
+            if (_appointments.isEmpty)
+              const Text('No appointments'),
+
+            for (final a in _appointments)
+              ListTile(
+                title: Text(_formatTimestamp(a.timestamp)),
+                trailing: IconButton(
+                  icon:
+                      const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () => _removeAppointment(a),
+                ),
               ),
 
-            // Add appointment button
             SizedBox(
               width: double.infinity,
               child: TextButton.icon(

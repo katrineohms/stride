@@ -4,6 +4,7 @@ import '../widgets/stop_watch_timer_widget.dart';
 import '../widgets/movesense_status_widget.dart';
 import 'package:stop_watch_timer/stop_watch_timer.dart';
 import '../view/client_card_view.dart';
+import '../view/edit_client_view.dart';
 
 /// ===== Helper =====
 Color getStatusColor(int active) {
@@ -22,13 +23,16 @@ Color getStatusColor(int active) {
 /// ===== Helper to get next upcoming appointment =====
 DateTime? getNextAppointment(Client client) {
   final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-  final futureAppointments =
-      client.appointments.where((a) => a.timestamp >= now).toList();
+  final futureAppointments = client.appointments
+      .where((a) => a.timestamp >= now)
+      .toList();
 
   if (futureAppointments.isEmpty) return null;
 
   futureAppointments.sort((a, b) => a.timestamp.compareTo(b.timestamp));
-  return DateTime.fromMillisecondsSinceEpoch(futureAppointments.first.timestamp * 1000);
+  return DateTime.fromMillisecondsSinceEpoch(
+    futureAppointments.first.timestamp * 1000,
+  );
 }
 
 /// ===== Client Card =====
@@ -44,7 +48,7 @@ class ClientCard extends StatelessWidget {
 
     final timeStr = nextAppointment != null
         ? '${nextAppointment.hour.toString().padLeft(2, '0')}:'
-          '${nextAppointment.minute.toString().padLeft(2, '0')}'
+              '${nextAppointment.minute.toString().padLeft(2, '0')}'
         : 'No upcoming';
 
     return Card(
@@ -64,10 +68,7 @@ class ClientCard extends StatelessWidget {
             Expanded(child: Text(client.name)),
             Text(
               timeStr,
-              style: const TextStyle(
-
-                color: Color.fromARGB(255, 80, 80, 80),
-              ),
+              style: const TextStyle(color: Color.fromARGB(255, 80, 80, 80)),
             ),
           ],
         ),
@@ -117,22 +118,64 @@ class ClientDetailViewWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 16),
-              Expanded( // ensures the name/status row expands
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      client.name,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      children: [
+                        // ===== Client Name =====
+                        Expanded(
+                          child: Text(
+                            client.name,
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+
+                        // ===== Trailing Buttons =====
+                        Row(
+                          mainAxisSize: MainAxisSize
+                              .min, // makes the inner row wrap its children
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.add, size: 24),
+                              onPressed: () {
+                                // TODO: Handle plus button click (for adding appointments)
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.edit, size: 24),
+                              onPressed: () async {
+                                final updatedClient =
+                                    await Navigator.push<Client>(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            EditClientPage(client: client),
+                                      ),
+                                    );
+
+                                if (updatedClient != null) {
+                                  // TODO: Handle updated client (e.g., refresh view)
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
+
                     const SizedBox(height: 4),
                     Row(
                       children: [
                         const Text('Status: '),
-                        Icon(Icons.circle, color: getStatusColor(client.active)),
+                        Icon(
+                          Icons.circle,
+                          color: getStatusColor(client.active),
+                        ),
                       ],
                     ),
                   ],
@@ -166,8 +209,10 @@ class ClientDetailViewWidget extends StatelessWidget {
                   children: [
                     const Text(
                       'Personal Info',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text('Age: ${client.age}'),
@@ -204,8 +249,10 @@ class ClientDetailViewWidget extends StatelessWidget {
                   children: [
                     const Text(
                       'Appointments',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     if (client.appointments.isEmpty)
@@ -213,7 +260,8 @@ class ClientDetailViewWidget extends StatelessWidget {
                     else
                       ...client.appointments.map((a) {
                         final dt = DateTime.fromMillisecondsSinceEpoch(
-                            a.timestamp * 1000);
+                          a.timestamp * 1000,
+                        );
                         final hour = dt.hour.toString().padLeft(2, '0');
                         final minute = dt.minute.toString().padLeft(2, '0');
                         final dateStr =
@@ -271,7 +319,9 @@ class ClientDetailViewWidget extends StatelessWidget {
                               ),
                             ),
                             if (exercise is CountableExercise)
-                              Text('${exercise.sets} sets • ${exercise.reps} reps')
+                              Text(
+                                '${exercise.sets} sets • ${exercise.reps} reps',
+                              )
                             else if (exercise is TimeableExercise)
                               Text('Time: ${exercise.time}s'),
                           ],
@@ -289,7 +339,8 @@ class ClientDetailViewWidget extends StatelessWidget {
                               ),
                             ],
                           )
-                        else if (exercise is TimeableExercise && stopWatch != null)
+                        else if (exercise is TimeableExercise &&
+                            stopWatch != null)
                           Row(
                             children: [
                               Icon(
@@ -298,7 +349,9 @@ class ClientDetailViewWidget extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               Expanded(
-                                child: StopwatchWidget(stopWatchTimer: stopWatch),
+                                child: StopwatchWidget(
+                                  stopWatchTimer: stopWatch,
+                                ),
                               ),
                             ],
                           ),

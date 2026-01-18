@@ -114,7 +114,7 @@ class _CreateClientPageState extends State<CreateClientPage> {
                         children: [
                           Expanded(
                             child: DropdownButtonFormField<int>(
-                              value: viewModel.active,
+                              initialValue: viewModel.active,
                               decoration: const InputDecoration(
                                 labelText: 'Status',
                                 border: OutlineInputBorder(),
@@ -164,8 +164,9 @@ class _CreateClientPageState extends State<CreateClientPage> {
                                 ),
                               ],
                               onChanged: (v) {
-                                if (v != null)
+                                if (v != null) {
                                   setState(() => viewModel.active = v);
+                                }
                               },
                             ),
                           ),
