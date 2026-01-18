@@ -5,12 +5,14 @@ import '../view_model/create_client_view_model.dart';
 class ExerciseFormWidget extends StatefulWidget {
   final List<Exercise> initialExercises;
   final Function(Exercise) onCreate;
+  final Function(Exercise)? onUpdate;
   final Function(Exercise)? onRemove;
 
   const ExerciseFormWidget({
     super.key,
     this.initialExercises = const [],
     required this.onCreate,
+    this.onUpdate,
     this.onRemove,
   });
 
@@ -81,6 +83,105 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
     }
   }
 
+  Future<void> _editExercise(Exercise ex) async {
+    // Pre-fill controllers with existing values
+    _nameController.text = ex.name;
+    _descriptionController.text = ex.description;
+    if (ex is CountableExercise) {
+      viewModel.isCountable = true;
+      _setsController.text = ex.sets.toString();
+      _repsController.text = ex.reps.toString();
+    } else if (ex is TimeableExercise) {
+      viewModel.isCountable = false;
+      _timeController.text = ex.time.toString();
+    }
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Edit Exercise'),
+        content: SingleChildScrollView(
+          child: Column(
+            children: [
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(labelText: 'Name'),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(labelText: 'Description'),
+                minLines: 2,
+                maxLines: 4,
+              ),
+              const SizedBox(height: 8),
+              if (viewModel.isCountable) ...[
+                TextFormField(
+                  controller: _setsController,
+                  decoration: const InputDecoration(labelText: 'Sets'),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 4),
+                TextFormField(
+                  controller: _repsController,
+                  decoration: const InputDecoration(labelText: 'Reps'),
+                  keyboardType: TextInputType.number,
+                ),
+              ] else ...[
+                TextFormField(
+                  controller: _timeController,
+                  decoration: const InputDecoration(labelText: 'Time (s)'),
+                  keyboardType: TextInputType.number,
+                ),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, 'delete'),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, 'save'),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == 'save') {
+      // Update exercise
+      viewModel.name = _nameController.text.trim();
+      viewModel.description = _descriptionController.text.trim();
+      viewModel.sets = int.tryParse(_setsController.text) ?? 0;
+      viewModel.reps = int.tryParse(_repsController.text) ?? 0;
+      viewModel.time = int.tryParse(_timeController.text) ?? 0;
+
+      final updatedExercise = viewModel.createExercise();
+
+      setState(() {
+        final index = _exercises.indexOf(ex);
+        if (index != -1) _exercises[index] = updatedExercise;
+      });
+
+      widget.onUpdate?.call(updatedExercise);
+    } else if (result == 'delete') {
+      _removeExercise(ex);
+    }
+
+    // Clear controllers after dialog closes
+    _nameController.clear();
+    _descriptionController.clear();
+    _setsController.clear();
+    _repsController.clear();
+    _timeController.clear();
+  }
+
   void _removeExercise(Exercise ex) {
     setState(() {
       _exercises.remove(ex);
@@ -143,8 +244,8 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
                                   : 'Time: ${(ex as TimeableExercise).time}s',
                             ),
                             trailing: IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => _removeExercise(ex),
+                              icon: const Icon(Icons.edit, color: Colors.blue),
+                              onPressed: () => _editExercise(ex),
                             ),
                           ),
                         ))
@@ -152,7 +253,7 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
               ),
             const SizedBox(height: 8),
 
-            // Form
+            // Form for adding new exercise
             Form(
               key: _formKey,
               child: Column(
@@ -163,8 +264,9 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
                       labelText: 'Exercise Name',
                       border: OutlineInputBorder(),
                     ),
-                    validator: (v) =>
-                        v?.trim().isEmpty ?? true ? 'Enter exercise name' : null,
+                    validator: (v) => v?.trim().isEmpty ?? true
+                        ? 'Enter exercise name'
+                        : null,
                   ),
                   const SizedBox(height: 8),
                   TextFormField(
@@ -184,10 +286,8 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
                         Expanded(
                           child: TextFormField(
                             controller: _setsController,
-                            decoration: const InputDecoration(
-                              labelText: 'Sets',
-                              border: OutlineInputBorder(),
-                            ),
+                            decoration:
+                                const InputDecoration(labelText: 'Sets', border: OutlineInputBorder()),
                             keyboardType: TextInputType.number,
                             validator: (_) => viewModel.validateSets(),
                           ),
@@ -196,10 +296,8 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
                         Expanded(
                           child: TextFormField(
                             controller: _repsController,
-                            decoration: const InputDecoration(
-                              labelText: 'Reps',
-                              border: OutlineInputBorder(),
-                            ),
+                            decoration:
+                                const InputDecoration(labelText: 'Reps', border: OutlineInputBorder()),
                             keyboardType: TextInputType.number,
                             validator: (_) => viewModel.validateReps(),
                           ),

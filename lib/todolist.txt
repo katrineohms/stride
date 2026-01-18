@@ -1,6 +1,5 @@
 ToDo list: 
 I morgen:
-- Snak med Viktor om mutable/inmutable
 - Snak med Viktor om UI placering af HRR
 - UI placement
 - Dummy data collection
@@ -12,6 +11,10 @@ Frontend:
 
 Both: 
 - Edit clients
+    v UI
+    v Class updates
+    - Updating view
+    - Saving
 - Edit exercises
 
 
