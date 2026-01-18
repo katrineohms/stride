@@ -15,11 +15,12 @@ class MyApp extends StatelessWidget {
       title: 'Stride',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color.fromARGB(255, 97, 164, 97)),
+            seedColor: const Color.fromARGB(255, 107, 151, 92)),
+            primaryColor: const Color.fromARGB(255, 107, 151, 92) ,
         useMaterial3: true,
         scaffoldBackgroundColor: const Color.fromARGB(255, 235, 235, 235), 
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color.fromARGB(255, 97, 164, 97),
+          backgroundColor: Color.fromARGB(255, 107, 151, 92),
           foregroundColor: Colors.white,
           centerTitle: true,  
           titleTextStyle: TextStyle(

@@ -120,11 +120,11 @@ class _HomePageState extends State<HomePage> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            const DrawerHeader(
+            DrawerHeader(
               decoration: BoxDecoration(
-                color: Color.fromARGB(255, 97, 164, 97),
+                color: Theme.of(context).primaryColor,
               ),
-              child: Text(
+              child: const Text(
                 'Clients',
                 style: TextStyle(color: Colors.white, fontSize: 24),
               ),

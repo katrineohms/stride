@@ -3,7 +3,7 @@ allprojects {
         google()
         mavenCentral()
         flatDir{
-            dirs "$rootDir/libs"
+            dirs(rootDir.resolve("libs"))
         }
     }
 }
