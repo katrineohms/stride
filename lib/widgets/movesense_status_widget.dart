@@ -76,7 +76,7 @@ class MoveSenseStatusCard extends StatelessWidget {
                   Icons.favorite,
                   size: 20,
                   color: heartRate > 0
-                      ? const Color.fromARGB(255, 182, 78, 82)
+                      ? const Color.fromARGB(255, 210, 57, 62)
                       : Colors.grey,
                 ),
                 const SizedBox(height: 4),
