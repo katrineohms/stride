@@ -3,6 +3,7 @@ import 'package:stride/widgets/movesense_status_widget.dart';
 import '../model/clients.dart';
 import '../widgets/appointments_widget.dart';
 import '../widgets/create_exercise_widget.dart';
+import '../view_model/edit_client_view_model.dart';
 
 class EditClientPage extends StatefulWidget {
   final Client client;
@@ -15,8 +16,7 @@ class EditClientPage extends StatefulWidget {
 
 class _EditClientPageState extends State<EditClientPage> {
   final _formKey = GlobalKey<FormState>();
-
-  late Client editedClient;
+  late EditClientViewModel viewModel;
 
   late TextEditingController _nameController;
   late TextEditingController _ageController;
@@ -26,13 +26,13 @@ class _EditClientPageState extends State<EditClientPage> {
   void initState() {
     super.initState();
 
-    editedClient = widget.client;
+    viewModel = EditClientViewModel(client: widget.client);
+    viewModel.init();
 
-    _nameController = TextEditingController(text: editedClient.name);
-    _ageController =
-        TextEditingController(text: editedClient.age.toString());
+    _nameController = TextEditingController(text: viewModel.name);
+    _ageController = TextEditingController(text: viewModel.age.toString());
     _motivationController =
-        TextEditingController(text: editedClient.motivation);
+        TextEditingController(text: viewModel.motivation);
   }
 
   @override
@@ -43,12 +43,10 @@ class _EditClientPageState extends State<EditClientPage> {
     super.dispose();
   }
 
-  void _updateClientFromFields() {
-    editedClient = editedClient.copyWith(
-      name: _nameController.text,
-      age: int.tryParse(_ageController.text) ?? editedClient.age,
-      motivation: _motivationController.text,
-    );
+  void _saveFieldsToViewModel() {
+    viewModel.updateName(_nameController.text.trim());
+    viewModel.updateAge(int.tryParse(_ageController.text) ?? viewModel.age);
+    viewModel.updateMotivation(_motivationController.text.trim());
   }
 
   @override
@@ -78,16 +76,10 @@ class _EditClientPageState extends State<EditClientPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Personal Info',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      const Text('Personal Info',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 12),
-
-                      // Name + Age
                       Row(
                         children: [
                           Expanded(
@@ -97,10 +89,7 @@ class _EditClientPageState extends State<EditClientPage> {
                                 labelText: 'Name',
                                 border: OutlineInputBorder(),
                               ),
-                              validator: (v) =>
-                                  v == null || v.isEmpty
-                                      ? 'Name required'
-                                      : null,
+                              validator: (_) => viewModel.validateName(),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -112,19 +101,14 @@ class _EditClientPageState extends State<EditClientPage> {
                                 border: OutlineInputBorder(),
                               ),
                               keyboardType: TextInputType.number,
-                              validator: (v) =>
-                                  int.tryParse(v ?? '') == null
-                                      ? 'Invalid age'
-                                      : null,
+                              validator: (_) => viewModel.validateAge(),
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
-
-                      // Status (same as Create)
                       DropdownButtonFormField<int>(
-                        initialValue: editedClient.active,
+                        value: viewModel.active,
                         decoration: const InputDecoration(
                           labelText: 'Status',
                           border: OutlineInputBorder(),
@@ -134,8 +118,7 @@ class _EditClientPageState extends State<EditClientPage> {
                             value: 0,
                             child: Row(
                               children: [
-                                Icon(Icons.circle,
-                                    color: Colors.green, size: 14),
+                                Icon(Icons.circle, color: Colors.green, size: 14),
                                 SizedBox(width: 6),
                                 Text('Active'),
                               ],
@@ -145,8 +128,7 @@ class _EditClientPageState extends State<EditClientPage> {
                             value: 1,
                             child: Row(
                               children: [
-                                Icon(Icons.circle,
-                                    color: Colors.yellow, size: 14),
+                                Icon(Icons.circle, color: Colors.yellow, size: 14),
                                 SizedBox(width: 6),
                                 Text('Caution'),
                               ],
@@ -156,8 +138,7 @@ class _EditClientPageState extends State<EditClientPage> {
                             value: 2,
                             child: Row(
                               children: [
-                                Icon(Icons.circle,
-                                    color: Colors.red, size: 14),
+                                Icon(Icons.circle, color: Colors.red, size: 14),
                                 SizedBox(width: 6),
                                 Text('Inactive'),
                               ],
@@ -166,16 +147,11 @@ class _EditClientPageState extends State<EditClientPage> {
                         ],
                         onChanged: (v) {
                           if (v != null) {
-                            setState(() {
-                              editedClient =
-                                  editedClient.copyWith(active: v);
-                            });
+                            setState(() => viewModel.updateActive(v));
                           }
                         },
                       ),
                       const SizedBox(height: 12),
-
-                      // Motivation
                       TextFormField(
                         controller: _motivationController,
                         decoration: const InputDecoration(
@@ -192,43 +168,18 @@ class _EditClientPageState extends State<EditClientPage> {
 
               // ===== Appointments =====
               AppointmentFormWidget(
-                initialAppointments: editedClient.appointments,
-                onCreate: (appointment) {
-                  setState(() {
-                    editedClient = editedClient.copyWith(
-                      appointments: [
-                        ...editedClient.appointments,
-                        appointment,
-                      ],
-                    );
-                  });
-                },
-                onRemove: (appointment) {
-                  setState(() {
-                    editedClient = editedClient.copyWith(
-                      appointments: editedClient.appointments
-                          .where((a) => a != appointment)
-                          .toList(),
-                    );
-                  });
-                },
+                initialAppointments: viewModel.appointments,
+                onCreate: (a) => setState(() => viewModel.addAppointment(a)),
+                onRemove: (a) => setState(() => viewModel.removeAppointment(a)),
               ),
 
               const SizedBox(height: 12),
 
               // ===== Exercises =====
               ExerciseFormWidget(
-                initialExercises: editedClient.exercises,
-                onCreate: (exercise) {
-                  setState(() {
-                    editedClient = editedClient.copyWith(
-                      exercises: [
-                        ...editedClient.exercises,
-                        exercise,
-                      ],
-                    );
-                  });
-                },
+                initialExercises: viewModel.exercises,
+                onCreate: (ex) => setState(() => viewModel.addExercise(ex)),
+                onRemove: (ex) => setState(() => viewModel.removeExercise(ex)),
               ),
 
               const SizedBox(height: 16),
@@ -236,9 +187,9 @@ class _EditClientPageState extends State<EditClientPage> {
               // ===== Save Button =====
               ElevatedButton(
                 onPressed: () {
-                  _updateClientFromFields();
+                  _saveFieldsToViewModel();
                   if (_formKey.currentState!.validate()) {
-                    Navigator.pop(context, editedClient);
+                    Navigator.pop(context, viewModel.buildClient());
                   }
                 },
                 child: const Text('Save Changes'),
