@@ -4,6 +4,7 @@ class MoveSenseStatusCard extends StatelessWidget {
   // ======= Properties =======
   final bool connected;
   final int heartRate;
+  final Stream<int>? heartRateStream;
   final bool batteryOk;
   final VoidCallback? onTap;
 
@@ -11,6 +12,7 @@ class MoveSenseStatusCard extends StatelessWidget {
     super.key,
     required this.connected,
     required this.heartRate,
+    this.heartRateStream,
     required this.batteryOk,
     this.onTap,
   });
@@ -80,7 +82,20 @@ class MoveSenseStatusCard extends StatelessWidget {
                       : Colors.grey,
                 ),
                 const SizedBox(height: 4),
-                const Text('HR', style: TextStyle(fontSize: 11)),
+                if (heartRateStream != null)
+                  StreamBuilder<int>(
+                    stream: heartRateStream,
+                    initialData: heartRate,
+                    builder: (context, snapshot) {
+                      final hr = snapshot.data ?? heartRate;
+                      return Text(
+                        '$hr',
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                      );
+                    },
+                  )
+                else
+                  const Text('HR', style: TextStyle(fontSize: 11)),
               ],
             ),
           ],
@@ -96,11 +111,13 @@ class MoveSenseStatusCard extends StatelessWidget {
 class MovesenseStatusIcon extends StatelessWidget {
   final bool connected;
   final int heartRate;
+  final Stream<int>? heartRateStream;
 
   const MovesenseStatusIcon({
     super.key,
     required this.connected,
     required this.heartRate,
+    this.heartRateStream,
   });
 
   @override
@@ -119,25 +136,34 @@ class MovesenseStatusIcon extends StatelessWidget {
           const SizedBox(width: 4),
 
           // ===== Heart rate (optional) =====
-          if (heartRate > 0)
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                const Icon(
-                  Icons.favorite_outline,
-                  size: 30,
-                  color: Colors.white,
-                ),
-                Text(
-                  heartRate.toString(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 10,
-                  ),
-                ),
-              ],
-            ),
+          if (heartRateStream != null)
+            StreamBuilder<int>(
+              stream: heartRateStream,
+              initialData: heartRate,
+              builder: (context, snapshot) {
+                final hr = snapshot.data ?? heartRate;
+                return hr > 0
+                    ? Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          const Icon(
+                            Icons.favorite_outline,
+                            size: 30,
+                            color: Colors.white,
+                          ),
+                          Text(
+                            hr.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      )
+                    : const SizedBox.shrink();
+              },
+            )
         ],
       ),
     );

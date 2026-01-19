@@ -1,8 +1,5 @@
-import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:movesense_plus/movesense_plus.dart';
-import 'package:permission_handler/permission_handler.dart';
+import '../view_model/movesense_connect_view_model.dart';
 import '../widgets/movesense_status_widget.dart';
 
 /// Movesense Connect Page
@@ -14,87 +11,22 @@ class MovesenseConnectView extends StatefulWidget {
 }
 
 class _MovesenseConnectViewState extends State<MovesenseConnectView> {
-  bool isConnected = false;
-  MovesenseDevice? connectedDevice;
-  List<MovesenseDevice> scannedDevices = [];
-  StreamSubscription<MovesenseDevice>? deviceScanSubscription;
+  // Static ViewModel to persist across navigation
+  static final MovesenseConnectViewModel _sharedViewModel = MovesenseConnectViewModel();
+  
+  late MovesenseConnectViewModel viewModel;
 
   @override
   void initState() {
     super.initState();
-    // Optionally, request permissions here if needed
+    // Use the shared ViewModel instead of creating a new one
+    viewModel = _sharedViewModel;
   }
 
   @override
   void dispose() {
-    Movesense().stopScan();
-    deviceScanSubscription?.cancel();
+    // Don't dispose the shared ViewModel here - it should persist
     super.dispose();
-  }
-
-  /// Start scanning for devices
-  Future<void> scanDevices() async {
-    // Request Bluetooth permissions for Android 12+
-    if (Platform.isAndroid) {
-      final scanStatus = await Permission.bluetoothScan.request();
-      final connectStatus = await Permission.bluetoothConnect.request();
-      
-      if (!scanStatus.isGranted || !connectStatus.isGranted) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Bluetooth permissions denied')),
-          );
-        }
-        return;
-      }
-    }
-
-    scannedDevices.clear();
-    deviceScanSubscription?.cancel();
-
-    deviceScanSubscription = Movesense().devices.listen((device) {
-      if (!scannedDevices.any((d) => d.address == device.address)) {
-        setState(() {
-          scannedDevices.add(device);
-        });
-      }
-    });
-
-    Movesense().scan();
-  }
-
-  /// Connect to a Movesense device
-  Future<void> connectDevice(MovesenseDevice device) async {
-    // Request BLUETOOTH_CONNECT permission if needed
-    if (Platform.isAndroid) {
-      final status = await Permission.bluetoothConnect.request();
-      if (!status.isGranted) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Bluetooth connect permission denied')),
-          );
-        }
-        return;
-      }
-    }
-
-    device.connect();
-
-    // Update UI
-    setState(() {
-      connectedDevice = device;
-      isConnected = device.isConnected;
-    });
-
-    // Listen to heart rate and status
-    device.hr.listen((hr) {
-      print('Heart Rate: ${hr.average}, R-R: ${hr.rr}');
-      // You could also update a variable and call setState to show it in the UI
-    });
-
-    device.statusEvents.listen((status) {
-      print('Device status: ${status.name}');
-    });
   }
 
   @override
@@ -103,76 +35,83 @@ class _MovesenseConnectViewState extends State<MovesenseConnectView> {
       appBar: AppBar(
         title: const Text('Connect'),
         actions: [
-          MovesenseStatusIcon(
-            connected: isConnected,
-            heartRate: 0, // TODO: bind to real heart rate if needed
+          ListenableBuilder(
+            listenable: viewModel,
+            builder: (context, _) {
+              return MovesenseStatusIcon(
+                connected: viewModel.isConnected,
+                heartRate: 0,
+                heartRateStream: viewModel.heartRateStream,
+              );
+            },
           ),
         ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Status
-            Row(
+        child: ListenableBuilder(
+          listenable: viewModel,
+          builder: (context, _) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Connection Status: ',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                // Status
+                Row(
+                  children: [
+                    const Text(
+                      'Connection Status: ',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Icon(
+                      Icons.circle,
+                      color: viewModel.getConnectionStatusColor(),
+                      size: 14,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(viewModel.getConnectionStatusText()),
+                  ],
                 ),
-                Icon(
-                  Icons.circle,
-                  color: isConnected ? Colors.green : Colors.red,
-                  size: 14,
+                const SizedBox(height: 16),
+
+                // Scan Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.search),
+                    label: const Text('Scan Devices'),
+                    onPressed: () => viewModel.scanDevices(),
+                  ),
                 ),
-                const SizedBox(width: 6),
-                Text(
-                  isConnected
-                      ? (connectedDevice?.name ?? 'Connected')
-                      : 'Disconnected',
+                const SizedBox(height: 16),
+
+                // List of scanned devices
+                if (viewModel.scannedDevices.isNotEmpty)
+                  const Text(
+                    'Available Devices:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: viewModel.scannedDevices.length,
+                    itemBuilder: (context, index) {
+                      final device = viewModel.scannedDevices[index];
+                      return Card(
+                        child: ListTile(
+                          title: Text(device.name ?? 'Unknown Device'),
+                          subtitle: Text(device.address ?? ''),
+                          trailing: ElevatedButton(
+                            child: const Text('Connect'),
+                            onPressed: () => viewModel.connectDevice(device),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ],
-            ),
-            const SizedBox(height: 16),
-
-            // Scan Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.search),
-                label: const Text('Scan Devices'),
-                onPressed: scanDevices,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // List of scanned devices
-            if (scannedDevices.isNotEmpty)
-              const Text(
-                'Available Devices:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: ListView.builder(
-                itemCount: scannedDevices.length,
-                itemBuilder: (context, index) {
-                  final device = scannedDevices[index];
-                  return Card(
-                    child: ListTile(
-                      title: Text(device.name ?? 'Unknown Device'),
-                      subtitle: Text(device.address ?? ''),
-                      trailing: ElevatedButton(
-                        child: const Text('Connect'),
-                        onPressed: () => connectDevice(device),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );

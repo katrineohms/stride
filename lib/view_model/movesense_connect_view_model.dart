@@ -1,169 +1,168 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:movesense_plus/movesense_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-class MovesenseDemo extends StatefulWidget {
-  @override
-  State<MovesenseDemo> createState() => _MovesenseDemoState();
-}
+enum ConnectionStatus { idle, connecting, connected, failed }
 
-class _MovesenseDemoState extends State<MovesenseDemo> {
-  List<MovesenseDevice> devices = [];
-  bool scanning = false;
-  String statusMessage = '';
-  Timer? scanTimeout;
-  StreamSubscription<MovesenseDevice>? _deviceSub;
-
-  @override
-  void initState() {
-    super.initState();
-    startScan();
-  }
-
-  /// Request necessary Bluetooth & location permissions
-  Future<bool> requestPermissions() async {
-    final statuses = await [
-      Permission.bluetooth,
-      Permission.bluetoothScan,
-      Permission.bluetoothConnect,
-      Permission.locationWhenInUse,
-    ].request();
-
-    return statuses.values.every((status) => status.isGranted);
-  }
+/// ViewModel for managing Movesense device connection
+class MovesenseConnectViewModel extends ChangeNotifier {
+  // State variables
+  ConnectionStatus connectionStatus = ConnectionStatus.idle;
+  List<MovesenseDevice> scannedDevices = [];
+  MovesenseDevice? connectedDevice;
+  bool isConnected = false;
+  
+  // Track connection states by device address
+  final Map<String, bool> deviceConnectionStates = {};
+  
+  // Streams and subscriptions
+  StreamSubscription<MovesenseDevice>? _deviceScanSubscription;
+  StreamSubscription<dynamic>? _heartRateSubscription;
+  
+  // Heart rate stream
+  Stream<int>? heartRateStream;
+  StreamController<int>? _heartRateController;
 
   /// Start scanning for Movesense devices
-  void startScan() async {
-    final granted = await requestPermissions();
-    if (!granted) {
-      setState(() {
-        scanning = false;
-        statusMessage = 'Permissions denied. Cannot scan.';
-      });
-      return;
+  Future<void> scanDevices() async {
+    // Request Bluetooth permissions for Android 12+
+    if (Platform.isAndroid) {
+      final scanStatus = await Permission.bluetoothScan.request();
+      final connectStatus = await Permission.bluetoothConnect.request();
+      
+      if (!scanStatus.isGranted || !connectStatus.isGranted) {
+        return;
+      }
     }
 
-    // Clear previous scan results
-    _deviceSub?.cancel();
-    setState(() {
-      devices.clear();
-      scanning = true;
-      statusMessage = 'Scanning for devices...';
-    });
+    scannedDevices.clear();
+    _deviceScanSubscription?.cancel();
+    notifyListeners();
 
-    // Listen for scanned devices
-    _deviceSub = Movesense().devices.listen((device) {
-      setState(() {
-        if (!devices.any((d) => d.address == device.address)) {
-          devices.add(device);
-        }
-      });
-    });
-
-    try {
-      Movesense().scan();
-    } catch (e) {
-      setState(() {
-        scanning = false;
-        statusMessage = 'Scan failed: $e';
-      });
-      return;
-    }
-
-    // Stop scan if no devices are found within 15 seconds
-    scanTimeout?.cancel();
-    scanTimeout = Timer(const Duration(seconds: 15), () {
-      Movesense().stopScan();
-      _deviceSub?.cancel();
-      if (devices.isEmpty) {
-        setState(() {
-          scanning = false;
-          statusMessage = 'No devices found. Try again.';
-        });
+    _deviceScanSubscription = Movesense().devices.listen((device) {
+      if (!scannedDevices.any((d) => d.address == device.address)) {
+        scannedDevices.add(device);
+        notifyListeners();
       }
     });
+
+    Movesense().scan();
   }
 
-  /// Connect to selected device and listen to status & heart rate
-  void connectToDevice(MovesenseDevice device) async {
-    setState(() {
-      statusMessage = 'Connecting to ${device.name}...';
-    });
+  /// Connect to a Movesense device
+  Future<void> connectDevice(MovesenseDevice device) async {
+    // Request BLUETOOTH_CONNECT permission if needed
+    if (Platform.isAndroid) {
+      final status = await Permission.bluetoothConnect.request();
+      if (!status.isGranted) {
+        return;
+      }
+    }
+
+    // Set status to connecting
+    connectionStatus = ConnectionStatus.connecting;
+    connectedDevice = device;
+    notifyListeners();
 
     try {
-      device.connect(); // await connection
-      setState(() {
-        scanning = false;
-        statusMessage = 'Connected to ${device.name}';
-      });
+      device.connect();
 
-      // Listen to device status
-      device.statusEvents.listen((status) {
-        print('Device status: ${status.name}');
-      });
+      // Wait a bit to see if connection succeeds
+      await Future.delayed(const Duration(seconds: 2));
 
-      // Listen to heart rate
-      device.hr.listen((hr) {
-        print('Heart Rate: ${hr.average}, R-R Interval: ${hr.rr}');
-      });
+      if (device.isConnected) {
+        // Track connection state by device address
+        deviceConnectionStates[device.address ?? ''] = true;
+        
+        connectionStatus = ConnectionStatus.connected;
+        isConnected = true;
+        
+        // Create a StreamController for heart rate data
+        _heartRateController = StreamController<int>.broadcast();
+        heartRateStream = _heartRateController!.stream;
+
+        // Listen to heart rate
+        _heartRateSubscription?.cancel();
+        _heartRateSubscription = device.hr.listen((hr) {
+          print('Heart Rate: ${hr.average}, R-R: ${hr.rr}');
+          _heartRateController?.add(hr.average.toInt());
+        });
+
+        // Listen to device status
+        device.statusEvents.listen((status) {
+          print('Device status: ${status.name}');
+        });
+
+        notifyListeners();
+      } else {
+        // Connection failed
+        deviceConnectionStates[device.address ?? ''] = false;
+        connectionStatus = ConnectionStatus.failed;
+        isConnected = false;
+        notifyListeners();
+
+        // Reset to idle after 3 seconds
+        await Future.delayed(const Duration(seconds: 3));
+        connectionStatus = ConnectionStatus.idle;
+        connectedDevice = null;
+        notifyListeners();
+      }
     } catch (e) {
-      setState(() {
-        statusMessage = 'Failed to connect: $e';
-      });
+      print('Error connecting: $e');
+      deviceConnectionStates[device.address ?? ''] = false;
+      connectionStatus = ConnectionStatus.failed;
+      isConnected = false;
+      notifyListeners();
+
+      // Reset to idle after 3 seconds
+      await Future.delayed(const Duration(seconds: 3));
+      connectionStatus = ConnectionStatus.idle;
+      connectedDevice = null;
+      notifyListeners();
+    }
+  }
+
+  /// Stop scanning for devices
+  void stopScanning() {
+    Movesense().stopScan();
+    _deviceScanSubscription?.cancel();
+  }
+
+  /// Get connection status text
+  String getConnectionStatusText() {
+    switch (connectionStatus) {
+      case ConnectionStatus.connecting:
+        return 'Connecting...';
+      case ConnectionStatus.connected:
+        return connectedDevice?.name ?? 'Connected';
+      case ConnectionStatus.failed:
+        return 'Could not connect to device';
+      case ConnectionStatus.idle:
+        return 'Disconnected';
+    }
+  }
+
+  /// Get connection status color
+  Color getConnectionStatusColor() {
+    switch (connectionStatus) {
+      case ConnectionStatus.connected:
+        return Colors.green;
+      case ConnectionStatus.connecting:
+        return Colors.orange;
+      case ConnectionStatus.failed:
+        return Colors.red;
+      case ConnectionStatus.idle:
+        return Colors.grey;
     }
   }
 
   @override
   void dispose() {
-    scanTimeout?.cancel();
-    _deviceSub?.cancel();
-    Movesense().stopScan();
+    stopScanning();
+    _heartRateSubscription?.cancel();
+    _heartRateController?.close();
     super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Movesense Devices')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            if (statusMessage.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Text(statusMessage),
-              ),
-            Expanded(
-              child: ListView.builder(
-                itemCount: devices.length,
-                itemBuilder: (_, index) {
-                  final device = devices[index];
-                  return Card(
-                    child: ListTile(
-                      title: Text(device.name ?? 'Unknown Device'),
-                      subtitle: Text(device.address ?? 'Unknown Address'),
-                      trailing: ElevatedButton(
-                        child: const Text('Connect'),
-                        onPressed: () => connectToDevice(device),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.refresh),
-                label: const Text('Scan Again'),
-                onPressed: scanning ? null : startScan,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
