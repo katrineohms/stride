@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 /// Service to manage persistent notifications for active sessions
 class NotificationService {
@@ -17,11 +19,35 @@ class NotificationService {
   Future<void> initialize() async {
     if (_initialized) return;
 
+    // Request notification permission (Android 13+)
+    await Permission.notification.request();
+
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const initSettings = InitializationSettings(android: androidSettings);
+    const iosSettings = DarwinInitializationSettings();
+    const initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+    );
 
     await _notifications.initialize(initSettings);
+
+    // Create notification channel (Android 8+)
+    const channel = AndroidNotificationChannel(
+      'session_channel',
+      'HR Session',
+      description: 'Ongoing heart rate monitoring session',
+      importance: Importance.low,
+      enableVibration: false,
+      playSound: false,
+    );
+
+    await _notifications
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
+
     _initialized = true;
+    debugPrint('Notification service initialized');
   }
 
   /// Show or update the session notification
@@ -49,21 +75,30 @@ class NotificationService {
       ongoing: true, // Makes it persistent
       autoCancel: false,
       showWhen: false,
-      icon: '@mipmap/ic_launcher',
     );
 
     const details = NotificationDetails(android: androidDetails);
 
-    await _notifications.show(
-      1, // Notification ID
-      'HR Session Active',
-      '$hrText • $timeStr',
-      details,
-    );
+    try {
+      await _notifications.show(
+        1, // Notification ID
+        'HR Session Active',
+        '$hrText • $timeStr',
+        details,
+      );
+      debugPrint('Notification shown: $hrText • $timeStr');
+    } catch (e) {
+      debugPrint('Error showing notification: $e');
+    }
   }
 
   /// Cancel the session notification
   Future<void> cancelSessionNotification() async {
-    await _notifications.cancel(1);
+    try {
+      await _notifications.cancel(1);
+      debugPrint('Notification cancelled');
+    } catch (e) {
+      debugPrint('Error cancelling notification: $e');
+    }
   }
 }
