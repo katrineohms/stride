@@ -251,8 +251,8 @@ class MovesenseStatusIcon extends StatelessWidget {
                         children: [
                           SvgPicture.asset(
                             'assets/icons/heart_outline_24.svg',
-                            width: 30,
-                            height: 30,
+                            width: 31,
+                            height: 31,
                           ),
                           Transform.translate(
                             offset: const Offset(0, -1),

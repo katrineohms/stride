@@ -173,6 +173,7 @@ class _HomePageState extends State<HomePage> {
               focusedDay: viewModel.focusedDay,
               selectedDayPredicate: (day) =>
                   isSameDay(viewModel.selectedDay ?? DateTime.now(), day),
+              eventLoader: (day) => viewModel.getClientsForDay(day),
               onDaySelected: (selectedDay, focusedDay) {
                 setState(() {
                   viewModel.selectDay(selectedDay);
@@ -184,6 +185,36 @@ class _HomePageState extends State<HomePage> {
               headerStyle: const HeaderStyle(
                 formatButtonVisible: false,
                 titleCentered: true,
+              ),
+              calendarStyle: CalendarStyle(
+                selectedDecoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary,
+                  shape: BoxShape.circle,
+                ),
+                todayDecoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.35),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              calendarBuilders: CalendarBuilders(
+                markerBuilder: (context, day, events) {
+                  if (events.isEmpty) return const SizedBox.shrink();
+                  final isSelected =
+                      isSameDay(viewModel.selectedDay ?? DateTime.now(), day);
+                  return Positioned(
+                    bottom: 10,
+                    child: Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? Colors.white
+                            : Theme.of(context).colorScheme.primary,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(height: 16),
