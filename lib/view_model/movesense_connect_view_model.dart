@@ -20,10 +20,15 @@ class MovesenseConnectViewModel extends ChangeNotifier {
   // Streams and subscriptions
   StreamSubscription<MovesenseDevice>? _deviceScanSubscription;
   StreamSubscription<dynamic>? _heartRateSubscription;
+  Timer? _batteryCheckTimer;
   
   // Heart rate stream
   Stream<int>? heartRateStream;
   StreamController<int>? _heartRateController;
+  
+  // Battery stream
+  Stream<String>? batteryStream;
+  StreamController<String>? _batteryController;
 
   /// Start scanning for Movesense devices
   Future<void> scanDevices() async {
@@ -79,6 +84,19 @@ class MovesenseConnectViewModel extends ChangeNotifier {
         connectionStatus = ConnectionStatus.connected;
         isConnected = true;
         
+        // Create a StreamController for battery data
+        _batteryController = StreamController<String>.broadcast();
+        batteryStream = _batteryController!.stream;
+
+        // Get initial battery status
+        _updateBatteryStatus(device);
+
+        // Check battery status every 30 seconds
+        _batteryCheckTimer?.cancel();
+        _batteryCheckTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+          _updateBatteryStatus(device);
+        });
+
         // Create a StreamController for heart rate data
         _heartRateController = StreamController<int>.broadcast();
         heartRateStream = _heartRateController!.stream;
@@ -87,7 +105,7 @@ class MovesenseConnectViewModel extends ChangeNotifier {
         _heartRateSubscription?.cancel();
         _heartRateSubscription = device.hr.listen((hr) {
           print('Heart Rate: ${hr.average}, R-R: ${hr.rr}');
-          _heartRateController?.add(hr.average.toInt());
+          _heartRateController!.add(hr.average.toInt());
         });
 
         // Listen to device status
@@ -121,6 +139,18 @@ class MovesenseConnectViewModel extends ChangeNotifier {
       connectionStatus = ConnectionStatus.idle;
       connectedDevice = null;
       notifyListeners();
+    }
+  }
+
+  /// Update battery status from device
+  Future<void> _updateBatteryStatus(MovesenseDevice device) async {
+    try {
+      final battery = await device.getBatteryStatus();
+      final batteryStatus = battery.name;
+      print('Battery level: $batteryStatus');
+      _batteryController!.add(batteryStatus);
+    } catch (e) {
+      print('Error fetching battery: $e');
     }
   }
 
@@ -163,6 +193,8 @@ class MovesenseConnectViewModel extends ChangeNotifier {
     stopScanning();
     _heartRateSubscription?.cancel();
     _heartRateController?.close();
+    _batteryCheckTimer?.cancel();
+    _batteryController?.close();
     super.dispose();
   }
 }

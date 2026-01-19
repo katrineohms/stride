@@ -6,6 +6,7 @@ class MoveSenseStatusCard extends StatelessWidget {
   final int heartRate;
   final Stream<int>? heartRateStream;
   final bool batteryOk;
+  final Stream<String>? batteryStream;
   final VoidCallback? onTap;
 
   const MoveSenseStatusCard({
@@ -14,6 +15,7 @@ class MoveSenseStatusCard extends StatelessWidget {
     required this.heartRate,
     this.heartRateStream,
     required this.batteryOk,
+    this.batteryStream,
     this.onTap,
   });
 
@@ -56,16 +58,45 @@ class MoveSenseStatusCard extends StatelessWidget {
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  batteryOk ? Icons.battery_full : Icons.battery_alert,
-                  size: 20,
-                  color: batteryOk ? Colors.green : Colors.red,
-                ),
+                if (batteryStream != null)
+                  StreamBuilder<String>(
+                    stream: batteryStream,
+                    initialData: batteryOk ? 'ok' : 'low',
+                    builder: (context, snapshot) {
+                      final batteryStatus = snapshot.data ?? 'low';
+                      final isOk = batteryStatus == 'ok';
+                      return Icon(
+                        isOk ? Icons.battery_full : Icons.battery_alert,
+                        size: 20,
+                        color: isOk ? Colors.green : Colors.red,
+                      );
+                    },
+                  )
+                else
+                  Icon(
+                    batteryOk ? Icons.battery_full : Icons.battery_alert,
+                    size: 20,
+                    color: batteryOk ? Colors.green : Colors.red,
+                  ),
                 const SizedBox(height: 4),
-                Text(
-                  batteryOk ? 'OK' : 'Low',
-                  style: const TextStyle(fontSize: 11),
-                ),
+                if (batteryStream != null)
+                  StreamBuilder<String>(
+                    stream: batteryStream,
+                    initialData: batteryOk ? 'ok' : 'low',
+                    builder: (context, snapshot) {
+                      final batteryStatus = snapshot.data ?? 'low';
+                      final isOk = batteryStatus == 'ok';
+                      return Text(
+                        isOk ? 'OK' : 'Low',
+                        style: const TextStyle(fontSize: 11),
+                      );
+                    },
+                  )
+                else
+                  Text(
+                    batteryOk ? 'OK' : 'Low',
+                    style: const TextStyle(fontSize: 11),
+                  ),
               ],
             ),
             const SizedBox(width: 12),
@@ -74,28 +105,46 @@ class MoveSenseStatusCard extends StatelessWidget {
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.favorite,
-                  size: 20,
-                  color: heartRate > 0
-                      ? const Color.fromARGB(255, 210, 57, 62)
-                      : Colors.grey,
-                ),
-                const SizedBox(height: 4),
                 if (heartRateStream != null)
                   StreamBuilder<int>(
                     stream: heartRateStream,
                     initialData: heartRate,
                     builder: (context, snapshot) {
                       final hr = snapshot.data ?? heartRate;
-                      return Text(
-                        '$hr',
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.favorite,
+                            size: 20,
+                            color: hr > 0
+                                ? const Color.fromARGB(255, 210, 57, 62)
+                                : Colors.grey,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '$hr',
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                        ],
                       );
                     },
                   )
                 else
-                  const Text('HR', style: TextStyle(fontSize: 11)),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.favorite,
+                        size: 20,
+                        color: heartRate > 0
+                            ? const Color.fromARGB(255, 210, 57, 62)
+                            : Colors.grey,
+                      ),
+                      const SizedBox(height: 4),
+                      const Text('HR', style: TextStyle(fontSize: 11)),
+                    ],
+                  ),
               ],
             ),
           ],

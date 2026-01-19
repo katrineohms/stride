@@ -5,6 +5,7 @@ import '../widgets/movesense_status_widget.dart';
 import 'package:stop_watch_timer/stop_watch_timer.dart';
 import '../view/client_card_view.dart';
 import '../view/edit_client_view.dart';
+import '../service/movesense_service.dart';
 
 /// ===== Helper =====
 Color getStatusColor(int active) {
@@ -186,11 +187,18 @@ class ClientDetailViewWidget extends StatelessWidget {
           const SizedBox(height: 12),
 
           // ===== Movesense Status =====
-          MoveSenseStatusCard(
-            connected: true,
-            heartRate: 72,
-            batteryOk: true,
-            onTap: onMovesenseTap,
+          ListenableBuilder(
+            listenable: MovesenseService().viewModel,
+            builder: (context, _) {
+              return MoveSenseStatusCard(
+                connected: MovesenseService().viewModel.isConnected,
+                heartRate: 0,
+                heartRateStream: MovesenseService().viewModel.heartRateStream,
+                batteryOk: true,
+                batteryStream: MovesenseService().viewModel.batteryStream,
+                onTap: onMovesenseTap,
+              );
+            },
           ),
           const SizedBox(height: 16),
 

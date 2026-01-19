@@ -143,16 +143,23 @@ class _HomePageState extends State<HomePage> {
             //const SizedBox(height: 4),
 
             // ======= Movesense Status =======
-            MoveSenseStatusCard(
-              connected: true, // TODO: bind to real data
-              heartRate: 72, // TODO: live HR
-              batteryOk: true, // TODO: bind to real data
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const MovesenseConnectView(),
-                  ),
+            ListenableBuilder(
+              listenable: MovesenseService().viewModel,
+              builder: (context, _) {
+                return MoveSenseStatusCard(
+                  connected: MovesenseService().viewModel.isConnected,
+                  heartRate: 0,
+                  heartRateStream: MovesenseService().viewModel.heartRateStream,
+                  batteryOk: true,
+                  batteryStream: MovesenseService().viewModel.batteryStream,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MovesenseConnectView(),
+                      ),
+                    );
+                  },
                 );
               },
             ),
