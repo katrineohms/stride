@@ -328,33 +328,52 @@ class ClientDetailViewWidget extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
 
-                        // Checkbox or stopwatch
-                        if (exercise is CountableExercise)
-                          Row(
-                            children: [
-                              Checkbox(
-                                value: done,
-                                onChanged: (val) =>
-                                    onToggleDone(exercise.exerciseId, val),
+                        // Row: checkbox / stopwatch + heart button
+                        Row(
+                          children: [
+                            if (exercise is CountableExercise)
+                              Expanded(
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Checkbox(
+                                    value: done,
+                                    onChanged: (val) =>
+                                        onToggleDone(exercise.exerciseId, val),
+                                  ),
+                                ),
                               ),
-                            ],
-                          )
-                        else if (exercise is TimeableExercise &&
-                            stopWatch != null)
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.timer_outlined,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                              const SizedBox(width: 8),
+                            if (exercise is TimeableExercise &&
+                                stopWatch != null)
                               Expanded(
                                 child: StopwatchWidget(
                                   stopWatchTimer: stopWatch,
                                 ),
                               ),
-                            ],
-                          ),
+
+                            // Heart button (always on the right)
+                            Material(
+                              color: Theme.of(context).colorScheme.primary,
+                              shape: const CircleBorder(),
+                              elevation: 1,
+                              child: InkWell(
+                                customBorder: const CircleBorder(),
+                                onTap: () {
+                                  debugPrint(
+                                    'Heart pressed for ${exercise.name}',
+                                  );
+                                },
+                                child: const Padding(
+                                  padding: EdgeInsets.all(8),
+                                  child: Icon(
+                                    Icons.favorite,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
