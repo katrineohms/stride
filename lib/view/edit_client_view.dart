@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:stride/widgets/movesense_status_widget.dart';
+import 'package:stride/service/movesense_service.dart';
 import '../model/clients.dart';
 import '../widgets/appointments_widget.dart';
 import '../widgets/create_exercise_widget.dart';
@@ -64,8 +65,17 @@ class _EditClientPageState extends State<EditClientPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Client'),
-        actions: const [
-          MovesenseStatusIcon(connected: true, heartRate: 72),
+        actions: [
+          ListenableBuilder(
+            listenable: MovesenseService().viewModel,
+            builder: (context, _) {
+              return MovesenseStatusIcon(
+                connected: MovesenseService().viewModel.isConnected,
+                heartRate: 0,
+                heartRateStream: MovesenseService().viewModel.heartRateStream,
+              );
+            },
+          ),
         ],
       ),
       body: SingleChildScrollView(

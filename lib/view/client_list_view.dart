@@ -5,6 +5,7 @@ import 'package:stride/view/create_client_view.dart';
 import 'package:stride/view/client_card_view.dart';
 import 'package:stride/view_model/client_list_view_model.dart';
 import 'package:stride/widgets/movesense_status_widget.dart';
+import 'package:stride/service/movesense_service.dart';
 import '../widgets/client_card_widget.dart';
 
 /// Page displaying a list of all clients
@@ -34,8 +35,17 @@ class _ClientOverviewPageState extends State<ClientOverviewPage> {
         title: const Text('Clients'),
         centerTitle: true,
         actions: [
-          MovesenseStatusIcon(connected: true, heartRate: 72),
-        ], // TODO make dynamic
+          ListenableBuilder(
+            listenable: MovesenseService().viewModel,
+            builder: (context, _) {
+              return MovesenseStatusIcon(
+                connected: MovesenseService().viewModel.isConnected,
+                heartRate: 0,
+                heartRateStream: MovesenseService().viewModel.heartRateStream,
+              );
+            },
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),

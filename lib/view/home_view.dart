@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../widgets/client_card_widget.dart';
 import '../widgets/movesense_status_widget.dart';
+import '../service/movesense_service.dart';
 
 import 'package:stride/view/client_list_view.dart';
 import 'package:stride/view/client_card_view.dart';
 import 'package:stride/view_model/home_view_model.dart';
 import 'package:stride/view/movesense_connect_view.dart';
-//import 'package:stride/model/clients.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -37,9 +37,15 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: const Text('Stride'),
         actions: [
-          MovesenseStatusIcon(
-            connected: true, // TODO: bind to real data
-            heartRate: 72, // TODO: live HR
+          ListenableBuilder(
+            listenable: MovesenseService().viewModel,
+            builder: (context, _) {
+              return MovesenseStatusIcon(
+                connected: MovesenseService().viewModel.isConnected,
+                heartRate: 0,
+                heartRateStream: MovesenseService().viewModel.heartRateStream,
+              );
+            },
           ),
         ],
       ),

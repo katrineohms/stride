@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:stride/widgets/movesense_status_widget.dart';
+import 'package:stride/service/movesense_service.dart';
 import '../model/clients.dart';
 import '../view_model/create_client_view_model.dart';
 import '../view_model/widgets_view_model/appointment_form_view_model.dart';
@@ -59,8 +60,17 @@ class _CreateClientPageState extends State<CreateClientPage> {
       appBar: AppBar(
         title: const Text('Create Client'),
         actions: [
-          MovesenseStatusIcon(connected: true, heartRate: 72),
-        ], // TODO make dynamic
+          ListenableBuilder(
+            listenable: MovesenseService().viewModel,
+            builder: (context, _) {
+              return MovesenseStatusIcon(
+                connected: MovesenseService().viewModel.isConnected,
+                heartRate: 0,
+                heartRateStream: MovesenseService().viewModel.heartRateStream,
+              );
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

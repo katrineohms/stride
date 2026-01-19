@@ -4,6 +4,7 @@ import 'package:stop_watch_timer/stop_watch_timer.dart';
 import '../widgets/client_card_widget.dart';
 import '../widgets/movesense_status_widget.dart';
 import 'package:stride/view/movesense_connect_view.dart';
+import 'package:stride/service/movesense_service.dart';
 
 /// ViewModel for client details
 class ClientDetailViewModel {
@@ -63,7 +64,18 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
       appBar: AppBar(
         title: Text(client.name),
         centerTitle: true,
-        actions: [MovesenseStatusIcon(connected: true, heartRate: 72)],
+        actions: [
+          ListenableBuilder(
+            listenable: MovesenseService().viewModel,
+            builder: (context, _) {
+              return MovesenseStatusIcon(
+                connected: MovesenseService().viewModel.isConnected,
+                heartRate: 0,
+                heartRateStream: MovesenseService().viewModel.heartRateStream,
+              );
+            },
+          ),
+        ],
       ),
       body: ClientDetailViewWidget(
         viewModel: widget.viewModel,

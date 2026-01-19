@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../view_model/movesense_connect_view_model.dart';
 import '../widgets/movesense_status_widget.dart';
+import '../service/movesense_service.dart';
 
 /// Movesense Connect Page
 class MovesenseConnectView extends StatefulWidget {
@@ -11,16 +12,14 @@ class MovesenseConnectView extends StatefulWidget {
 }
 
 class _MovesenseConnectViewState extends State<MovesenseConnectView> {
-  // Static ViewModel to persist across navigation
-  static final MovesenseConnectViewModel _sharedViewModel = MovesenseConnectViewModel();
-  
+  // Use the shared ViewModel from the service
   late MovesenseConnectViewModel viewModel;
 
   @override
   void initState() {
     super.initState();
-    // Use the shared ViewModel instead of creating a new one
-    viewModel = _sharedViewModel;
+    // Get the shared ViewModel from the service
+    viewModel = MovesenseService().viewModel;
   }
 
   @override
