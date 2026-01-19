@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class MoveSenseStatusCard extends StatelessWidget {
   // ======= Properties =======
@@ -248,15 +249,10 @@ class MovesenseStatusIcon extends StatelessWidget {
                     ? Stack(
                         alignment: Alignment.center,
                         children: [
-                          const Icon(
-                            Icons.favorite_outline,
-                            size: 34,
-                            color: Colors.white,
-                          ), // TODO fix outline
-                          const Icon(
-                            Icons.favorite,
-                            size: 30,
-                            color: Color.fromARGB(255, 210, 57, 62),
+                          SvgPicture.asset(
+                            'assets/icons/heart_outline_24.svg',
+                            width: 30,
+                            height: 30,
                           ),
                           Transform.translate(
                             offset: const Offset(0, -1),

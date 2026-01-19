@@ -19,7 +19,15 @@ class MyApp extends StatelessWidget {
             primaryColor: const Color.fromARGB(255, 107, 151, 92),
         cardColor: Colors.white,
         useMaterial3: true,
-        scaffoldBackgroundColor: const Color.fromARGB(255, 240, 240, 240), 
+        scaffoldBackgroundColor: const Color.fromARGB(255, 240, 240, 240),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.white,
+          ),
+        ),
+        drawerTheme: DrawerThemeData(
+          backgroundColor: Colors.white,
+        ),
         appBarTheme: const AppBarTheme(
           backgroundColor: Color.fromARGB(255, 107, 151, 92),
           foregroundColor: Colors.white,
