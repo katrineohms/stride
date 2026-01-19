@@ -16,9 +16,9 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
             seedColor: const Color.fromARGB(255, 107, 151, 92)),
-            primaryColor: const Color.fromARGB(255, 107, 151, 92) ,
+            primaryColor: const Color.fromARGB(255, 107, 151, 92),
         useMaterial3: true,
-        scaffoldBackgroundColor: const Color.fromARGB(255, 235, 235, 235), 
+        scaffoldBackgroundColor: const Color.fromARGB(255, 240, 240, 240), 
         appBarTheme: const AppBarTheme(
           backgroundColor: Color.fromARGB(255, 107, 151, 92),
           foregroundColor: Colors.white,
@@ -34,4 +34,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-  

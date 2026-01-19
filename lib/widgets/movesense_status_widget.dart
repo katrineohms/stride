@@ -124,7 +124,10 @@ class MoveSenseStatusCard extends StatelessWidget {
                           const SizedBox(height: 4),
                           Text(
                             '$hr',
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ],
                       );
@@ -156,6 +159,7 @@ class MoveSenseStatusCard extends StatelessWidget {
     );
   }
 }
+
 // ======= Movesense Status Icon Widget =======
 class MovesenseStatusIcon extends StatelessWidget {
   final bool connected;
@@ -177,14 +181,51 @@ class MovesenseStatusIcon extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           // ===== Connection status =====
-          Icon(
-            connected ? Icons.bluetooth : Icons.error,
-            size: 25,
-            color: connected ? Colors.white : Colors.red,
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // White circle behind error
+              if (!connected)
+                Container(
+                  width: 25,
+                  height: 25,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                  ),
+                ),
+
+              // Main icon
+              Icon(
+                connected ? Icons.bluetooth : Icons.error,
+                size: 25,
+                color: connected ? Colors.white : Colors.red,
+              ),
+
+              // Overlay small green check when connected
+              if (connected)
+                Positioned(
+                  bottom: -2,
+                  right: -2,
+                  child: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.green,
+                      border: Border.fromBorderSide(
+                        BorderSide(color: Colors.white, width: 1),
+                      ),
+                    ),
+                    child: const Icon(Icons.done, size: 8, color: Colors.white),
+                  ),
+                ),
+            ],
           ),
+
           const SizedBox(width: 4),
 
-          // ===== Heart rate (optional) =====
+          // ===== Heart rate =====
           if (heartRateStream != null)
             StreamBuilder<int>(
               stream: heartRateStream,
@@ -197,27 +238,32 @@ class MovesenseStatusIcon extends StatelessWidget {
                         children: [
                           const Icon(
                             Icons.favorite_outline,
-                            size: 30,
+                            size: 34,
                             color: Colors.white,
+                          ), // TODO fix outline
+                          const Icon(
+                            Icons.favorite,
+                            size: 30,
+                            color: Color.fromARGB(255, 210, 57, 62),
                           ),
-                          Text(
-                            hr.toString(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 10,
+                          Transform.translate(
+                            offset: const Offset(0, -1),
+                            child: Text(
+                              hr.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 10,
+                              ),
                             ),
                           ),
                         ],
                       )
                     : const SizedBox.shrink();
               },
-            )
+            ),
         ],
       ),
     );
   }
 }
-
-
-// TODO make stateful with live data
