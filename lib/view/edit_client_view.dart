@@ -129,7 +129,7 @@ class _EditClientPageState extends State<EditClientPage> {
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<int>(
-                        value: viewModel.active,
+                        initialValue: viewModel.active,
                         decoration: const InputDecoration(
                           labelText: 'Status',
                           border: OutlineInputBorder(),

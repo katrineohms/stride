@@ -192,7 +192,10 @@ class _HomePageState extends State<HomePage> {
                   shape: BoxShape.circle,
                 ),
                 todayDecoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.35),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primary
+                      .withValues(alpha: 0.35),
                   shape: BoxShape.circle,
                 ),
               ),

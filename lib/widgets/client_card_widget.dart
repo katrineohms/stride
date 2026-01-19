@@ -95,6 +95,7 @@ class ClientDetailViewWidget extends StatefulWidget {
   final Map<String, bool> exerciseDone;
   final Map<String, StopWatchTimer> stopWatches;
   final void Function(String, bool?) onToggleDone;
+  final ValueChanged<Client>? onClientUpdated;
   final VoidCallback? onMovesenseTap;
 
   const ClientDetailViewWidget({
@@ -103,6 +104,7 @@ class ClientDetailViewWidget extends StatefulWidget {
     required this.exerciseDone,
     required this.stopWatches,
     required this.onToggleDone,
+    this.onClientUpdated,
     this.onMovesenseTap,
   });
 
@@ -182,8 +184,30 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
                                       ),
                                     );
 
+                                if (!mounted) return;
+
                                 if (updatedClient != null) {
-                                  // TODO: Handle updated client (e.g., refresh view)
+                                  // Persist and refresh local state
+                                  ClientDataService()
+                                      .updateClient(updatedClient);
+                                  widget.viewModel.updateClient(updatedClient);
+                                  widget.onClientUpdated
+                                      ?.call(updatedClient);
+                                  if (mounted) {
+                                    setState(() {
+                                      _client = updatedClient;
+                                      _hrrResults = Map<String,
+                                              HeartRateRecovery>.from(
+                                          updatedClient.hrrResults);
+                                    });
+                                  }
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Client updated'),
+                                      ),
+                                    );
+                                  }
                                 }
                               },
                             ),
@@ -516,7 +540,7 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
               const SizedBox(height: 12),
               ValueListenableBuilder<int>(
                 valueListenable: timeLeft,
-                builder: (_, seconds, __) => Text(
+                builder: (_, seconds, _) => Text(
                   'Time left: ${seconds}s',
                   style: const TextStyle(fontSize: 14),
                 ),
@@ -524,7 +548,7 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
               const SizedBox(height: 8),
               ValueListenableBuilder<int?>(
                 valueListenable: lastHr,
-                builder: (_, hr, __) => Text(
+                builder: (_, hr, _) => Text(
                   hr == null ? 'Waiting for data…' : 'Current HR: $hr',
                   style: const TextStyle(fontSize: 14),
                 ),
@@ -748,6 +772,8 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
 
       if (confirm == true) {
         await sessionService.stopSession();
+
+        if (!context.mounted) return;
         
         // Refresh client data to show the saved session
         if (mounted) {
@@ -944,7 +970,7 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
                         belowBarData: BarAreaData(
                           show: true,
                           color: const Color.fromARGB(255, 210, 57, 62)
-                              .withOpacity(0.1),
+                              .withValues(alpha: 0.1),
                         ),
                       ),
                     ],

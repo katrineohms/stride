@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:movesense_plus/movesense_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -104,14 +106,11 @@ class MovesenseConnectViewModel extends ChangeNotifier {
         // Listen to heart rate
         _heartRateSubscription?.cancel();
         _heartRateSubscription = device.hr.listen((hr) {
-          print('Heart Rate: ${hr.average}, R-R: ${hr.rr}');
           _heartRateController!.add(hr.average.toInt());
         });
 
         // Listen to device status
-        device.statusEvents.listen((status) {
-          print('Device status: ${status.name}');
-        });
+        device.statusEvents.listen((status) {});
 
         notifyListeners();
       } else {
@@ -128,7 +127,9 @@ class MovesenseConnectViewModel extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      print('Error connecting: $e');
+      if (kDebugMode) {
+        developer.log('Error connecting to device', error: e);
+      }
       deviceConnectionStates[device.address ?? ''] = false;
       connectionStatus = ConnectionStatus.failed;
       isConnected = false;
@@ -147,10 +148,11 @@ class MovesenseConnectViewModel extends ChangeNotifier {
     try {
       final battery = await device.getBatteryStatus();
       final batteryStatus = battery.name;
-      print('Battery level: $batteryStatus');
       _batteryController!.add(batteryStatus);
     } catch (e) {
-      print('Error fetching battery: $e');
+      if (kDebugMode) {
+        developer.log('Error fetching battery status', error: e);
+      }
     }
   }
 

@@ -37,13 +37,13 @@ class _AppointmentFormWidgetState extends State<AppointmentFormWidget> {
       firstDate: DateTime.now(),
       lastDate: DateTime(2030),
     );
-    if (pickedDate == null) return;
+    if (!mounted || pickedDate == null) return;
 
     final pickedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
     );
-    if (pickedTime == null) return;
+    if (!mounted || pickedTime == null) return;
 
     final appointment = widget.viewModel.createAppointment(pickedDate, pickedTime);
 

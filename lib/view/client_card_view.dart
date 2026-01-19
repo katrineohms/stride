@@ -8,9 +8,15 @@ import 'package:stride/service/movesense_service.dart';
 
 /// ViewModel for client details
 class ClientDetailViewModel {
-  final Client client;
+  ClientDetailViewModel({required Client client}) : _client = client;
 
-  ClientDetailViewModel({required this.client});
+  Client _client;
+
+  Client get client => _client;
+
+  void updateClient(Client updated) {
+    _client = updated;
+  }
 }
 
 /// Client detail page UI
@@ -27,10 +33,22 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
   final Map<String, bool> _exerciseDone = {};
   final Map<String, StopWatchTimer> _stopWatches = {};
 
+  Client get _client => widget.viewModel.client;
+
   @override
   void initState() {
     super.initState();
-    for (final ex in widget.viewModel.client.exercises) {
+    _initializeExerciseState(_client);
+  }
+
+  void _initializeExerciseState(Client client) {
+    _exerciseDone.clear();
+    for (final ex in _stopWatches.values) {
+      ex.dispose();
+    }
+    _stopWatches.clear();
+
+    for (final ex in client.exercises) {
       if (ex is CountableExercise) {
         _exerciseDone[ex.exerciseId] = false;
       } else if (ex is TimeableExercise) {
@@ -58,7 +76,7 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final client = widget.viewModel.client;
+    final client = _client;
 
     return Scaffold(
       appBar: AppBar(
@@ -82,6 +100,12 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
         exerciseDone: _exerciseDone,
         stopWatches: _stopWatches,
         onToggleDone: _toggleDone,
+        onClientUpdated: (updatedClient) {
+          setState(() {
+            widget.viewModel.updateClient(updatedClient);
+            _initializeExerciseState(updatedClient);
+          });
+        },
         onMovesenseTap: () {
           Navigator.push(
             context,

@@ -2,9 +2,11 @@ import '../model/clients.dart';
 
 /// ViewModel for the Client Detail Page
 class ClientDetailViewModel {
-  final Client client;
+  ClientDetailViewModel({required Client client}) : _client = client;
 
-  ClientDetailViewModel({required this.client});
+  Client _client;
+
+  Client get client => _client;
 
   // ===== Next Appointment =====
   /// Returns the soonest future appointment, or null if none
@@ -41,6 +43,6 @@ class ClientDetailViewModel {
 
   /// Update the client with a new object (used after editing)
   void updateClient(Client updatedClient) {
-    //client = updatedClient; TODO
+    _client = updatedClient;
   }
 }
