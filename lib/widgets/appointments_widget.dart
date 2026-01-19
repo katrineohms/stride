@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../model/clients.dart';
+import '../view_model/appointment_form_view_model.dart';
 
 class AppointmentFormWidget extends StatefulWidget {
   final List<Appointment> initialAppointments;
@@ -19,12 +20,13 @@ class AppointmentFormWidget extends StatefulWidget {
 }
 
 class _AppointmentFormWidgetState extends State<AppointmentFormWidget> {
-  late List<Appointment> _appointments;
+  late AppointmentFormViewModel viewModel;
 
   @override
   void initState() {
     super.initState();
-    _appointments = List.from(widget.initialAppointments);
+    viewModel = AppointmentFormViewModel();
+    viewModel.initialize(widget.initialAppointments);
   }
 
   void _addAppointment() async {
@@ -42,18 +44,10 @@ class _AppointmentFormWidgetState extends State<AppointmentFormWidget> {
     );
     if (pickedTime == null) return;
 
-    final timestamp = DateTime(
-      pickedDate.year,
-      pickedDate.month,
-      pickedDate.day,
-      pickedTime.hour,
-      pickedTime.minute,
-    ).millisecondsSinceEpoch ~/ 1000;
-
-    final appointment = Appointment(timestamp: timestamp);
+    final appointment = viewModel.createAppointment(pickedDate, pickedTime);
 
     setState(() {
-      _appointments.add(appointment);
+      viewModel.addAppointment(appointment);
     });
 
     widget.onCreate(appointment);
@@ -61,17 +55,10 @@ class _AppointmentFormWidgetState extends State<AppointmentFormWidget> {
 
   void _removeAppointment(Appointment a) {
     setState(() {
-      _appointments.remove(a);
+      viewModel.removeAppointment(a);
     });
 
     widget.onRemove?.call(a);
-  }
-
-  String _formatTimestamp(int timestamp) {
-    final dt = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
-    return
-        '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
-        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -92,12 +79,12 @@ class _AppointmentFormWidgetState extends State<AppointmentFormWidget> {
             ),
             const SizedBox(height: 8),
 
-            if (_appointments.isEmpty)
+            if (viewModel.appointments.isEmpty)
               const Text('No appointments'),
 
-            for (final a in _appointments)
+            for (final a in viewModel.appointments)
               ListTile(
-                title: Text(_formatTimestamp(a.timestamp)),
+                title: Text(viewModel.formatTimestamp(a.timestamp)),
                 trailing: IconButton(
                   icon:
                       const Icon(Icons.delete, color: Colors.red),

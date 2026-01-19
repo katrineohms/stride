@@ -1,24 +1,36 @@
 import 'package:flutter/material.dart';
 import '../model/clients.dart';
+import '../model/client_dummy_data.dart';
 import '../widgets/client_card_widget.dart'; // <-- import helper
 
 class ClientOverviewViewModel {
-  final List<Client> _clients;
+  final ClientDataService _dataService = ClientDataService();
 
-  ClientOverviewViewModel({List<Client>? initialClients})
-      : _clients = initialClients ?? [];
+  ClientOverviewViewModel({List<Client>? initialClients}) {
+    if (initialClients != null && initialClients.isNotEmpty) {
+      _dataService.clear();
+      for (final client in initialClients) {
+        _dataService.addClient(client);
+      }
+    }
+  }
 
-  List<Client> get clients => List.unmodifiable(_clients);
+  List<Client> get clients => _dataService.getClients();
 
   void addClient(Client client) {
-    _clients.add(client);
+    _dataService.addClient(client);
+  }
+
+  void updateClient(Client client) {
+    _dataService.updateClient(client);
+  }
+
+  void deleteClient(String clientId) {
+    _dataService.deleteClient(clientId);
   }
 
   List<Client> searchClients(String query) {
-    if (query.isEmpty) return clients;
-    return _clients
-        .where((c) => c.name.toLowerCase().contains(query.toLowerCase()))
-        .toList();
+    return _dataService.searchClients(query);
   }
 
   // Example method using getStatusColor

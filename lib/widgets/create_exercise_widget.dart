@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../model/clients.dart';
-import '../view_model/create_client_view_model.dart';
+import '../view_model/exercise_form_view_model.dart';
 
 class ExerciseFormWidget extends StatefulWidget {
   final List<Exercise> initialExercises;
@@ -22,9 +22,7 @@ class ExerciseFormWidget extends StatefulWidget {
 
 class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
   final _formKey = GlobalKey<FormState>();
-  final CreateExerciseViewModel viewModel = CreateExerciseViewModel();
-
-  late List<Exercise> _exercises;
+  late ExerciseFormViewModel viewModel;
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -35,7 +33,8 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
   @override
   void initState() {
     super.initState();
-    _exercises = List.from(widget.initialExercises);
+    viewModel = ExerciseFormViewModel();
+    viewModel.initialize(widget.initialExercises);
   }
 
   @override
@@ -48,35 +47,32 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
     super.dispose();
   }
 
-  void _clearRelevantFieldsOnToggle() {
-    if (viewModel.isCountable) {
-      _timeController.clear();
-      viewModel.time = 0;
-    } else {
-      _setsController.clear();
-      _repsController.clear();
-      viewModel.sets = 0;
-      viewModel.reps = 0;
-    }
+  void _syncFormToViewModel() {
+    viewModel.updateName(_nameController.text);
+    viewModel.updateDescription(_descriptionController.text);
+    viewModel.updateSets(_setsController.text);
+    viewModel.updateReps(_repsController.text);
+    viewModel.updateTime(_timeController.text);
+  }
+
+  void _clearFormControllers() {
+    _nameController.clear();
+    _descriptionController.clear();
+    _setsController.clear();
+    _repsController.clear();
+    _timeController.clear();
   }
 
   void _addExercise() {
-    viewModel.name = _nameController.text.trim();
-    viewModel.description = _descriptionController.text.trim();
-    viewModel.sets = int.tryParse(_setsController.text) ?? 0;
-    viewModel.reps = int.tryParse(_repsController.text) ?? 0;
-    viewModel.time = int.tryParse(_timeController.text) ?? 0;
+    _syncFormToViewModel();
 
     if (_formKey.currentState!.validate()) {
       final exercise = viewModel.createExercise();
 
       setState(() {
-        _exercises.add(exercise);
-        _nameController.clear();
-        _descriptionController.clear();
-        _setsController.clear();
-        _repsController.clear();
-        _timeController.clear();
+        viewModel.addExercise(exercise);
+        _clearFormControllers();
+        viewModel.resetForm();
       });
 
       widget.onCreate(exercise);
@@ -84,16 +80,14 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
   }
 
   Future<void> _editExercise(Exercise ex) async {
-    // Pre-fill controllers with existing values
-    _nameController.text = ex.name;
-    _descriptionController.text = ex.description;
-    if (ex is CountableExercise) {
-      viewModel.isCountable = true;
-      _setsController.text = ex.sets.toString();
-      _repsController.text = ex.reps.toString();
-    } else if (ex is TimeableExercise) {
-      viewModel.isCountable = false;
-      _timeController.text = ex.time.toString();
+    viewModel.populateFormFromExercise(ex);
+    _nameController.text = viewModel.name;
+    _descriptionController.text = viewModel.description;
+    if (viewModel.isCountable) {
+      _setsController.text = viewModel.sets.toString();
+      _repsController.text = viewModel.reps.toString();
+    } else {
+      _timeController.text = viewModel.time.toString();
     }
 
     final result = await showDialog<String>(
@@ -155,18 +149,14 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
     );
 
     if (result == 'save') {
-      // Update exercise
-      viewModel.name = _nameController.text.trim();
-      viewModel.description = _descriptionController.text.trim();
-      viewModel.sets = int.tryParse(_setsController.text) ?? 0;
-      viewModel.reps = int.tryParse(_repsController.text) ?? 0;
-      viewModel.time = int.tryParse(_timeController.text) ?? 0;
-
+      _syncFormToViewModel();
       final updatedExercise = viewModel.createExercise();
 
       setState(() {
-        final index = _exercises.indexOf(ex);
-        if (index != -1) _exercises[index] = updatedExercise;
+        final index = viewModel.exercises.indexOf(ex);
+        if (index != -1) {
+          viewModel.updateExercise(index, updatedExercise);
+        }
       });
 
       widget.onUpdate?.call(updatedExercise);
@@ -174,17 +164,13 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
       _removeExercise(ex);
     }
 
-    // Clear controllers after dialog closes
-    _nameController.clear();
-    _descriptionController.clear();
-    _setsController.clear();
-    _repsController.clear();
-    _timeController.clear();
+    _clearFormControllers();
+    viewModel.resetForm();
   }
 
   void _removeExercise(Exercise ex) {
     setState(() {
-      _exercises.remove(ex);
+      viewModel.removeExercise(ex);
     });
     widget.onRemove?.call(ex);
   }
@@ -215,8 +201,7 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
                       value: viewModel.isCountable,
                       onChanged: (val) {
                         setState(() {
-                          viewModel.isCountable = val;
-                          _clearRelevantFieldsOnToggle();
+                          viewModel.toggleExerciseType();
                         });
                       },
                     ),
@@ -228,9 +213,9 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
             const SizedBox(height: 12),
 
             // Existing exercises
-            if (_exercises.isNotEmpty)
+            if (viewModel.exercises.isNotEmpty)
               Column(
-                children: _exercises
+                children: viewModel.exercises
                     .map((ex) => Card(
                           color: Colors.grey[100],
                           margin: const EdgeInsets.symmetric(vertical: 4),

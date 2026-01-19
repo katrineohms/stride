@@ -1,25 +1,46 @@
 import '../model/clients.dart';
+import '../model/client_dummy_data.dart';
 
 class HomeViewModel {
-  // ======= Client List =======
-  final List<Client> _clients;
+  // ======= Dependencies =======
+  final ClientDataService _dataService = ClientDataService();
 
   // ======= Calendar State =======
   DateTime focusedDay = DateTime.now();
   DateTime? selectedDay;
 
   // ======= Constructor =======
-  HomeViewModel({List<Client>? initialClients})
-    : _clients = initialClients ?? [];
+  HomeViewModel({List<Client>? initialClients}) {
+    if (initialClients != null && initialClients.isNotEmpty) {
+      // Initialize with provided clients
+      _dataService.clear();
+      for (final client in initialClients) {
+        _dataService.addClient(client);
+      }
+    } else {
+      // Use dummy data by default
+      _dataService.initializeDummyData();
+    }
+  }
 
   // ======= Public Accessors =======
-  List<Client> get clients => _clients;
+  List<Client> get clients => _dataService.getClients();
 
   // ======= Actions =======
 
   /// Add a new client to the list
   void addClient(Client client) {
-    _clients.add(client);
+    _dataService.addClient(client);
+  }
+
+  /// Update an existing client
+  void updateClient(Client client) {
+    _dataService.updateClient(client);
+  }
+
+  /// Delete a client
+  void deleteClient(String clientId) {
+    _dataService.deleteClient(clientId);
   }
 
   /// Update selected and focused day
@@ -30,16 +51,11 @@ class HomeViewModel {
 
   /// Get clients who have an appointment on the given day
   List<Client> getClientsForDay(DateTime day) {
-    return _clients.where((client) {
-      // Check if any of the client's appointments fall on the given day
-      return client.appointments.any((appointment) {
-        final appointmentDate = DateTime.fromMillisecondsSinceEpoch(
-          appointment.timestamp * 1000,
-        );
-        return appointmentDate.year == day.year &&
-            appointmentDate.month == day.month &&
-            appointmentDate.day == day.day;
-      });
-    }).toList();
+    return _dataService.getClientsForDay(day);
+  }
+
+  /// Search clients by name
+  List<Client> searchClients(String query) {
+    return _dataService.searchClients(query);
   }
 }

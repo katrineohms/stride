@@ -4,7 +4,6 @@ import '../widgets/client_card_widget.dart';
 import '../widgets/movesense_status_widget.dart';
 
 import 'package:stride/view/client_list_view.dart';
-import 'package:stride/model/clients.dart';
 import 'package:stride/view/client_card_view.dart';
 import 'package:stride/view_model/home_view_model.dart';
 import 'package:stride/view/movesense_connect_view.dart';
@@ -26,78 +25,8 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
 
-    // Initialize view model with dummy clients
-    viewModel = HomeViewModel(
-      initialClients: [
-        Client(
-          clientId: '1',
-          name: 'AnnaDummy',
-          age: 25,
-          gender: 'Female',
-          active: 0,
-          motivation: 'Motivated',
-          exercises: [
-            CountableExercise(
-              exerciseId: 'e1',
-              name: 'Squats',
-              description: 'Bodyweight squats',
-              sets: 3,
-              reps: 12,
-            ),
-            TimeableExercise(
-              exerciseId: 'e2',
-              name: 'Plank',
-              description: 'Core stability hold',
-              time: 30,
-            ),
-          ],
-          appointments: [
-            Appointment(
-              timestamp:
-                  DateTime(2026, 1, 19, 16).millisecondsSinceEpoch ~/ 1000,
-            ),
-            Appointment(
-              timestamp:
-                  DateTime(2026, 1, 26, 16).millisecondsSinceEpoch ~/ 1000,
-            ),
-          ],
-        ),
-        Client(
-          clientId: '2',
-          name: 'MarkDummy',
-          age: 30,
-          gender: 'Male',
-          active: 1,
-          motivation: 'Needs support',
-          exercises: [],
-          appointments: [
-            Appointment(
-              timestamp:
-                  DateTime(2026, 1, 21, 14, 30).millisecondsSinceEpoch ~/ 1000,
-            ),
-          ],
-        ),
-        Client(
-          clientId: '3',
-          name: 'SophiaDummy',
-          age: 28,
-          gender: 'Female',
-          active: 2,
-          motivation: 'Struggling',
-          exercises: [],
-          appointments: [
-            Appointment(
-              timestamp:
-                  DateTime(2026, 1, 21, 10, 15).millisecondsSinceEpoch ~/ 1000,
-            ),
-            Appointment(
-              timestamp:
-                  DateTime(2026, 1, 28, 11, 0).millisecondsSinceEpoch ~/ 1000,
-            ),
-          ],
-        ),
-      ],
-    );
+    // Initialize view model (dummy data is handled by data service)
+    viewModel = HomeViewModel();
   }
 
   // ======= Build UI =======
