@@ -125,7 +125,7 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
     final client = _client;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 56),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -870,7 +870,6 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
                 _buildStatItem('Avg', '$avgHr', 'bpm'),
                 _buildStatItem('Max', '$maxHr', 'bpm'),
                 _buildStatItem('Min', '$minHr', 'bpm'),
-                _buildStatItem('Readings', '${hrValues.length}', ''),
               ],
             ),
             const SizedBox(height: 16),
@@ -925,7 +924,9 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
                       border: Border.all(color: Colors.grey.shade300),
                     ),
                     minX: 0,
-                    maxX: max(duration.inMinutes.toDouble(), 5),
+                    maxX: (duration.inMinutes > 0 
+                        ? duration.inMinutes.toDouble() * 1.1 // Add 10% padding
+                        : 5),
                     minY: max(minHr - 10, 40).toDouble(),
                     maxY: (maxHr + 10).toDouble(),
                     lineBarsData: [
