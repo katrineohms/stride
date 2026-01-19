@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../model/clients.dart';
-import '../model/client_dummy_data.dart';
+import '../service/client_data_service.dart';
 import '../widgets/client_card_widget.dart'; // <-- import helper
 
 class ClientOverviewViewModel {

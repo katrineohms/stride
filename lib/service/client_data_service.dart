@@ -1,4 +1,4 @@
-import 'clients.dart';
+import '../model/clients.dart';
 
 /// ============= Client Data Service =============
 /// Centralized service for managing client data.

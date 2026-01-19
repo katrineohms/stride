@@ -1,5 +1,5 @@
 import '../model/clients.dart';
-import '../model/client_dummy_data.dart';
+import '../service/client_data_service.dart';
 
 class HomeViewModel {
   // ======= Dependencies =======
