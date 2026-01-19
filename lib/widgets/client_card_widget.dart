@@ -60,6 +60,7 @@ class ClientCard extends StatelessWidget {
         : 'No upcoming';
 
     return Card(
+      color: Theme.of(context).cardColor,
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
@@ -232,6 +233,7 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
           SizedBox(
             width: double.infinity,
             child: Card(
+              color: Theme.of(context).cardColor,
               elevation: 2,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -272,6 +274,7 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
           SizedBox(
             width: double.infinity,
             child: Card(
+              color: Theme.of(context).cardColor,
               elevation: 2,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -327,6 +330,7 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
               return SizedBox(
                 width: double.infinity,
                 child: Card(
+                  color: Theme.of(context).cardColor,
                   margin: const EdgeInsets.symmetric(vertical: 4),
                   elevation: 2,
                   shape: RoundedRectangleBorder(
@@ -629,8 +633,8 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
         }
 
         return Card(
+          color: Theme.of(context).cardColor,
           elevation: 2,
-          color: isActive ? Colors.green.shade50 : null,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -819,6 +823,7 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
     }
 
     return Card(
+      color: Theme.of(context).cardColor,
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),

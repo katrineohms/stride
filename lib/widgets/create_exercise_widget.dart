@@ -197,6 +197,7 @@ class _ExerciseFormView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: Theme.of(context).cardColor,
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       margin: const EdgeInsets.symmetric(vertical: 12),
@@ -232,7 +233,7 @@ class _ExerciseFormView extends StatelessWidget {
               Column(
                 children: exercises
                     .map((ex) => Card(
-                          color: Colors.grey[100],
+                          color: Theme.of(context).cardColor,
                           margin: const EdgeInsets.symmetric(vertical: 4),
                           child: ListTile(
                             leading: const Icon(Icons.fitness_center,

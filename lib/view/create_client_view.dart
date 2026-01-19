@@ -79,6 +79,7 @@ class _CreateClientPageState extends State<CreateClientPage> {
           child: Column(
             children: [
               Card(
+                color: Theme.of(context).cardColor,
                 elevation: 4,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),

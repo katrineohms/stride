@@ -96,6 +96,7 @@ class _MovesenseConnectViewState extends State<MovesenseConnectView> {
                     itemBuilder: (context, index) {
                       final device = viewModel.scannedDevices[index];
                       return Card(
+                        color: Theme.of(context).cardColor,
                         child: ListTile(
                           title: Text(device.name ?? 'Unknown Device'),
                           subtitle: Text(device.address ?? ''),

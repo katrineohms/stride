@@ -86,6 +86,7 @@ class _EditClientPageState extends State<EditClientPage> {
             children: [
               // ===== Personal Info =====
               Card(
+                color: Theme.of(context).cardColor,
                 elevation: 4,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),

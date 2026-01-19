@@ -92,6 +92,7 @@ class _AppointmentFormView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: Theme.of(context).cardColor,
       elevation: 4,
       shape:
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

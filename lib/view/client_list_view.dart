@@ -85,6 +85,7 @@ class _ClientOverviewPageState extends State<ClientOverviewPage> {
           // ======= Client List =======
           ...viewModel.clients.map((client) {
             return Card(
+              color: Theme.of(context).cardColor,
               elevation: 2,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
