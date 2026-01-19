@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:stride/widgets/movesense_status_widget.dart';
 import '../model/clients.dart';
 import '../view_model/create_client_view_model.dart';
+import '../view_model/appointment_form_view_model.dart';
+import '../view_model/exercise_form_view_model.dart';
 import '../widgets/create_exercise_widget.dart';
 import '../widgets/appointments_widget.dart';
 
@@ -18,11 +20,23 @@ class CreateClientPage extends StatefulWidget {
 class _CreateClientPageState extends State<CreateClientPage> {
   final _formKey = GlobalKey<FormState>();
   final CreateClientViewModel viewModel = CreateClientViewModel();
+  
+  // ======= Form ViewModels =======
+  late final AppointmentFormViewModel appointmentFormViewModel;
+  late final ExerciseFormViewModel exerciseFormViewModel;
 
   // ======= Controllers =======
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _motivationController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize form ViewModels
+    appointmentFormViewModel = AppointmentFormViewModel();
+    exerciseFormViewModel = ExerciseFormViewModel();
+  }
 
   @override
   void dispose() {
@@ -192,6 +206,7 @@ class _CreateClientPageState extends State<CreateClientPage> {
 
               // ======= Appointments =======
               AppointmentFormWidget(
+                viewModel: appointmentFormViewModel,
                 onCreate: (appointment) {
                   setState(() {
                     viewModel.appointments.add(appointment);
@@ -203,6 +218,7 @@ class _CreateClientPageState extends State<CreateClientPage> {
 
               // Exercise form
               ExerciseFormWidget(
+                viewModel: exerciseFormViewModel,
                 onCreate: (exercise) {
                   setState(() {
                     // Add the exercise to the client in the view model

@@ -4,6 +4,8 @@ import '../model/clients.dart';
 import '../widgets/appointments_widget.dart';
 import '../widgets/create_exercise_widget.dart';
 import '../view_model/edit_client_view_model.dart';
+import '../view_model/appointment_form_view_model.dart';
+import '../view_model/exercise_form_view_model.dart';
 
 class EditClientPage extends StatefulWidget {
   final Client client;
@@ -17,6 +19,10 @@ class EditClientPage extends StatefulWidget {
 class _EditClientPageState extends State<EditClientPage> {
   final _formKey = GlobalKey<FormState>();
   late EditClientViewModel viewModel;
+  
+  // ======= Form ViewModels =======
+  late final AppointmentFormViewModel appointmentFormViewModel;
+  late final ExerciseFormViewModel exerciseFormViewModel;
 
   late TextEditingController _nameController;
   late TextEditingController _ageController;
@@ -28,6 +34,10 @@ class _EditClientPageState extends State<EditClientPage> {
 
     viewModel = EditClientViewModel(client: widget.client);
     viewModel.init();
+    
+    // Initialize form ViewModels
+    appointmentFormViewModel = AppointmentFormViewModel();
+    exerciseFormViewModel = ExerciseFormViewModel();
 
     _nameController = TextEditingController(text: viewModel.name);
     _ageController = TextEditingController(text: viewModel.age.toString());
@@ -168,6 +178,7 @@ class _EditClientPageState extends State<EditClientPage> {
 
               // ===== Appointments =====
               AppointmentFormWidget(
+                viewModel: appointmentFormViewModel,
                 initialAppointments: viewModel.appointments,
                 onCreate: (a) => setState(() => viewModel.addAppointment(a)),
                 onRemove: (a) => setState(() => viewModel.removeAppointment(a)),
@@ -177,6 +188,7 @@ class _EditClientPageState extends State<EditClientPage> {
 
               // ===== Exercises =====
               ExerciseFormWidget(
+                viewModel: exerciseFormViewModel,
                 initialExercises: viewModel.exercises,
                 onCreate: (ex) => setState(() => viewModel.addExercise(ex)),
                 onRemove: (ex) => setState(() => viewModel.removeExercise(ex)),

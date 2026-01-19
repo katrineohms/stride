@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import '../model/clients.dart';
 import '../view_model/appointment_form_view_model.dart';
 
+// ============= SMART WIDGET (Container) =============
+/// Manages appointment form logic and state
 class AppointmentFormWidget extends StatefulWidget {
+  final AppointmentFormViewModel viewModel;
   final List<Appointment> initialAppointments;
   final Function(Appointment) onCreate;
   final Function(Appointment)? onRemove;
 
   const AppointmentFormWidget({
     super.key,
+    required this.viewModel,
     this.initialAppointments = const [],
     required this.onCreate,
     this.onRemove,
@@ -20,13 +24,10 @@ class AppointmentFormWidget extends StatefulWidget {
 }
 
 class _AppointmentFormWidgetState extends State<AppointmentFormWidget> {
-  late AppointmentFormViewModel viewModel;
-
   @override
   void initState() {
     super.initState();
-    viewModel = AppointmentFormViewModel();
-    viewModel.initialize(widget.initialAppointments);
+    widget.viewModel.initialize(widget.initialAppointments);
   }
 
   void _addAppointment() async {
@@ -44,10 +45,10 @@ class _AppointmentFormWidgetState extends State<AppointmentFormWidget> {
     );
     if (pickedTime == null) return;
 
-    final appointment = viewModel.createAppointment(pickedDate, pickedTime);
+    final appointment = widget.viewModel.createAppointment(pickedDate, pickedTime);
 
     setState(() {
-      viewModel.addAppointment(appointment);
+      widget.viewModel.addAppointment(appointment);
     });
 
     widget.onCreate(appointment);
@@ -55,11 +56,38 @@ class _AppointmentFormWidgetState extends State<AppointmentFormWidget> {
 
   void _removeAppointment(Appointment a) {
     setState(() {
-      viewModel.removeAppointment(a);
+      widget.viewModel.removeAppointment(a);
     });
 
     widget.onRemove?.call(a);
   }
+
+  @override
+  Widget build(BuildContext context) {
+    // Pass state and callbacks to dumb view widget
+    return _AppointmentFormView(
+      appointments: widget.viewModel.appointments,
+      onAddAppointment: _addAppointment,
+      onRemoveAppointment: _removeAppointment,
+      formatTimestamp: widget.viewModel.formatTimestamp,
+    );
+  }
+}
+
+// ============= DUMB WIDGET (Presentational) =============
+/// Pure UI widget - receives all data as parameters, no business logic
+class _AppointmentFormView extends StatelessWidget {
+  final List<Appointment> appointments;
+  final VoidCallback onAddAppointment;
+  final Function(Appointment) onRemoveAppointment;
+  final String Function(int) formatTimestamp;
+
+  const _AppointmentFormView({
+    required this.appointments,
+    required this.onAddAppointment,
+    required this.onRemoveAppointment,
+    required this.formatTimestamp,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -79,23 +107,22 @@ class _AppointmentFormWidgetState extends State<AppointmentFormWidget> {
             ),
             const SizedBox(height: 8),
 
-            if (viewModel.appointments.isEmpty)
+            if (appointments.isEmpty)
               const Text('No appointments'),
 
-            for (final a in viewModel.appointments)
+            for (final a in appointments)
               ListTile(
-                title: Text(viewModel.formatTimestamp(a.timestamp)),
+                title: Text(formatTimestamp(a.timestamp)),
                 trailing: IconButton(
-                  icon:
-                      const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => _removeAppointment(a),
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () => onRemoveAppointment(a),
                 ),
               ),
 
             SizedBox(
               width: double.infinity,
               child: TextButton.icon(
-                onPressed: _addAppointment,
+                onPressed: onAddAppointment,
                 icon: const Icon(Icons.add),
                 label: const Text('Add Appointment'),
               ),

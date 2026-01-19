@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import '../model/clients.dart';
 import '../view_model/exercise_form_view_model.dart';
 
+// ============= SMART WIDGET (Container) =============
+/// Manages exercise form logic, state, and form controllers
 class ExerciseFormWidget extends StatefulWidget {
+  final ExerciseFormViewModel viewModel;
   final List<Exercise> initialExercises;
   final Function(Exercise) onCreate;
   final Function(Exercise)? onUpdate;
@@ -10,6 +13,7 @@ class ExerciseFormWidget extends StatefulWidget {
 
   const ExerciseFormWidget({
     super.key,
+    required this.viewModel,
     this.initialExercises = const [],
     required this.onCreate,
     this.onUpdate,
@@ -22,7 +26,6 @@ class ExerciseFormWidget extends StatefulWidget {
 
 class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
   final _formKey = GlobalKey<FormState>();
-  late ExerciseFormViewModel viewModel;
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -33,8 +36,7 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
   @override
   void initState() {
     super.initState();
-    viewModel = ExerciseFormViewModel();
-    viewModel.initialize(widget.initialExercises);
+    widget.viewModel.initialize(widget.initialExercises);
   }
 
   @override
@@ -48,11 +50,11 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
   }
 
   void _syncFormToViewModel() {
-    viewModel.updateName(_nameController.text);
-    viewModel.updateDescription(_descriptionController.text);
-    viewModel.updateSets(_setsController.text);
-    viewModel.updateReps(_repsController.text);
-    viewModel.updateTime(_timeController.text);
+    widget.viewModel.updateName(_nameController.text);
+    widget.viewModel.updateDescription(_descriptionController.text);
+    widget.viewModel.updateSets(_setsController.text);
+    widget.viewModel.updateReps(_repsController.text);
+    widget.viewModel.updateTime(_timeController.text);
   }
 
   void _clearFormControllers() {
@@ -67,12 +69,12 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
     _syncFormToViewModel();
 
     if (_formKey.currentState!.validate()) {
-      final exercise = viewModel.createExercise();
+      final exercise = widget.viewModel.createExercise();
 
       setState(() {
-        viewModel.addExercise(exercise);
+        widget.viewModel.addExercise(exercise);
         _clearFormControllers();
-        viewModel.resetForm();
+        widget.viewModel.resetForm();
       });
 
       widget.onCreate(exercise);
@@ -80,82 +82,41 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
   }
 
   Future<void> _editExercise(Exercise ex) async {
-    viewModel.populateFormFromExercise(ex);
-    _nameController.text = viewModel.name;
-    _descriptionController.text = viewModel.description;
-    if (viewModel.isCountable) {
-      _setsController.text = viewModel.sets.toString();
-      _repsController.text = viewModel.reps.toString();
+    widget.viewModel.populateFormFromExercise(ex);
+    _nameController.text = widget.viewModel.name;
+    _descriptionController.text = widget.viewModel.description;
+    if (widget.viewModel.isCountable) {
+      _setsController.text = widget.viewModel.sets.toString();
+      _repsController.text = widget.viewModel.reps.toString();
     } else {
-      _timeController.text = viewModel.time.toString();
+      _timeController.text = widget.viewModel.time.toString();
     }
 
     final result = await showDialog<String>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Edit Exercise'),
-        content: SingleChildScrollView(
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Name'),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(labelText: 'Description'),
-                minLines: 2,
-                maxLines: 4,
-              ),
-              const SizedBox(height: 8),
-              if (viewModel.isCountable) ...[
-                TextFormField(
-                  controller: _setsController,
-                  decoration: const InputDecoration(labelText: 'Sets'),
-                  keyboardType: TextInputType.number,
-                ),
-                const SizedBox(height: 4),
-                TextFormField(
-                  controller: _repsController,
-                  decoration: const InputDecoration(labelText: 'Reps'),
-                  keyboardType: TextInputType.number,
-                ),
-              ] else ...[
-                TextFormField(
-                  controller: _timeController,
-                  decoration: const InputDecoration(labelText: 'Time (s)'),
-                  keyboardType: TextInputType.number,
-                ),
-              ],
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, 'delete'),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, 'save'),
-            child: const Text('Save'),
-          ),
-        ],
+      builder: (_) => _ExerciseEditDialog(
+        name: _nameController.text,
+        description: _descriptionController.text,
+        isCountable: widget.viewModel.isCountable,
+        sets: _setsController.text,
+        reps: _repsController.text,
+        time: _timeController.text,
+        onNameChanged: (v) => _nameController.text = v,
+        onDescriptionChanged: (v) => _descriptionController.text = v,
+        onSetsChanged: (v) => _setsController.text = v,
+        onRepsChanged: (v) => _repsController.text = v,
+        onTimeChanged: (v) => _timeController.text = v,
       ),
     );
 
     if (result == 'save') {
       _syncFormToViewModel();
-      final updatedExercise = viewModel.createExercise();
+      final updatedExercise = widget.viewModel.createExercise();
 
       setState(() {
-        final index = viewModel.exercises.indexOf(ex);
+        final index = widget.viewModel.exercises.indexOf(ex);
         if (index != -1) {
-          viewModel.updateExercise(index, updatedExercise);
+          widget.viewModel.updateExercise(index, updatedExercise);
         }
       });
 
@@ -165,15 +126,73 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
     }
 
     _clearFormControllers();
-    viewModel.resetForm();
+    widget.viewModel.resetForm();
   }
 
   void _removeExercise(Exercise ex) {
     setState(() {
-      viewModel.removeExercise(ex);
+      widget.viewModel.removeExercise(ex);
     });
     widget.onRemove?.call(ex);
   }
+
+  @override
+  Widget build(BuildContext context) {
+    // Pass state and callbacks to dumb view widget
+    return _ExerciseFormView(
+      formKey: _formKey,
+      exercises: widget.viewModel.exercises,
+      isCountable: widget.viewModel.isCountable,
+      nameController: _nameController,
+      descriptionController: _descriptionController,
+      setsController: _setsController,
+      repsController: _repsController,
+      timeController: _timeController,
+      viewModel: widget.viewModel,
+      onAddExercise: _addExercise,
+      onEditExercise: _editExercise,
+      onRemoveExercise: _removeExercise,
+      onToggleExerciseType: () {
+        setState(() {
+          widget.viewModel.toggleExerciseType();
+        });
+      },
+    );
+  }
+}
+
+// ============= DUMB WIDGET (Presentational) =============
+/// Pure UI widget for rendering the exercise form
+class _ExerciseFormView extends StatelessWidget {
+  final GlobalKey<FormState> formKey;
+  final List<Exercise> exercises;
+  final bool isCountable;
+  final TextEditingController nameController;
+  final TextEditingController descriptionController;
+  final TextEditingController setsController;
+  final TextEditingController repsController;
+  final TextEditingController timeController;
+  final ExerciseFormViewModel viewModel;
+  final VoidCallback onAddExercise;
+  final Function(Exercise) onEditExercise;
+  final Function(Exercise) onRemoveExercise;
+  final VoidCallback onToggleExerciseType;
+
+  const _ExerciseFormView({
+    required this.formKey,
+    required this.exercises,
+    required this.isCountable,
+    required this.nameController,
+    required this.descriptionController,
+    required this.setsController,
+    required this.repsController,
+    required this.timeController,
+    required this.viewModel,
+    required this.onAddExercise,
+    required this.onEditExercise,
+    required this.onRemoveExercise,
+    required this.onToggleExerciseType,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -198,12 +217,8 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
                   children: [
                     const Text('Timed'),
                     Switch(
-                      value: viewModel.isCountable,
-                      onChanged: (val) {
-                        setState(() {
-                          viewModel.toggleExerciseType();
-                        });
-                      },
+                      value: isCountable,
+                      onChanged: (_) => onToggleExerciseType(),
                     ),
                     const Text('Countable'),
                   ],
@@ -213,9 +228,9 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
             const SizedBox(height: 12),
 
             // Existing exercises
-            if (viewModel.exercises.isNotEmpty)
+            if (exercises.isNotEmpty)
               Column(
-                children: viewModel.exercises
+                children: exercises
                     .map((ex) => Card(
                           color: Colors.grey[100],
                           margin: const EdgeInsets.symmetric(vertical: 4),
@@ -230,7 +245,7 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
                             ),
                             trailing: IconButton(
                               icon: const Icon(Icons.edit, color: Colors.blue),
-                              onPressed: () => _editExercise(ex),
+                              onPressed: () => onEditExercise(ex),
                             ),
                           ),
                         ))
@@ -240,11 +255,11 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
 
             // Form for adding new exercise
             Form(
-              key: _formKey,
+              key: formKey,
               child: Column(
                 children: [
                   TextFormField(
-                    controller: _nameController,
+                    controller: nameController,
                     decoration: const InputDecoration(
                       labelText: 'Exercise Name',
                       border: OutlineInputBorder(),
@@ -255,7 +270,7 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
                   ),
                   const SizedBox(height: 8),
                   TextFormField(
-                    controller: _descriptionController,
+                    controller: descriptionController,
                     decoration: const InputDecoration(
                       labelText: 'Description',
                       border: OutlineInputBorder(),
@@ -265,12 +280,12 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
                     maxLines: 4,
                   ),
                   const SizedBox(height: 8),
-                  if (viewModel.isCountable) ...[
+                  if (isCountable) ...[
                     Row(
                       children: [
                         Expanded(
                           child: TextFormField(
-                            controller: _setsController,
+                            controller: setsController,
                             decoration:
                                 const InputDecoration(labelText: 'Sets', border: OutlineInputBorder()),
                             keyboardType: TextInputType.number,
@@ -280,7 +295,7 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: TextFormField(
-                            controller: _repsController,
+                            controller: repsController,
                             decoration:
                                 const InputDecoration(labelText: 'Reps', border: OutlineInputBorder()),
                             keyboardType: TextInputType.number,
@@ -291,7 +306,7 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
                     ),
                   ] else ...[
                     TextFormField(
-                      controller: _timeController,
+                      controller: timeController,
                       decoration: const InputDecoration(
                         labelText: 'Time (seconds)',
                         border: OutlineInputBorder(),
@@ -304,7 +319,7 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _addExercise,
+                      onPressed: onAddExercise,
                       child: const Text('Add Exercise'),
                     ),
                   ),
@@ -314,6 +329,99 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ============= DUMB DIALOG WIDGET (Presentational) =============
+/// Pure UI widget for the exercise edit dialog
+class _ExerciseEditDialog extends StatelessWidget {
+  final String name;
+  final String description;
+  final bool isCountable;
+  final String sets;
+  final String reps;
+  final String time;
+  final Function(String) onNameChanged;
+  final Function(String) onDescriptionChanged;
+  final Function(String) onSetsChanged;
+  final Function(String) onRepsChanged;
+  final Function(String) onTimeChanged;
+
+  const _ExerciseEditDialog({
+    required this.name,
+    required this.description,
+    required this.isCountable,
+    required this.sets,
+    required this.reps,
+    required this.time,
+    required this.onNameChanged,
+    required this.onDescriptionChanged,
+    required this.onSetsChanged,
+    required this.onRepsChanged,
+    required this.onTimeChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit Exercise'),
+      content: SingleChildScrollView(
+        child: Column(
+          children: [
+            TextFormField(
+              initialValue: name,
+              decoration: const InputDecoration(labelText: 'Name'),
+              onChanged: onNameChanged,
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              initialValue: description,
+              decoration: const InputDecoration(labelText: 'Description'),
+              minLines: 2,
+              maxLines: 4,
+              onChanged: onDescriptionChanged,
+            ),
+            const SizedBox(height: 8),
+            if (isCountable) ...[
+              TextFormField(
+                initialValue: sets,
+                decoration: const InputDecoration(labelText: 'Sets'),
+                keyboardType: TextInputType.number,
+                onChanged: onSetsChanged,
+              ),
+              const SizedBox(height: 4),
+              TextFormField(
+                initialValue: reps,
+                decoration: const InputDecoration(labelText: 'Reps'),
+                keyboardType: TextInputType.number,
+                onChanged: onRepsChanged,
+              ),
+            ] else ...[
+              TextFormField(
+                initialValue: time,
+                decoration: const InputDecoration(labelText: 'Time (s)'),
+                keyboardType: TextInputType.number,
+                onChanged: onTimeChanged,
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, 'delete'),
+          child: const Text('Delete', style: TextStyle(color: Colors.red)),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context, 'save'),
+          child: const Text('Save'),
+        ),
+      ],
     );
   }
 }
