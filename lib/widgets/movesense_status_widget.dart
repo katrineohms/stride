@@ -58,7 +58,13 @@ class MoveSenseStatusCard extends StatelessWidget {
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (batteryStream != null)
+                if (!connected)
+                  const Icon(
+                    Icons.battery_unknown,
+                    size: 20,
+                    color: Colors.grey,
+                  )
+                else if (batteryStream != null)
                   StreamBuilder<String>(
                     stream: batteryStream,
                     initialData: batteryOk ? 'ok' : 'low',
@@ -79,7 +85,12 @@ class MoveSenseStatusCard extends StatelessWidget {
                     color: batteryOk ? Colors.green : Colors.red,
                   ),
                 const SizedBox(height: 4),
-                if (batteryStream != null)
+                if (!connected)
+                  const Text(
+                    '?',
+                    style: TextStyle(fontSize: 11, color: Colors.grey),
+                  )
+                else if (batteryStream != null)
                   StreamBuilder<String>(
                     stream: batteryStream,
                     initialData: batteryOk ? 'ok' : 'low',

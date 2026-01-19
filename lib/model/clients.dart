@@ -10,6 +10,15 @@ class Exercise {
   });
 }
 
+class HeartRateRecovery {
+  final int high;
+  final int low;
+
+  const HeartRateRecovery({required this.high, required this.low});
+
+  int get delta => high - low;
+}
+
 class CountableExercise extends Exercise {
   final int reps;
   final int sets;
@@ -55,6 +64,7 @@ class Client {
   final List<Appointment> appointments;
   final String motivation;
   final List<Exercise> exercises;
+  final Map<String, HeartRateRecovery> hrrResults;
 
   Client({
     required this.clientId,
@@ -65,8 +75,10 @@ class Client {
     List<Appointment>? appointments,
     required this.motivation,
     List<Exercise>? exercises,
+    Map<String, HeartRateRecovery>? hrrResults,
   })  : appointments = List.unmodifiable(appointments ?? []),
-        exercises = List.unmodifiable(exercises ?? []);
+      exercises = List.unmodifiable(exercises ?? []),
+      hrrResults = Map.unmodifiable(hrrResults ?? {});
 
   Client copyWith({
     String? clientId,
@@ -77,6 +89,7 @@ class Client {
     List<Appointment>? appointments,
     String? motivation,
     List<Exercise>? exercises,
+    Map<String, HeartRateRecovery>? hrrResults,
   }) {
     return Client(
       clientId: clientId ?? this.clientId,
@@ -87,6 +100,7 @@ class Client {
       appointments: appointments ?? this.appointments,
       motivation: motivation ?? this.motivation,
       exercises: exercises ?? this.exercises,
+      hrrResults: hrrResults ?? this.hrrResults,
     );
   }
 }

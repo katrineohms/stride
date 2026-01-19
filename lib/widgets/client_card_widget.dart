@@ -1,11 +1,16 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
-import '../model/clients.dart';
-import '../widgets/stop_watch_timer_widget.dart';
-import '../widgets/movesense_status_widget.dart';
 import 'package:stop_watch_timer/stop_watch_timer.dart';
+
+import '../model/clients.dart';
+import '../service/client_data_service.dart';
+import '../service/movesense_service.dart';
 import '../view/client_card_view.dart';
 import '../view/edit_client_view.dart';
-import '../service/movesense_service.dart';
+import '../widgets/movesense_status_widget.dart';
+import '../widgets/stop_watch_timer_widget.dart';
 
 /// ===== Helper =====
 Color getStatusColor(int active) {
@@ -82,7 +87,7 @@ class ClientCard extends StatelessWidget {
 }
 
 /// ===== Client Detail View =====
-class ClientDetailViewWidget extends StatelessWidget {
+class ClientDetailViewWidget extends StatefulWidget {
   final ClientDetailViewModel viewModel;
   final Map<String, bool> exerciseDone;
   final Map<String, StopWatchTimer> stopWatches;
@@ -99,8 +104,23 @@ class ClientDetailViewWidget extends StatelessWidget {
   });
 
   @override
+  State<ClientDetailViewWidget> createState() => _ClientDetailViewWidgetState();
+}
+
+class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
+  late Client _client;
+  late Map<String, HeartRateRecovery> _hrrResults;
+
+  @override
+  void initState() {
+    super.initState();
+    _client = widget.viewModel.client;
+    _hrrResults = Map<String, HeartRateRecovery>.from(_client.hrrResults);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final client = viewModel.client;
+    final client = _client;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -196,7 +216,7 @@ class ClientDetailViewWidget extends StatelessWidget {
                 heartRateStream: MovesenseService().viewModel.heartRateStream,
                 batteryOk: true,
                 batteryStream: MovesenseService().viewModel.batteryStream,
-                onTap: onMovesenseTap,
+                onTap: widget.onMovesenseTap,
               );
             },
           ),
@@ -294,8 +314,9 @@ class ClientDetailViewWidget extends StatelessWidget {
           const SizedBox(height: 8),
           Column(
             children: client.exercises.map((exercise) {
-              final done = exerciseDone[exercise.exerciseId] ?? false;
-              final stopWatch = stopWatches[exercise.exerciseId];
+              final done = widget.exerciseDone[exercise.exerciseId] ?? false;
+              final stopWatch = widget.stopWatches[exercise.exerciseId];
+              final hrr = _hrrResults[exercise.exerciseId];
 
               return SizedBox(
                 width: double.infinity,
@@ -345,8 +366,10 @@ class ClientDetailViewWidget extends StatelessWidget {
                                   alignment: Alignment.centerLeft,
                                   child: Checkbox(
                                     value: done,
-                                    onChanged: (val) =>
-                                        onToggleDone(exercise.exerciseId, val),
+                                    onChanged: (val) => widget.onToggleDone(
+                                      exercise.exerciseId,
+                                      val,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -358,27 +381,78 @@ class ClientDetailViewWidget extends StatelessWidget {
                                 ),
                               ),
 
-                            // Heart button (always on the right)
-                            Material(
-                              color: Theme.of(context).colorScheme.primary,
-                              shape: const CircleBorder(),
-                              elevation: 1,
-                              child: InkWell(
-                                customBorder: const CircleBorder(),
-                                onTap: () {
-                                  debugPrint(
-                                    'Heart pressed for ${exercise.name}',
-                                  );
-                                },
-                                child: const Padding(
-                                  padding: EdgeInsets.all(8),
-                                  child: Icon(
-                                    Icons.favorite,
-                                    color: Colors.white,
-                                    size: 16,
-                                  ),
+                            if (hrr != null)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'High: ${hrr.high}',
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                    Text(
+                                      'Low: ${hrr.low}',
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                    Text(
+                                      'HRR: ${hrr.delta}',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
+
+                            // Heart button (changes style after HRR captured)
+                            Builder(
+                              builder: (context) {
+                                final hasHrr = hrr != null;
+                                final borderRadius = BorderRadius.circular(20);
+                                final borderColor =
+                                    Theme.of(context).colorScheme.primary;
+                                return Material(
+                                  color: hasHrr
+                                      ? Colors.white
+                                      : Theme.of(context)
+                                          .colorScheme
+                                          .primary,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: borderRadius,
+                                    side: hasHrr
+                                        ? BorderSide(color: borderColor)
+                                        : BorderSide.none,
+                                  ),
+                                  elevation: 1,
+                                  child: InkWell(
+                                    customBorder: RoundedRectangleBorder(
+                                      borderRadius: borderRadius,
+                                    ),
+                                    onTap: () => _startHeartRateRecovery(
+                                      context,
+                                      exercise.exerciseId,
+                                      exercise.name,
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8),
+                                      child: Icon(
+                                        Icons.favorite,
+                                        color: hasHrr
+                                            ? const Color.fromARGB(
+                                                255,
+                                                210,
+                                                57,
+                                                62,
+                                              )
+                                            : Colors.white,
+                                        size: 16,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ],
                         ),
@@ -392,5 +466,139 @@ class ClientDetailViewWidget extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Collects heart rate samples for a fixed window and shows recovery stats.
+  Future<void> _startHeartRateRecovery(
+    BuildContext context,
+    String exerciseId,
+    String exerciseName,
+  ) async {
+    final movesense = MovesenseService().viewModel;
+    final hrStream = movesense.heartRateStream;
+
+    if (!movesense.isConnected || hrStream == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No Movesense device connected.')),
+      );
+      return;
+    }
+
+    const measurementDuration = Duration(seconds: 60); // standard HRR window
+    final readings = <int>[];
+    final timeLeft = ValueNotifier<int>(measurementDuration.inSeconds);
+    final lastHr = ValueNotifier<int?>(null);
+
+    StreamSubscription<int>? sub;
+    Timer? countdown;
+
+    // Show a blocking dialog while measuring.
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text('Measuring HRR for $exerciseName'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 12),
+              ValueListenableBuilder<int>(
+                valueListenable: timeLeft,
+                builder: (_, seconds, __) => Text(
+                  'Time left: ${seconds}s',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
+              const SizedBox(height: 8),
+              ValueListenableBuilder<int?>(
+                valueListenable: lastHr,
+                builder: (_, hr, __) => Text(
+                  hr == null ? 'Waiting for data…' : 'Current HR: $hr',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    sub = hrStream.listen((hr) {
+      if (hr <= 0) return; // ignore invalid readings
+      readings.add(hr);
+      lastHr.value = hr;
+    });
+
+    countdown = Timer.periodic(const Duration(seconds: 1), (t) {
+      final remaining = measurementDuration.inSeconds - t.tick;
+      if (remaining >= 0) {
+        timeLeft.value = remaining;
+      }
+      if (remaining <= 0) {
+        t.cancel();
+      }
+    });
+
+    await Future.delayed(measurementDuration);
+
+    await sub.cancel();
+    countdown.cancel();
+    timeLeft.dispose();
+    lastHr.dispose();
+
+    if (context.mounted) {
+      Navigator.of(context, rootNavigator: true).pop();
+    }
+
+    if (readings.isEmpty) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No heart rate data captured.')),
+        );
+      }
+      return;
+    }
+
+    final maxHr = readings.reduce(max);
+    final minHr = readings.reduce(min);
+    final recovery = maxHr - minHr;
+
+    setState(() {
+      _hrrResults = Map<String, HeartRateRecovery>.from(_hrrResults)
+        ..[exerciseId] = HeartRateRecovery(high: maxHr, low: minHr);
+      _client = _client.copyWith(hrrResults: _hrrResults);
+      ClientDataService().updateClient(_client);
+    });
+
+    if (context.mounted) {
+      showDialog<void>(
+        context: context,
+        builder: (ctx) {
+          return AlertDialog(
+            title: const Text('Heart Rate Recovery'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Exercise: $exerciseName'),
+                const SizedBox(height: 8),
+                Text('Highest HR: $maxHr bpm'),
+                Text('Lowest HR: $minHr bpm'),
+                const SizedBox(height: 8),
+                Text('Recovery (high - low): $recovery bpm'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 }
