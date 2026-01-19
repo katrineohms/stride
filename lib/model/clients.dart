@@ -19,6 +19,47 @@ class HeartRateRecovery {
   int get delta => high - low;
 }
 
+class HrReading {
+  final int timestamp; // Unix timestamp in seconds
+  final int heartRate;
+
+  const HrReading({required this.timestamp, required this.heartRate});
+}
+
+class Session {
+  final String sessionId;
+  final int startTime; // Unix timestamp in seconds
+  final int? endTime; // null if session is active
+  final List<HrReading> hrReadings;
+
+  const Session({
+    required this.sessionId,
+    required this.startTime,
+    this.endTime,
+    required this.hrReadings,
+  });
+
+  bool get isActive => endTime == null;
+  
+  Duration get duration => Duration(
+    seconds: (endTime ?? (DateTime.now().millisecondsSinceEpoch ~/ 1000)) - startTime,
+  );
+
+  Session copyWith({
+    String? sessionId,
+    int? startTime,
+    int? endTime,
+    List<HrReading>? hrReadings,
+  }) {
+    return Session(
+      sessionId: sessionId ?? this.sessionId,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      hrReadings: hrReadings ?? this.hrReadings,
+    );
+  }
+}
+
 class CountableExercise extends Exercise {
   final int reps;
   final int sets;
@@ -65,6 +106,7 @@ class Client {
   final String motivation;
   final List<Exercise> exercises;
   final Map<String, HeartRateRecovery> hrrResults;
+  final List<Session> sessions;
 
   Client({
     required this.clientId,
@@ -76,9 +118,11 @@ class Client {
     required this.motivation,
     List<Exercise>? exercises,
     Map<String, HeartRateRecovery>? hrrResults,
+    List<Session>? sessions,
   })  : appointments = List.unmodifiable(appointments ?? []),
       exercises = List.unmodifiable(exercises ?? []),
-      hrrResults = Map.unmodifiable(hrrResults ?? {});
+      hrrResults = Map.unmodifiable(hrrResults ?? {}),
+      sessions = List.unmodifiable(sessions ?? []);
 
   Client copyWith({
     String? clientId,
@@ -90,6 +134,7 @@ class Client {
     String? motivation,
     List<Exercise>? exercises,
     Map<String, HeartRateRecovery>? hrrResults,
+    List<Session>? sessions,
   }) {
     return Client(
       clientId: clientId ?? this.clientId,
@@ -101,6 +146,7 @@ class Client {
       motivation: motivation ?? this.motivation,
       exercises: exercises ?? this.exercises,
       hrrResults: hrrResults ?? this.hrrResults,
+      sessions: sessions ?? this.sessions,
     );
   }
 }

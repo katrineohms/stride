@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:stop_watch_timer/stop_watch_timer.dart';
 
 import '../model/clients.dart';
 import '../service/client_data_service.dart';
 import '../service/movesense_service.dart';
+import '../service/session_service.dart';
 import '../view/client_card_view.dart';
 import '../view/edit_client_view.dart';
 import '../widgets/movesense_status_widget.dart';
@@ -220,6 +222,10 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
               );
             },
           ),
+          const SizedBox(height: 16),
+
+          // ===== Session Control =====
+          _buildSessionControl(context),
           const SizedBox(height: 16),
 
           // ===== Personal Info Card =====
@@ -565,12 +571,14 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
     final minHr = readings.reduce(min);
     final recovery = maxHr - minHr;
 
-    setState(() {
-      _hrrResults = Map<String, HeartRateRecovery>.from(_hrrResults)
-        ..[exerciseId] = HeartRateRecovery(high: maxHr, low: minHr);
-      _client = _client.copyWith(hrrResults: _hrrResults);
-      ClientDataService().updateClient(_client);
-    });
+    if (mounted) {
+      setState(() {
+        _hrrResults = Map<String, HeartRateRecovery>.from(_hrrResults)
+          ..[exerciseId] = HeartRateRecovery(high: maxHr, low: minHr);
+        _client = _client.copyWith(hrrResults: _hrrResults);
+        ClientDataService().updateClient(_client);
+      });
+    }
 
     if (context.mounted) {
       showDialog<void>(
@@ -601,4 +609,387 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
       );
     }
   }
+
+  /// Build session control card
+  Widget _buildSessionControl(BuildContext context) {
+    return ListenableBuilder(
+      listenable: SessionService(),
+      builder: (context, _) {
+        final sessionService = SessionService();
+        final isActive = sessionService.hasActiveSession &&
+            sessionService.activeClientId == _client.clientId;
+
+        // Show graph if there's a completed session
+        final latestSession = _client.sessions.isNotEmpty
+            ? _client.sessions.last
+            : null;
+        
+        if (!isActive && latestSession != null && !latestSession.isActive) {
+          return _buildSessionGraph(latestSession);
+        }
+
+        return Card(
+          elevation: 2,
+          color: isActive ? Colors.green.shade50 : null,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'HR Session',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    if (isActive) ...[
+                      StreamBuilder<void>(
+                        stream: Stream.periodic(const Duration(seconds: 1)),
+                        builder: (context, _) {
+                          final duration = sessionService.sessionDuration;
+                          final hours = duration?.inHours ?? 0;
+                          final minutes = (duration?.inMinutes ?? 0) % 60;
+                          final seconds = (duration?.inSeconds ?? 0) % 60;
+                          return Text(
+                            '${hours.toString().padLeft(2, '0')}:'
+                            '${minutes.toString().padLeft(2, '0')}:'
+                            '${seconds.toString().padLeft(2, '0')}',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (isActive) ...[
+                  StreamBuilder<void>(
+                    stream: Stream.periodic(const Duration(seconds: 1)),
+                    builder: (context, _) {
+                      final hr = sessionService.currentHeartRate;
+                      return Row(
+                        children: [
+                          const Icon(Icons.favorite,
+                              color: Color.fromARGB(255, 210, 57, 62)),
+                          const SizedBox(width: 8),
+                          Text(
+                            hr != null ? '$hr bpm' : 'Waiting for HR...',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _toggleSession(context),
+                    icon: Icon(isActive ? Icons.stop : Icons.play_arrow),
+                    label: Text(isActive ? 'Stop Session' : 'Start Session'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isActive ? Colors.red : Colors.green,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Toggle session start/stop
+  Future<void> _toggleSession(BuildContext context) async {
+    final sessionService = SessionService();
+    final isActive = sessionService.hasActiveSession &&
+        sessionService.activeClientId == _client.clientId;
+
+    if (isActive) {
+      // Confirm stop
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Stop Session?'),
+          content: const Text(
+            'Are you sure you want to stop the current session? '
+            'All collected HR data will be saved.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Stop'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm == true) {
+        await sessionService.stopSession();
+        
+        // Refresh client data to show the saved session
+        if (mounted) {
+          setState(() {
+            final updatedClient = ClientDataService().getClientById(_client.clientId);
+            if (updatedClient != null) {
+              _client = updatedClient;
+            }
+          });
+        }
+        
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Session stopped and saved.')),
+          );
+        }
+      }
+    } else {
+      // Check for active session on another client
+      if (sessionService.hasActiveSession) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Another session is active. Stop it first.'),
+            ),
+          );
+        }
+        return;
+      }
+
+      // Start new session
+      try {
+        await sessionService.startSession(_client.clientId);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Session started!')),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e')),
+          );
+        }
+      }
+    }
+  }
+
+  /// Build session graph card
+  Widget _buildSessionGraph(Session session) {
+    final startTime = DateTime.fromMillisecondsSinceEpoch(session.startTime * 1000);
+    final endTime = session.endTime != null
+        ? DateTime.fromMillisecondsSinceEpoch(session.endTime! * 1000)
+        : DateTime.now();
+    final duration = session.duration;
+
+    // Calculate stats
+    final hrValues = session.hrReadings.map((r) => r.heartRate).toList();
+    final avgHr = hrValues.isEmpty
+        ? 0
+        : hrValues.reduce((a, b) => a + b) ~/ hrValues.length;
+    final maxHr = hrValues.isEmpty ? 0 : hrValues.reduce(max);
+    final minHr = hrValues.isEmpty ? 0 : hrValues.reduce(min);
+
+    // Prepare chart data
+    final spots = <FlSpot>[];
+    if (session.hrReadings.isNotEmpty) {
+      final baseTime = session.startTime;
+      for (final reading in session.hrReadings) {
+        final minutesElapsed = (reading.timestamp - baseTime) / 60.0;
+        spots.add(FlSpot(minutesElapsed, reading.heartRate.toDouble()));
+      }
+    }
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Latest Session',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 20),
+                  onPressed: () {
+                    // Remove this session and refresh
+                    setState(() {
+                      final updatedSessions = List<Session>.from(_client.sessions)
+                        ..removeLast();
+                      _client = _client.copyWith(sessions: updatedSessions);
+                      ClientDataService().updateClient(_client);
+                    });
+                  },
+                  tooltip: 'Delete session',
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${startTime.hour.toString().padLeft(2, '0')}:'
+              '${startTime.minute.toString().padLeft(2, '0')} - '
+              '${endTime.hour.toString().padLeft(2, '0')}:'
+              '${endTime.minute.toString().padLeft(2, '0')} '
+              '(${duration.inMinutes} min)',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 12),
+            // Stats row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildStatItem('Avg', '$avgHr', 'bpm'),
+                _buildStatItem('Max', '$maxHr', 'bpm'),
+                _buildStatItem('Min', '$minHr', 'bpm'),
+                _buildStatItem('Readings', '${hrValues.length}', ''),
+              ],
+            ),
+            const SizedBox(height: 16),
+            // Chart
+            if (spots.isNotEmpty)
+              SizedBox(
+                height: 180,
+                child: LineChart(
+                  LineChartData(
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: true,
+                      horizontalInterval: 20,
+                      verticalInterval: 5,
+                    ),
+                    titlesData: FlTitlesData(
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 30,
+                          interval: 5,
+                          getTitlesWidget: (value, meta) {
+                            return Text(
+                              '${value.toInt()}m',
+                              style: const TextStyle(fontSize: 10),
+                            );
+                          },
+                        ),
+                      ),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 40,
+                          interval: 20,
+                          getTitlesWidget: (value, meta) {
+                            return Text(
+                              value.toInt().toString(),
+                              style: const TextStyle(fontSize: 10),
+                            );
+                          },
+                        ),
+                      ),
+                      topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                    ),
+                    borderData: FlBorderData(
+                      show: true,
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    minX: 0,
+                    maxX: max(duration.inMinutes.toDouble(), 5),
+                    minY: max(minHr - 10, 40).toDouble(),
+                    maxY: (maxHr + 10).toDouble(),
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: spots,
+                        isCurved: true,
+                        color: const Color.fromARGB(255, 210, 57, 62),
+                        barWidth: 2,
+                        dotData: const FlDotData(show: false),
+                        belowBarData: BarAreaData(
+                          show: true,
+                          color: const Color.fromARGB(255, 210, 57, 62)
+                              .withOpacity(0.1),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              const Center(
+                child: Text('No heart rate data recorded'),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value, String unit) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            color: Colors.grey,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            if (unit.isNotEmpty) ...[
+              const SizedBox(width: 2),
+              Text(
+                unit,
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
 }
+
