@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../model/clients.dart';
-import '../view_model/appointment_form_view_model.dart';
+import '../view_model/widgets_view_model/appointment_form_view_model.dart';
 
 // ============= SMART WIDGET (Container) =============
 /// Manages appointment form logic and state

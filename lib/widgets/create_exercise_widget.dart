@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../model/clients.dart';
-import '../view_model/exercise_form_view_model.dart';
+import '../view_model/widgets_view_model/exercise_form_view_model.dart';
 
 // ============= SMART WIDGET (Container) =============
 /// Manages exercise form logic, state, and form controllers

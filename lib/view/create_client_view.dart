@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:stride/widgets/movesense_status_widget.dart';
 import '../model/clients.dart';
 import '../view_model/create_client_view_model.dart';
-import '../view_model/appointment_form_view_model.dart';
-import '../view_model/exercise_form_view_model.dart';
+import '../view_model/widgets_view_model/appointment_form_view_model.dart';
+import '../view_model/widgets_view_model/exercise_form_view_model.dart';
 import '../widgets/create_exercise_widget.dart';
 import '../widgets/appointments_widget.dart';
 

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../model/clients.dart';
+import '../../model/clients.dart';
 
 /// ViewModel for managing appointment form state and logic
 class AppointmentFormViewModel {
