@@ -11,7 +11,7 @@ import '../view_model/widgets_view_model/ui_event.dart';
 import '../view/movesense_connect_view.dart';
 
 // Widgets
-import '../widgets/movesense_connection_card.dart';
+import '../widgets/movesense_status_widget.dart';
 import '../widgets/personal_info_card.dart';
 import '../widgets/executable_exercise_card.dart';
 import '../widgets/session_graph_card.dart';
@@ -187,6 +187,8 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
     timeLeft.dispose();
     lastHr.dispose();
 
+    if (!mounted) return;
+
     if (context.mounted) {
       Navigator.of(context, rootNavigator: true).pop();
     }
@@ -209,9 +211,9 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
       HeartRateRecovery(high: maxHr, low: minHr),
     );
 
-    if (mounted) {
-      setState(() {});
-    }
+    if (!mounted) return;
+
+    setState(() {});
 
     if (context.mounted) {
       showDialog<void>(
@@ -252,6 +254,18 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
       appBar: AppBar(
         title: Text('${_client.name} - Session'),
         centerTitle: true,
+        actions: [
+          ListenableBuilder(
+            listenable: widget.viewModel.movesense,
+            builder: (context, _) {
+              return MovesenseStatusIcon(
+                connected: widget.viewModel.movesense.isConnected,
+                heartRate: 0,
+                heartRateStream: widget.viewModel.movesense.heartRateStream,
+              );
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -262,9 +276,12 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
             ListenableBuilder(
               listenable: widget.viewModel.movesense,
               builder: (context, _) {
-                return MovesenseConnectionCard(
-                  isConnected: widget.viewModel.movesense.isConnected,
+                return MoveSenseStatusCard(
+                  connected: widget.viewModel.movesense.isConnected,
+                  heartRate: 0,
                   heartRateStream: widget.viewModel.movesense.heartRateStream,
+                  batteryOk: true,
+                  batteryStream: widget.viewModel.movesense.batteryStream,
                   onTap: () {
                     Navigator.push(
                       context,

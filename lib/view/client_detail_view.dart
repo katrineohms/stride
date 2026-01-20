@@ -12,7 +12,7 @@ import '../view/edit_client_view.dart';
 
 // Widgets
 import '../widgets/personal_info_card.dart';
-import '../widgets/movesense_connection_card.dart';
+import '../widgets/movesense_status_widget.dart';
 import '../widgets/exercise_template_card.dart';
 
 
@@ -80,19 +80,14 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
         title: Text(_client.name),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            tooltip: 'Edit client',
-            onPressed: () async {
-              final updated = await Navigator.push<Client>(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => EditClientPage(client: _client),
-                ),
+          ListenableBuilder(
+            listenable: widget.viewModel.movesense,
+            builder: (context, _) {
+              return MovesenseStatusIcon(
+                connected: widget.viewModel.movesense.isConnected,
+                heartRate: 0,
+                heartRateStream: widget.viewModel.movesense.heartRateStream,
               );
-              if (updated != null) {
-                await widget.viewModel.updateClient(updated);
-              }
             },
           ),
         ],
@@ -106,9 +101,12 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
             ListenableBuilder(
               listenable: widget.viewModel.movesense,
               builder: (context, _) {
-                return MovesenseConnectionCard(
-                  isConnected: widget.viewModel.movesense.isConnected,
+                return MoveSenseStatusCard(
+                  connected: widget.viewModel.movesense.isConnected,
+                  heartRate: 0,
                   heartRateStream: widget.viewModel.movesense.heartRateStream,
+                  batteryOk: true,
+                  batteryStream: widget.viewModel.movesense.batteryStream,
                   onTap: () {
                     Navigator.push(
                       context,
@@ -125,9 +123,30 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
             const SizedBox(height: 16),
 
             // ===== Personal Info =====
-            SizedBox(
-              width: double.infinity,
-              child: PersonalInfoCard(client: _client),
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: PersonalInfoCard(client: _client),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  tooltip: 'Edit client',
+                  onPressed: () async {
+                    final updated = await Navigator.push<Client>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EditClientPage(client: _client),
+                      ),
+                    );
+                    if (updated != null) {
+                      await widget.viewModel.updateClient(updated);
+                    }
+                  },
+                ),
+              ],
             ),
             const SizedBox(height: 16),
 
