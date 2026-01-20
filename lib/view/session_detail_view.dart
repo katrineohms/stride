@@ -1,5 +1,6 @@
 // Packages
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:stop_watch_timer/stop_watch_timer.dart';
 
@@ -13,6 +14,7 @@ import '../view/movesense_connect_view.dart';
 import '../widgets/movesense_connection_card.dart';
 import '../widgets/personal_info_card.dart';
 import '../widgets/executable_exercise_card.dart';
+import '../widgets/session_graph_card.dart';
 
 /// Session detail page - for executing a specific session from calendar
 class SessionDetailPage extends StatefulWidget {
@@ -28,6 +30,7 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
   final Map<String, bool> _exerciseDone = {};
   final Map<String, StopWatchTimer> _stopWatches = {};
   late StreamSubscription<UiEvent> _eventSub;
+  Timer? _ticker;
 
   Client get _client => widget.viewModel.client;
 
@@ -37,6 +40,7 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
     widget.viewModel.attach();
     widget.viewModel.addListener(_onSessionChanged);
     _initializeExerciseState();
+    _startTicker();
     
     _eventSub = widget.viewModel.events.stream.listen((event) {
       if (!mounted) return;
@@ -77,6 +81,7 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
     for (final timer in _stopWatches.values) {
       timer.dispose();
     }
+    _ticker?.cancel();
     _eventSub.cancel();
     widget.viewModel.removeListener(_onSessionChanged);
     widget.viewModel.dispose();
@@ -90,13 +95,162 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
   }
 
   void _onSessionChanged() {
-    setState(() {
-      _initializeExerciseState();
+    setState(() {});
+  }
+
+  void _startTicker() {
+    _ticker?.cancel();
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      if (widget.viewModel.isActiveForClient) {
+        setState(() {});
+      }
     });
+  }
+
+  /// Collects heart rate samples for a fixed window and shows recovery stats.
+  Future<void> _startHeartRateRecovery(
+    BuildContext context,
+    String exerciseId,
+    String exerciseName,
+  ) async {
+    final movesense = widget.viewModel.movesense;
+    final hrStream = movesense.heartRateStream;
+
+    if (!movesense.isConnected || hrStream == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No Movesense device connected.')),
+      );
+      return;
+    }
+
+    const measurementDuration = Duration(seconds: 60);
+    final readings = <int>[];
+    final timeLeft = ValueNotifier<int>(measurementDuration.inSeconds);
+    final lastHr = ValueNotifier<int?>(null);
+
+    StreamSubscription<int>? sub;
+    Timer? countdown;
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text('Measuring HRR for $exerciseName'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 12),
+              ValueListenableBuilder<int>(
+                valueListenable: timeLeft,
+                builder: (_, seconds, _) => Text(
+                  'Time left: ${seconds}s',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
+              const SizedBox(height: 8),
+              ValueListenableBuilder<int?>(
+                valueListenable: lastHr,
+                builder: (_, hr, _) => Text(
+                  hr == null ? 'Waiting for data…' : 'Current HR: $hr',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    sub = hrStream.listen((hr) {
+      if (hr <= 0) return;
+      readings.add(hr);
+      lastHr.value = hr;
+    });
+
+    countdown = Timer.periodic(const Duration(seconds: 1), (t) {
+      final remaining = measurementDuration.inSeconds - t.tick;
+      if (remaining >= 0) {
+        timeLeft.value = remaining;
+      }
+      if (remaining <= 0) {
+        t.cancel();
+      }
+    });
+
+    await Future.delayed(measurementDuration);
+
+    await sub.cancel();
+    countdown.cancel();
+    timeLeft.dispose();
+    lastHr.dispose();
+
+    if (context.mounted) {
+      Navigator.of(context, rootNavigator: true).pop();
+    }
+
+    if (readings.isEmpty) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No heart rate data captured.')),
+        );
+      }
+      return;
+    }
+
+    final maxHr = readings.reduce(max);
+    final minHr = readings.reduce(min);
+    final recovery = maxHr - minHr;
+
+    await widget.viewModel.saveHrrResult(
+      exerciseId,
+      HeartRateRecovery(high: maxHr, low: minHr),
+    );
+
+    if (mounted) {
+      setState(() {});
+    }
+
+    if (context.mounted) {
+      showDialog<void>(
+        context: context,
+        builder: (ctx) {
+          return AlertDialog(
+            title: const Text('Heart Rate Recovery'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Exercise: $exerciseName'),
+                const SizedBox(height: 8),
+                Text('Highest HR: $maxHr bpm'),
+                Text('Lowest HR: $minHr bpm'),
+                const SizedBox(height: 8),
+                Text('Recovery (high - low): $recovery bpm'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isActive = widget.viewModel.isActiveForClient;
+    final liveHr = widget.viewModel.liveHeartRate;
+    final liveDuration = widget.viewModel.liveDuration;
+    final activeSession = widget.viewModel.activeSession;
+    final latestSession = widget.viewModel.session;
+
     return Scaffold(
       appBar: AppBar(
         title: Text('${_client.name} - Session'),
@@ -139,30 +293,137 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => widget.viewModel.startSession(),
-                    icon: const Icon(Icons.play_arrow),
-                    label: const Text('Start Session'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => widget.viewModel.stopSession(),
-                    icon: const Icon(Icons.stop),
-                    label: const Text('Stop Session'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
+            ElevatedButton.icon(
+              onPressed: () async {
+                if (isActive) {
+                  await widget.viewModel.stopSession();
+                } else {
+                  await widget.viewModel.startSession();
+                }
+                if (mounted) setState(() {});
+              },
+              icon: Icon(isActive ? Icons.stop : Icons.play_arrow),
+              label: Text(isActive ? 'Stop Session' : 'Start Session'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isActive ? Colors.red : null,
+                foregroundColor: isActive ? Colors.white : null,
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+
+            // Live stats when session running
+            if (isActive) ...[
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _StatTile(
+                              label: 'Current HR',
+                              value: liveHr != null ? '$liveHr bpm' : '--',
+                            ),
+                          ),
+                          Expanded(
+                            child: _StatTile(
+                              label: 'Duration',
+                              value: _formatDuration(liveDuration),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        activeSession?.startLocationCity ?? 'Location: --',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+
+            // Latest completed session stats/graph
+            if (!isActive && latestSession.hrReadings.isNotEmpty) ...[
+              Card(
+                color: Theme.of(context).cardColor,
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Latest Session',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close, size: 20),
+                            onPressed: () {
+                              widget.viewModel.deleteLatestSession();
+                              setState(() {});
+                            },
+                            tooltip: 'Delete session',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _buildSessionTimeString(latestSession),
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                      if (latestSession.startLocationCity != null) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          'Location: ${latestSession.startLocationCity}',
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      // Stats row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildStatItem(
+                            'Avg',
+                            '${_averageHr(latestSession.hrReadings)}',
+                            'bpm',
+                          ),
+                          _buildStatItem(
+                            'Max',
+                            '${_maxHr(latestSession.hrReadings)}',
+                            'bpm',
+                          ),
+                          _buildStatItem(
+                            'Min',
+                            '${_minHr(latestSession.hrReadings)}',
+                            'bpm',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Chart embedded
+                      SessionGraphCard(session: latestSession),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            const SizedBox(height: 4),
 
             // ===== Exercises =====
             Text(
@@ -171,16 +432,18 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
             ),
             const SizedBox(height: 8),
             ..._client.exerciseTemplates.map((exercise) {
+              final hrr = latestSession.hrrResults[exercise.exerciseId];
               return ExecutableExerciseCard(
                 exercise: exercise,
                 isDone: _exerciseDone[exercise.exerciseId] ?? false,
                 stopWatch: _stopWatches[exercise.exerciseId],
                 onDoneChanged: (value) => _toggleDone(exercise.exerciseId, value),
-                onHrrTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('HRR measurement coming soon')),
-                  );
-                },
+                onHrrTap: () => _startHeartRateRecovery(
+                  context,
+                  exercise.exerciseId,
+                  exercise.name,
+                ),
+                hrr: hrr,
               );
             }),
           ],
@@ -188,4 +451,108 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
       ),
     );
   }
+}
+
+class _StatTile extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _StatTile({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: Theme.of(context)
+              .textTheme
+              .titleMedium
+              ?.copyWith(fontWeight: FontWeight.w600),
+        ),
+      ],
+    );
+  }
+}
+
+String _formatDuration(Duration? duration) {
+  if (duration == null) return '--';
+  final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+  final hours = duration.inHours;
+  final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+  if (hours > 0) {
+    return '${hours.toString().padLeft(2, '0')}:$minutes:$seconds';
+  }
+  return '$minutes:$seconds';
+}
+
+int _averageHr(List<HrReading> readings) {
+  if (readings.isEmpty) return 0;
+  final total = readings.fold<int>(0, (sum, r) => sum + r.heartRate);
+  return (total / readings.length).round();
+}
+
+int _maxHr(List<HrReading> readings) {
+  if (readings.isEmpty) return 0;
+  return readings.map((r) => r.heartRate).reduce(max);
+}
+
+int _minHr(List<HrReading> readings) {
+  if (readings.isEmpty) return 0;
+  return readings.map((r) => r.heartRate).reduce(min);
+}
+
+String _buildSessionTimeString(Session session) {
+  final startTime = DateTime.fromMillisecondsSinceEpoch(session.startTime * 1000);
+  final endTime = session.endTime != null
+      ? DateTime.fromMillisecondsSinceEpoch(session.endTime! * 1000)
+      : DateTime.now();
+  final duration = session.duration;
+  
+  final startStr =
+      '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}';
+  final endStr =
+      '${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}';
+  
+  return '$startStr - $endStr (${duration.inMinutes} min)';
+}
+
+Widget _buildStatItem(String label, String value, String unit) {
+  return Column(
+    children: [
+      Text(
+        label,
+        style: const TextStyle(
+          fontSize: 11,
+          color: Colors.grey,
+        ),
+      ),
+      const SizedBox(height: 4),
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          if (unit.isNotEmpty) ...[
+            const SizedBox(width: 2),
+            Text(
+              unit,
+              style: const TextStyle(
+                fontSize: 10,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ],
+      ),
+    ],
+  );
 }

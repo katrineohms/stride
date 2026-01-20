@@ -12,6 +12,7 @@ class ExecutableExerciseCard extends StatelessWidget {
   final StopWatchTimer? stopWatch;
   final ValueChanged<bool?>? onDoneChanged;
   final VoidCallback? onHrrTap;
+  final HeartRateRecovery? hrr;
 
   const ExecutableExerciseCard({
     super.key,
@@ -20,6 +21,7 @@ class ExecutableExerciseCard extends StatelessWidget {
     this.stopWatch,
     this.onDoneChanged,
     this.onHrrTap,
+    this.hrr,
   });
 
   @override
@@ -62,15 +64,25 @@ class ExecutableExerciseCard extends StatelessWidget {
                     const Text('Done'),
                   ],
                 ),
-                ElevatedButton.icon(
-                  onPressed: onHrrTap,
-                  icon: const Icon(Icons.favorite, size: 16),
-                  label: const Text('HRR'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Colors.white,
+                if (hrr != null)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text('High: ${hrr!.high}', style: const TextStyle(fontSize: 12)),
+                      Text('Low: ${hrr!.low}', style: const TextStyle(fontSize: 12)),
+                      Text('HRR: ${hrr!.delta}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    ],
+                  )
+                else
+                  ElevatedButton.icon(
+                    onPressed: onHrrTap,
+                    icon: const Icon(Icons.favorite, size: 16),
+                    label: const Text('HRR'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Colors.white,
+                    ),
                   ),
-                ),
               ],
             ),
           ],
@@ -149,15 +161,24 @@ class ExecutableExerciseCard extends StatelessWidget {
               const SizedBox(height: 8),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: onHrrTap,
-                  icon: const Icon(Icons.favorite, size: 16),
-                  label: const Text('Measure HRR'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Colors.white,
-                  ),
-                ),
+                child: hrr != null
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('High: ${hrr!.high} bpm', style: const TextStyle(fontSize: 12)),
+                          Text('Low: ${hrr!.low} bpm', style: const TextStyle(fontSize: 12)),
+                          Text('HRR: ${hrr!.delta} bpm', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                        ],
+                      )
+                    : ElevatedButton.icon(
+                        onPressed: onHrrTap,
+                        icon: const Icon(Icons.favorite, size: 16),
+                        label: const Text('Measure HRR'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
               ),
             ],
           ],

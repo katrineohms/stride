@@ -142,6 +142,35 @@ class _CreateClientPageState extends State<CreateClientPage> {
                       Row(
                         children: [
                           Expanded(
+                            child: DropdownButtonFormField<String>(
+                              initialValue: viewModel.gender,
+                              decoration: const InputDecoration(
+                                labelText: 'Gender',
+                                border: OutlineInputBorder(),
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'Male',
+                                  child: Text('Male'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Female',
+                                  child: Text('Female'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Other',
+                                  child: Text('Other'),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                if (value != null) {
+                                  setState(() => viewModel.gender = value);
+                                }
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
                             child: DropdownButtonFormField<int>(
                               initialValue: viewModel.active,
                               decoration: const InputDecoration(

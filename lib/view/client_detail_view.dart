@@ -8,6 +8,7 @@ import '../view_model/client_detail_view_model.dart';
 import '../view_model/session_detail_view_model.dart';
 import '../view/movesense_connect_view.dart';
 import '../view/session_detail_view.dart';
+import '../view/edit_client_view.dart';
 
 // Widgets
 import '../widgets/personal_info_card.dart';
@@ -68,6 +69,23 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
       appBar: AppBar(
         title: Text(_client.name),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            tooltip: 'Edit client',
+            onPressed: () async {
+              final updated = await Navigator.push<Client>(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EditClientPage(client: _client),
+                ),
+              );
+              if (updated != null) {
+                await widget.viewModel.updateClient(updated);
+              }
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

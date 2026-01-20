@@ -17,6 +17,7 @@ class EditClientViewModel {
   // Controllers for personal info
   late String name = client.name;
   late int age = client.age;
+  late String gender = client.gender;
   late String motivation = client.motivation;
   late int active = client.active;
 
@@ -33,6 +34,7 @@ class EditClientViewModel {
   // ===== Personal Info Updates =====
   void updateName(String newName) => name = newName;
   void updateAge(int newAge) => age = newAge;
+  void updateGender(String newGender) => gender = newGender;
   void updateMotivation(String newMotivation) =>
       motivation = newMotivation;
   void updateActive(int newActive) => active = newActive;
@@ -60,6 +62,7 @@ class EditClientViewModel {
     return client.copyWith(
       name: name,
       age: age,
+      gender: gender,
       motivation: motivation,
       active: active,
       sessions: sessions,

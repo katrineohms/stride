@@ -133,49 +133,84 @@ class _EditClientPageState extends State<EditClientPage> {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      DropdownButtonFormField<int>(
-                        initialValue: viewModel.active,
-                        decoration: const InputDecoration(
-                          labelText: 'Status',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: 0,
-                            child: Row(
-                              children: [
-                                Icon(Icons.circle, color: Colors.green, size: 14),
-                                SizedBox(width: 6),
-                                Text('Active'),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: viewModel.gender,
+                              decoration: const InputDecoration(
+                                labelText: 'Gender',
+                                border: OutlineInputBorder(),
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'Male',
+                                  child: Text('Male'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Female',
+                                  child: Text('Female'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Other',
+                                  child: Text('Other'),
+                                ),
                               ],
+                              onChanged: (value) {
+                                if (value != null) {
+                                  setState(() => viewModel.updateGender(value));
+                                }
+                              },
                             ),
                           ),
-                          DropdownMenuItem(
-                            value: 1,
-                            child: Row(
-                              children: [
-                                Icon(Icons.circle, color: Colors.yellow, size: 14),
-                                SizedBox(width: 6),
-                                Text('Caution'),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: DropdownButtonFormField<int>(
+                              initialValue: viewModel.active,
+                              decoration: const InputDecoration(
+                                labelText: 'Status',
+                                border: OutlineInputBorder(),
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 0,
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.circle, color: Colors.green, size: 14),
+                                      SizedBox(width: 6),
+                                      Text('Active'),
+                                    ],
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: 1,
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.circle, color: Colors.yellow, size: 14),
+                                      SizedBox(width: 6),
+                                      Text('Caution'),
+                                    ],
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: 2,
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.circle, color: Colors.red, size: 14),
+                                      SizedBox(width: 6),
+                                      Text('Inactive'),
+                                    ],
+                                  ),
+                                ),
                               ],
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: 2,
-                            child: Row(
-                              children: [
-                                Icon(Icons.circle, color: Colors.red, size: 14),
-                                SizedBox(width: 6),
-                                Text('Inactive'),
-                              ],
+                              onChanged: (v) {
+                                if (v != null) {
+                                  setState(() => viewModel.updateActive(v));
+                                }
+                              },
                             ),
                           ),
                         ],
-                        onChanged: (v) {
-                          if (v != null) {
-                            setState(() => viewModel.updateActive(v));
-                          }
-                        },
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
