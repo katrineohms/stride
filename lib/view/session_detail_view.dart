@@ -246,9 +246,6 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
   @override
   Widget build(BuildContext context) {
     final isActive = widget.viewModel.isActiveForClient;
-    final liveHr = widget.viewModel.liveHeartRate;
-    final liveDuration = widget.viewModel.liveDuration;
-    final activeSession = widget.viewModel.activeSession;
     final latestSession = widget.viewModel.session;
 
     return Scaffold(
@@ -346,108 +343,4 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
       ),
     );
   }
-}
-
-class _StatTile extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _StatTile({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: Theme.of(context)
-              .textTheme
-              .titleMedium
-              ?.copyWith(fontWeight: FontWeight.w600),
-        ),
-      ],
-    );
-  }
-}
-
-String _formatDuration(Duration? duration) {
-  if (duration == null) return '--';
-  final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
-  final hours = duration.inHours;
-  final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
-  if (hours > 0) {
-    return '${hours.toString().padLeft(2, '0')}:$minutes:$seconds';
-  }
-  return '$minutes:$seconds';
-}
-
-int _averageHr(List<HrReading> readings) {
-  if (readings.isEmpty) return 0;
-  final total = readings.fold<int>(0, (sum, r) => sum + r.heartRate);
-  return (total / readings.length).round();
-}
-
-int _maxHr(List<HrReading> readings) {
-  if (readings.isEmpty) return 0;
-  return readings.map((r) => r.heartRate).reduce(max);
-}
-
-int _minHr(List<HrReading> readings) {
-  if (readings.isEmpty) return 0;
-  return readings.map((r) => r.heartRate).reduce(min);
-}
-
-String _buildSessionTimeString(Session session) {
-  final startTime = DateTime.fromMillisecondsSinceEpoch(session.startTime * 1000);
-  final endTime = session.endTime != null
-      ? DateTime.fromMillisecondsSinceEpoch(session.endTime! * 1000)
-      : DateTime.now();
-  final duration = session.duration;
-  
-  final startStr =
-      '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}';
-  final endStr =
-      '${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}';
-  
-  return '$startStr - $endStr (${duration.inMinutes} min)';
-}
-
-Widget _buildStatItem(String label, String value, String unit) {
-  return Column(
-    children: [
-      Text(
-        label,
-        style: const TextStyle(
-          fontSize: 11,
-          color: Colors.grey,
-        ),
-      ),
-      const SizedBox(height: 4),
-      Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          if (unit.isNotEmpty) ...[
-            const SizedBox(width: 2),
-            Text(
-              unit,
-              style: const TextStyle(
-                fontSize: 10,
-                color: Colors.grey,
-              ),
-            ),
-          ],
-        ],
-      ),
-    ],
-  );
 }
