@@ -1,11 +1,4 @@
 ToDo list: 
-I morgen:
-- Snak med Viktor om UI placering af HRR
-- UI placement
-- Dummy data collection
-- Implement snackbar, etc.
-
-
 Frontend:
 - When stopwatch runs out, blank out exercise 
 
@@ -18,11 +11,7 @@ Both:
 - Edit exercises
 
 
-Backend
-- Connect to MotionSense
-- Create HRR (recovery) function?
-    -- Call on model to collect values 
-    -- Collect values for x time
-    -- Calculate HRR
+Backend:
+Filter HR session data a bit
 
 

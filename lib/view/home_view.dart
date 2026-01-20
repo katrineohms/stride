@@ -1,13 +1,19 @@
+// Packages
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
+
+// Files
+import '../view/client_list_view.dart';
+import '../view/client_card_view.dart';
+import '../view_model/home_view_model.dart';
+import '../view_model/client_card_view_model.dart';
+import '../view/movesense_connect_view.dart';
+
+// Widgets
 import '../widgets/client_card_widget.dart';
 import '../widgets/movesense_status_widget.dart';
-import '../service/movesense_service.dart';
 
-import 'package:stride/view/client_list_view.dart';
-import 'package:stride/view/client_card_view.dart';
-import 'package:stride/view_model/home_view_model.dart';
-import 'package:stride/view/movesense_connect_view.dart';
+
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -38,12 +44,12 @@ class _HomePageState extends State<HomePage> {
         title: const Text('Stride'),
         actions: [
           ListenableBuilder(
-            listenable: MovesenseService().viewModel,
+            listenable: viewModel.movesense,
             builder: (context, _) {
               return MovesenseStatusIcon(
-                connected: MovesenseService().viewModel.isConnected,
+                connected: viewModel.movesense.isConnected,
                 heartRate: 0,
-                heartRateStream: MovesenseService().viewModel.heartRateStream,
+                heartRateStream: viewModel.movesense.heartRateStream,
               );
             },
           ),
@@ -144,19 +150,21 @@ class _HomePageState extends State<HomePage> {
 
             // ======= Movesense Status =======
             ListenableBuilder(
-              listenable: MovesenseService().viewModel,
+              listenable: viewModel.movesense,
               builder: (context, _) {
                 return MoveSenseStatusCard(
-                  connected: MovesenseService().viewModel.isConnected,
+                  connected: viewModel.movesense.isConnected,
                   heartRate: 0,
-                  heartRateStream: MovesenseService().viewModel.heartRateStream,
+                  heartRateStream: viewModel.movesense.heartRateStream,
                   batteryOk: true,
-                  batteryStream: MovesenseService().viewModel.batteryStream,
+                  batteryStream: viewModel.movesense.batteryStream,
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const MovesenseConnectView(),
+                        builder: (context) => MovesenseConnectView(
+                          viewModel: viewModel.movesense,
+                        ),
                       ),
                     );
                   },

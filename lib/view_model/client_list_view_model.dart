@@ -1,12 +1,25 @@
+// Packages
 import 'package:flutter/material.dart';
+
+// Files
 import '../model/clients.dart';
+import '../view_model/movesense_connect_view_model.dart';
+
+// Widgets
+import '../widgets/client_card_widget.dart';
+
+// Services
 import '../service/client_data_service.dart';
-import '../widgets/client_card_widget.dart'; // <-- import helper
+import '../service/movesense_service.dart';
 
 class ClientOverviewViewModel {
   final ClientDataService _dataService = ClientDataService();
+  final MovesenseConnectViewModel movesense;
 
-  ClientOverviewViewModel({List<Client>? initialClients}) {
+  ClientOverviewViewModel({
+    List<Client>? initialClients,
+    MovesenseConnectViewModel? movesense,
+  }) : movesense = movesense ?? MovesenseService().viewModel {
     if (initialClients != null && initialClients.isNotEmpty) {
       _dataService.clear();
       for (final client in initialClients) {

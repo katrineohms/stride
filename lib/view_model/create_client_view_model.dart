@@ -1,12 +1,21 @@
+// Packages
 import '../model/clients.dart';
+import '../view_model/movesense_connect_view_model.dart';
+
+// Services
+import '../service/movesense_service.dart';
 
 class CreateClientViewModel {
+  CreateClientViewModel({MovesenseConnectViewModel? movesense})
+      : movesense = movesense ?? MovesenseService().viewModel;
+
   String name = '';
   int? age;
   String gender = 'Male';
   int active = 0; // 0 = green, 1 = yellow, 2 = red
   List<Appointment> appointments = []; // multiple appointments
   String motivation = '';
+  final MovesenseConnectViewModel movesense;
 
   // Define a list to hold exercises
   List<Exercise> exercises = []; // Ensure Exercise is the correct type

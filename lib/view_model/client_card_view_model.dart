@@ -1,10 +1,46 @@
+// Packages
+import 'package:flutter/foundation.dart';
+
+// Files
 import '../model/clients.dart';
+import '../view_model/movesense_connect_view_model.dart';
+import 'widgets_view_model/ui_event.dart';
+
+// Services
+import '../service/client_data_service.dart';
+import '../service/movesense_service.dart';
+import '../service/session_service.dart';
 
 /// ViewModel for the Client Detail Page
-class ClientDetailViewModel {
-  ClientDetailViewModel({required Client client}) : _client = client;
+class ClientDetailViewModel extends ChangeNotifier {
+  ClientDetailViewModel({
+    required Client client,
+    MovesenseConnectViewModel? movesense,
+    UiEventNotifier? events,
+  })  : _client = client,
+        movesense = movesense ?? MovesenseService().viewModel,
+        events = events ?? UiEventNotifier();
 
+  final ClientDataService _dataService = ClientDataService();
+  final SessionService _sessionService = SessionService();
+  final MovesenseConnectViewModel movesense;
+  final UiEventNotifier events;
   Client _client;
+  bool _attached = false;
+
+  void _onSessionChanged() => notifyListeners();
+
+  void attach() {
+    if (_attached) return;
+    _sessionService.addListener(_onSessionChanged);
+    _attached = true;
+  }
+
+  void detach() {
+    if (!_attached) return;
+    _sessionService.removeListener(_onSessionChanged);
+    _attached = false;
+  }
 
   Client get client => _client;
 
@@ -13,14 +49,12 @@ class ClientDetailViewModel {
   Appointment? get nextAppointment {
     final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
-    // Filter only future appointments
-    final futureAppointments = client.appointments
+    final futureAppointments = _client.appointments
         .where((a) => a.timestamp >= now)
         .toList();
 
     if (futureAppointments.isEmpty) return null;
 
-    // Sort by timestamp ascending
     futureAppointments.sort((a, b) => a.timestamp.compareTo(b.timestamp));
     return futureAppointments.first;
   }
@@ -39,10 +73,81 @@ class ClientDetailViewModel {
   }
 
   /// Exercises remain tied to the client
-  List<Exercise> get exercises => client.exercises;
+  List<Exercise> get exercises => _client.exercises;
 
-  /// Update the client with a new object (used after editing)
-  void updateClient(Client updatedClient) {
+  /// Update the client and optionally persist
+  void updateClient(Client updatedClient, {bool persist = true}) {
     _client = updatedClient;
+    if (persist) {
+      _dataService.updateClient(_client);
+    }
+    notifyListeners();
+  }
+
+  /// Replace/merge HRR results and persist
+  void setHeartRateRecovery(String exerciseId, HeartRateRecovery hrr) {
+    final updatedHrr = Map<String, HeartRateRecovery>.from(_client.hrrResults)
+      ..[exerciseId] = hrr;
+    updateClient(_client.copyWith(hrrResults: updatedHrr));
+  }
+
+  /// Remove the latest session (used by UI delete button)
+  void deleteLatestSession() {
+    if (_client.sessions.isEmpty) return;
+    final updatedSessions = List<Session>.from(_client.sessions)..removeLast();
+    updateClient(_client.copyWith(sessions: updatedSessions));
+  }
+
+  /// Start a session and emit UI events for success or failure.
+  Future<void> startSession() async {
+    if (_sessionService.hasActiveSession &&
+        _sessionService.activeClientId != _client.clientId) {
+      events.emit(
+        const SnackBarEvent(
+          'Another session is active. Stop it first.',
+          isError: true,
+        ),
+      );
+      return;
+    }
+    try {
+      await _sessionService.startSession(_client.clientId);
+      events.emit(const SnackBarEvent('Session started!'));
+    } catch (e) {
+      events.emit(
+        SnackBarEvent('Could not start session: $e', isError: true),
+      );
+    }
+  }
+
+  /// Stop session and refresh client data from the data service.
+  Future<void> stopSessionAndRefresh() async {
+    try {
+      await _sessionService.stopSession();
+      final refreshed = _dataService.getClientById(_client.clientId);
+      if (refreshed != null) {
+        updateClient(refreshed, persist: false);
+      }
+      events.emit(const SnackBarEvent('Session stopped and saved.'));
+    } catch (e) {
+      events.emit(
+        SnackBarEvent('Could not stop session: $e', isError: true),
+      );
+    }
+  }
+
+  bool get isSessionActiveForClient =>
+      _sessionService.hasActiveSession &&
+      _sessionService.activeClientId == _client.clientId;
+
+  Duration? get sessionDuration => _sessionService.sessionDuration;
+
+  int? get currentSessionHeartRate => _sessionService.currentHeartRate;
+
+  @override
+  void dispose() {
+    detach();
+    events.dispose();
+    super.dispose();
   }
 }

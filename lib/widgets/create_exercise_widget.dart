@@ -1,4 +1,7 @@
+// Packages
 import 'package:flutter/material.dart';
+
+// Files
 import '../model/clients.dart';
 import '../view_model/widgets_view_model/exercise_form_view_model.dart';
 

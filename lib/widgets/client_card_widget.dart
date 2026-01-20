@@ -1,15 +1,16 @@
+// Plugins
 import 'dart:async';
 import 'dart:math';
 
+// Packages
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:stop_watch_timer/stop_watch_timer.dart';
 
+// Files
 import '../model/clients.dart';
-import '../service/client_data_service.dart';
-import '../service/movesense_service.dart';
-import '../service/session_service.dart';
-import '../view/client_card_view.dart';
+import '../view_model/client_card_view_model.dart';
+import '../view_model/widgets_view_model/ui_event.dart';
 import '../view/edit_client_view.dart';
 import '../widgets/movesense_status_widget.dart';
 import '../widgets/stop_watch_timer_widget.dart';
@@ -115,12 +116,36 @@ class ClientDetailViewWidget extends StatefulWidget {
 class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
   late Client _client;
   late Map<String, HeartRateRecovery> _hrrResults;
+  late final StreamSubscription<UiEvent> _eventSub;
 
   @override
   void initState() {
     super.initState();
     _client = widget.viewModel.client;
     _hrrResults = Map<String, HeartRateRecovery>.from(_client.hrrResults);
+    _eventSub = widget.viewModel.events.stream.listen((event) {
+      if (!mounted) return;
+      if (event is SnackBarEvent) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(event.message),
+            backgroundColor:
+                event.isError ? Theme.of(context).colorScheme.error : null,
+          ),
+        );
+      } else if (event is NavigationEvent) {
+        Navigator.of(context).pushNamed(
+          event.route,
+          arguments: event.arguments,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _eventSub.cancel();
+    super.dispose();
   }
 
   @override
@@ -187,9 +212,7 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
                                 if (!mounted) return;
 
                                 if (updatedClient != null) {
-                                  // Persist and refresh local state
-                                  ClientDataService()
-                                      .updateClient(updatedClient);
+                                  // Persist and refresh via view model
                                   widget.viewModel.updateClient(updatedClient);
                                   widget.onClientUpdated
                                       ?.call(updatedClient);
@@ -235,14 +258,15 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
 
           // ===== Movesense Status =====
           ListenableBuilder(
-            listenable: MovesenseService().viewModel,
+            listenable: widget.viewModel.movesense,
             builder: (context, _) {
+              final movesense = widget.viewModel.movesense;
               return MoveSenseStatusCard(
-                connected: MovesenseService().viewModel.isConnected,
+                connected: movesense.isConnected,
                 heartRate: 0,
-                heartRateStream: MovesenseService().viewModel.heartRateStream,
+                heartRateStream: movesense.heartRateStream,
                 batteryOk: true,
-                batteryStream: MovesenseService().viewModel.batteryStream,
+                batteryStream: movesense.batteryStream,
                 onTap: widget.onMovesenseTap,
               );
             },
@@ -508,7 +532,7 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
     String exerciseId,
     String exerciseName,
   ) async {
-    final movesense = MovesenseService().viewModel;
+    final movesense = widget.viewModel.movesense;
     final hrStream = movesense.heartRateStream;
 
     if (!movesense.isConnected || hrStream == null) {
@@ -601,10 +625,16 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
 
     if (mounted) {
       setState(() {
-        _hrrResults = Map<String, HeartRateRecovery>.from(_hrrResults)
-          ..[exerciseId] = HeartRateRecovery(high: maxHr, low: minHr);
-        _client = _client.copyWith(hrrResults: _hrrResults);
-        ClientDataService().updateClient(_client);
+        final updated = _client.copyWith(
+          hrrResults: Map<String, HeartRateRecovery>.from(_hrrResults)
+            ..[exerciseId] = HeartRateRecovery(high: maxHr, low: minHr),
+        );
+        widget.viewModel.setHeartRateRecovery(
+          exerciseId,
+          HeartRateRecovery(high: maxHr, low: minHr),
+        );
+        _hrrResults = Map<String, HeartRateRecovery>.from(updated.hrrResults);
+        _client = updated;
       });
     }
 
@@ -641,11 +671,9 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
   /// Build session control card
   Widget _buildSessionControl(BuildContext context) {
     return ListenableBuilder(
-      listenable: SessionService(),
+      listenable: widget.viewModel,
       builder: (context, _) {
-        final sessionService = SessionService();
-        final isActive = sessionService.hasActiveSession &&
-            sessionService.activeClientId == _client.clientId;
+        final isActive = widget.viewModel.isSessionActiveForClient;
 
         // Show graph if there's a completed session
         final latestSession = _client.sessions.isNotEmpty
@@ -681,7 +709,7 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
                       StreamBuilder<void>(
                         stream: Stream.periodic(const Duration(seconds: 1)),
                         builder: (context, _) {
-                          final duration = sessionService.sessionDuration;
+                          final duration = widget.viewModel.sessionDuration;
                           final hours = duration?.inHours ?? 0;
                           final minutes = (duration?.inMinutes ?? 0) % 60;
                           final seconds = (duration?.inSeconds ?? 0) % 60;
@@ -705,7 +733,7 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
                   StreamBuilder<void>(
                     stream: Stream.periodic(const Duration(seconds: 1)),
                     builder: (context, _) {
-                      final hr = sessionService.currentHeartRate;
+                      final hr = widget.viewModel.currentSessionHeartRate;
                       return Row(
                         children: [
                           const Icon(Icons.favorite,
@@ -743,9 +771,7 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
 
   /// Toggle session start/stop
   Future<void> _toggleSession(BuildContext context) async {
-    final sessionService = SessionService();
-    final isActive = sessionService.hasActiveSession &&
-        sessionService.activeClientId == _client.clientId;
+    final isActive = widget.viewModel.isSessionActiveForClient;
 
     if (isActive) {
       // Confirm stop
@@ -771,53 +797,22 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
       );
 
       if (confirm == true) {
-        await sessionService.stopSession();
+        await widget.viewModel.stopSessionAndRefresh();
 
         if (!context.mounted) return;
-        
-        // Refresh client data to show the saved session
         if (mounted) {
           setState(() {
-            final updatedClient = ClientDataService().getClientById(_client.clientId);
-            if (updatedClient != null) {
-              _client = updatedClient;
-            }
+            _client = widget.viewModel.client;
           });
-        }
-        
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Session stopped and saved.')),
-          );
         }
       }
     } else {
-      // Check for active session on another client
-      if (sessionService.hasActiveSession) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Another session is active. Stop it first.'),
-            ),
-          );
-        }
-        return;
-      }
-
-      // Start new session
       try {
-        await sessionService.startSession(_client.clientId);
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Session started!')),
-          );
-        }
+        await widget.viewModel.startSession();
       } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e')),
-          );
-        }
+        widget.viewModel.events.emit(
+          SnackBarEvent('Error starting session: $e', isError: true),
+        );
       }
     }
   }
@@ -871,15 +866,12 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.close, size: 20),
-                  onPressed: () {
-                    // Remove this session and refresh
-                    setState(() {
-                      final updatedSessions = List<Session>.from(_client.sessions)
-                        ..removeLast();
-                      _client = _client.copyWith(sessions: updatedSessions);
-                      ClientDataService().updateClient(_client);
-                    });
-                  },
+                    onPressed: () {
+                      setState(() {
+                        widget.viewModel.deleteLatestSession();
+                        _client = widget.viewModel.client;
+                      });
+                    },
                   tooltip: 'Delete session',
                 ),
               ],

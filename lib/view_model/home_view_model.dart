@@ -1,16 +1,25 @@
+// Files
 import '../model/clients.dart';
+import '../view_model/movesense_connect_view_model.dart';
+
+// Services
 import '../service/client_data_service.dart';
+import '../service/movesense_service.dart';
 
 class HomeViewModel {
   // ======= Dependencies =======
   final ClientDataService _dataService = ClientDataService();
+  final MovesenseConnectViewModel movesense;
 
   // ======= Calendar State =======
   DateTime focusedDay = DateTime.now();
   DateTime? selectedDay;
 
   // ======= Constructor =======
-  HomeViewModel({List<Client>? initialClients}) {
+  HomeViewModel({
+    List<Client>? initialClients,
+    MovesenseConnectViewModel? movesense,
+  }) : movesense = movesense ?? MovesenseService().viewModel {
     if (initialClients != null && initialClients.isNotEmpty) {
       // Initialize with provided clients
       _dataService.clear();

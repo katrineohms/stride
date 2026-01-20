@@ -1,10 +1,14 @@
+// Packages
 import 'package:flutter/material.dart';
-import 'package:stride/widgets/movesense_status_widget.dart';
-import 'package:stride/service/movesense_service.dart';
+
+// Files
 import '../model/clients.dart';
 import '../view_model/create_client_view_model.dart';
 import '../view_model/widgets_view_model/appointment_form_view_model.dart';
 import '../view_model/widgets_view_model/exercise_form_view_model.dart';
+
+// Widgets
+import '../widgets/movesense_status_widget.dart';
 import '../widgets/create_exercise_widget.dart';
 import '../widgets/appointments_widget.dart';
 
@@ -61,12 +65,12 @@ class _CreateClientPageState extends State<CreateClientPage> {
         title: const Text('Create Client'),
         actions: [
           ListenableBuilder(
-            listenable: MovesenseService().viewModel,
+            listenable: viewModel.movesense,
             builder: (context, _) {
               return MovesenseStatusIcon(
-                connected: MovesenseService().viewModel.isConnected,
+                connected: viewModel.movesense.isConnected,
                 heartRate: 0,
-                heartRateStream: MovesenseService().viewModel.heartRateStream,
+                heartRateStream: viewModel.movesense.heartRateStream,
               );
             },
           ),

@@ -1,23 +1,16 @@
+// Packages
 import 'package:flutter/material.dart';
-import '../model/clients.dart';
 import 'package:stop_watch_timer/stop_watch_timer.dart';
+
+// Files
+import '../model/clients.dart';
+import '../view_model/client_card_view_model.dart';
+import '../view/movesense_connect_view.dart';
+
+// Widgets
 import '../widgets/client_card_widget.dart';
 import '../widgets/movesense_status_widget.dart';
-import 'package:stride/view/movesense_connect_view.dart';
-import 'package:stride/service/movesense_service.dart';
 
-/// ViewModel for client details
-class ClientDetailViewModel {
-  ClientDetailViewModel({required Client client}) : _client = client;
-
-  Client _client;
-
-  Client get client => _client;
-
-  void updateClient(Client updated) {
-    _client = updated;
-  }
-}
 
 /// Client detail page UI
 class ClientDetailPage extends StatefulWidget {
@@ -38,6 +31,8 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
   @override
   void initState() {
     super.initState();
+    widget.viewModel.attach();
+    widget.viewModel.addListener(_onClientChanged);
     _initializeExerciseState(_client);
   }
 
@@ -65,12 +60,20 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
     for (final timer in _stopWatches.values) {
       timer.dispose();
     }
+    widget.viewModel.removeListener(_onClientChanged);
+    widget.viewModel.dispose();
     super.dispose();
   }
 
   void _toggleDone(String exerciseId, bool? value) {
     setState(() {
       _exerciseDone[exerciseId] = value ?? false;
+    });
+  }
+
+  void _onClientChanged() {
+    setState(() {
+      _initializeExerciseState(widget.viewModel.client);
     });
   }
 
@@ -84,12 +87,12 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
         centerTitle: true,
         actions: [
           ListenableBuilder(
-            listenable: MovesenseService().viewModel,
+            listenable: widget.viewModel.movesense,
             builder: (context, _) {
               return MovesenseStatusIcon(
-                connected: MovesenseService().viewModel.isConnected,
+                connected: widget.viewModel.movesense.isConnected,
                 heartRate: 0,
-                heartRateStream: MovesenseService().viewModel.heartRateStream,
+                heartRateStream: widget.viewModel.movesense.heartRateStream,
               );
             },
           ),
@@ -110,7 +113,9 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const MovesenseConnectView(),
+              builder: (context) => MovesenseConnectView(
+                viewModel: widget.viewModel.movesense,
+              ),
             ),
           );
         },

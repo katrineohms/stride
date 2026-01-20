@@ -1,32 +1,27 @@
+// Packages
 import 'package:flutter/material.dart';
+
+// Files
 import '../view_model/movesense_connect_view_model.dart';
+
+// Widgets
 import '../widgets/movesense_status_widget.dart';
-import '../service/movesense_service.dart';
 
 /// Movesense Connect Page
 class MovesenseConnectView extends StatefulWidget {
-  const MovesenseConnectView({super.key});
+  const MovesenseConnectView({
+    super.key,
+    required this.viewModel,
+  });
+
+  final MovesenseConnectViewModel viewModel;
 
   @override
   State<MovesenseConnectView> createState() => _MovesenseConnectViewState();
 }
 
 class _MovesenseConnectViewState extends State<MovesenseConnectView> {
-  // Use the shared ViewModel from the service
-  late MovesenseConnectViewModel viewModel;
-
-  @override
-  void initState() {
-    super.initState();
-    // Get the shared ViewModel from the service
-    viewModel = MovesenseService().viewModel;
-  }
-
-  @override
-  void dispose() {
-    // Don't dispose the shared ViewModel here - it should persist
-    super.dispose();
-  }
+  MovesenseConnectViewModel get viewModel => widget.viewModel;
 
   @override
   Widget build(BuildContext context) {

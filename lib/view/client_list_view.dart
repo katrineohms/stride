@@ -1,12 +1,16 @@
+// Packages
 import 'package:flutter/material.dart';
-import 'package:stride/model/clients.dart';
 
-import 'package:stride/view/create_client_view.dart';
-import 'package:stride/view/client_card_view.dart';
-import 'package:stride/view_model/client_list_view_model.dart';
-import 'package:stride/widgets/movesense_status_widget.dart';
-import 'package:stride/service/movesense_service.dart';
+// Files
+import '../model/clients.dart';
+import '../view/create_client_view.dart';
+import '../view/client_card_view.dart';
+import '../view_model/client_list_view_model.dart';
+import '../view_model/client_card_view_model.dart';
+
+// Widgets
 import '../widgets/client_card_widget.dart';
+import '../widgets/movesense_status_widget.dart';
 
 /// Page displaying a list of all clients
 class ClientOverviewPage extends StatefulWidget {
@@ -36,12 +40,12 @@ class _ClientOverviewPageState extends State<ClientOverviewPage> {
         centerTitle: true,
         actions: [
           ListenableBuilder(
-            listenable: MovesenseService().viewModel,
+            listenable: viewModel.movesense,
             builder: (context, _) {
               return MovesenseStatusIcon(
-                connected: MovesenseService().viewModel.isConnected,
+                connected: viewModel.movesense.isConnected,
                 heartRate: 0,
-                heartRateStream: MovesenseService().viewModel.heartRateStream,
+                heartRateStream: viewModel.movesense.heartRateStream,
               );
             },
           ),

@@ -1,9 +1,18 @@
+// Files
 import '../model/clients.dart';
+import '../view_model/movesense_connect_view_model.dart';
+
+// Services
+import '../service/movesense_service.dart';
 
 class EditClientViewModel {
   late Client client;
+  final MovesenseConnectViewModel movesense;
 
-  EditClientViewModel({required this.client});
+  EditClientViewModel({
+    required this.client,
+    MovesenseConnectViewModel? movesense,
+  }) : movesense = movesense ?? MovesenseService().viewModel;
 
   // Controllers for personal info
   late String name = client.name;
