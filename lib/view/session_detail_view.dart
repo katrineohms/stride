@@ -299,12 +299,12 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
             }),
             const SizedBox(height: 16),
 
-            // ===== Delete Session Button =====
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: displaySession.hrReadings.isNotEmpty
-                    ? () {
+            // ===== Delete Session Button (only after session ends) =====
+            if (!isActive && displaySession.hrReadings.isNotEmpty)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
                         showDialog<void>(
                           context: context,
                           builder: (ctx) => AlertDialog(
@@ -326,12 +326,11 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
                             ],
                           ),
                         );
-                      }
-                    : null,
-                icon: const Icon(Icons.delete),
-                label: const Text('Delete Session'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: displaySession.hrReadings.isNotEmpty ? Colors.red : Colors.grey,
+                      },
+                  icon: const Icon(Icons.delete),
+                  label: const Text('Delete Session'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
                   foregroundColor: Colors.white,
                 ),
               ),
