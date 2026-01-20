@@ -824,6 +824,14 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
         ? DateTime.fromMillisecondsSinceEpoch(session.endTime! * 1000)
         : DateTime.now();
     final duration = session.duration;
+    final startLoc = _formatLocation(
+      session.startLatitude,
+      session.startLongitude,
+    );
+    final endLoc = _formatLocation(
+      session.endLatitude,
+      session.endLongitude,
+    );
 
     // Calculate stats
     final hrValues = session.hrReadings.map((r) => r.heartRate).toList();
@@ -885,6 +893,19 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
               '(${duration.inMinutes} min)',
               style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
+            if (startLoc != null || endLoc != null) ...[
+              const SizedBox(height: 6),
+              if (startLoc != null)
+                Text(
+                  'Start location: $startLoc',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              if (endLoc != null)
+                Text(
+                  'End location: $endLoc',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+            ],
             const SizedBox(height: 12),
             // Stats row
             Row(
@@ -1014,6 +1035,11 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
         ),
       ],
     );
+  }
+
+  String? _formatLocation(double? lat, double? lon) {
+    if (lat == null || lon == null) return null;
+    return '${lat.toStringAsFixed(5)}, ${lon.toStringAsFixed(5)}';
   }
 }
 

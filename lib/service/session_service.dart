@@ -5,6 +5,7 @@ import '../model/clients.dart';
 import '../service/movesense_service.dart';
 import '../service/client_data_service.dart';
 import '../service/notification_service.dart';
+import '../service/gps_service.dart';
 
 /// Service to manage HR monitoring sessions
 class SessionService extends ChangeNotifier {
@@ -21,6 +22,7 @@ class SessionService extends ChangeNotifier {
   Timer? _saveTimer;
   Timer? _notificationTimer;
   final List<HrReading> _pendingReadings = [];
+  final GpsService _gpsService = GpsService();
 
   // Public accessors
   Session? get activeSession => _activeSession;
@@ -43,10 +45,14 @@ class SessionService extends ChangeNotifier {
     final sessionId = const Uuid().v4();
     final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
+    final startLocation = await _gpsService.getLocation();
+
     _activeSession = Session(
       sessionId: sessionId,
       startTime: now,
       hrReadings: [],
+      startLatitude: startLocation?.latitude,
+      startLongitude: startLocation?.longitude,
     );
     _activeClientId = clientId;
     _pendingReadings.clear();
@@ -91,7 +97,12 @@ class SessionService extends ChangeNotifier {
 
     // Mark session as ended
     final endTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    _activeSession = _activeSession!.copyWith(endTime: endTime);
+    final endLocation = await _gpsService.getLocation();
+    _activeSession = _activeSession!.copyWith(
+      endTime: endTime,
+      endLatitude: endLocation?.latitude,
+      endLongitude: endLocation?.longitude,
+    );
 
     // Save session to client
     final client = ClientDataService().getClientById(_activeClientId!);
