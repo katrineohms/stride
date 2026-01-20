@@ -31,20 +31,14 @@ class Session {
   final int startTime; // Unix timestamp in seconds
   final int? endTime; // null if session is active
   final List<HrReading> hrReadings;
-  final double? startLatitude;
-  final double? startLongitude;
-  final double? endLatitude;
-  final double? endLongitude;
+  final String? startLocationCity; // city name from reverse geocoding
 
   const Session({
     required this.sessionId,
     required this.startTime,
     this.endTime,
     required this.hrReadings,
-    this.startLatitude,
-    this.startLongitude,
-    this.endLatitude,
-    this.endLongitude,
+    this.startLocationCity,
   });
 
   bool get isActive => endTime == null;
@@ -58,20 +52,14 @@ class Session {
     int? startTime,
     int? endTime,
     List<HrReading>? hrReadings,
-    double? startLatitude,
-    double? startLongitude,
-    double? endLatitude,
-    double? endLongitude,
+    String? startLocationCity,
   }) {
     return Session(
       sessionId: sessionId ?? this.sessionId,
       startTime: startTime ?? this.startTime,
       endTime: endTime ?? this.endTime,
       hrReadings: hrReadings ?? this.hrReadings,
-      startLatitude: startLatitude ?? this.startLatitude,
-      startLongitude: startLongitude ?? this.startLongitude,
-      endLatitude: endLatitude ?? this.endLatitude,
-      endLongitude: endLongitude ?? this.endLongitude,
+      startLocationCity: startLocationCity ?? this.startLocationCity,
     );
   }
 }

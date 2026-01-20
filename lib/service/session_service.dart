@@ -47,14 +47,13 @@ class SessionService extends ChangeNotifier {
     final sessionId = const Uuid().v4();
     final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
-    final startLocation = await _gpsService.getLocation();
+    final startCity = await _gpsService.getLocationCityName();
 
     _activeSession = Session(
       sessionId: sessionId,
       startTime: now,
       hrReadings: [],
-      startLatitude: startLocation?.latitude,
-      startLongitude: startLocation?.longitude,
+      startLocationCity: startCity,
     );
     _activeClientId = clientId;
     _pendingReadings.clear();
@@ -106,11 +105,8 @@ class SessionService extends ChangeNotifier {
 
     // Mark session as ended
     final endTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    final endLocation = await _gpsService.getLocation();
     _activeSession = _activeSession!.copyWith(
       endTime: endTime,
-      endLatitude: endLocation?.latitude,
-      endLongitude: endLocation?.longitude,
     );
 
     // Save session to client

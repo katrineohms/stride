@@ -87,7 +87,7 @@ class ClientDataService {
         ],
         appointments: [
           Appointment(
-            timestamp: (now.add(const Duration(days: 1)).millisecondsSinceEpoch ~/ 1000),
+            timestamp: (now.add(const Duration(hours: 1)).millisecondsSinceEpoch ~/ 1000),
           ),
           Appointment(
             timestamp: (now.add(const Duration(days: 3)).millisecondsSinceEpoch ~/ 1000),
