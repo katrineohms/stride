@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import '../model/_models.dart';
 import '../service/movesense_service.dart';
 import '../service/client_data_service.dart';
@@ -83,6 +84,9 @@ class SessionService extends ChangeNotifier {
       _updateNotification();
     });
 
+    // Enable wakelock to prevent device from sleeping
+    await WakelockPlus.enable();
+
     // Show initial notification
     await NotificationService().initialize();
     await _updateNotification();
@@ -93,6 +97,9 @@ class SessionService extends ChangeNotifier {
   /// Stop the active session
   Future<void> stopSession() async {
     if (_activeSession == null || _activeClientId == null) return;
+
+    // Disable wakelock
+    await WakelockPlus.disable();
 
     // Cancel timers and subscriptions
     await _hrSubscription?.cancel();

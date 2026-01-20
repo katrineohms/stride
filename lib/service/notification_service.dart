@@ -70,11 +70,11 @@ class NotificationService {
       'session_channel',
       'HR Session',
       channelDescription: 'Ongoing heart rate monitoring session',
-      importance: Importance.low,
-      priority: Priority.low,
+      importance: Importance.max,
+      priority: Priority.high,
       ongoing: true, // Makes it persistent
       autoCancel: false,
-      showWhen: false,
+      showWhen: true,
     );
 
     const details = NotificationDetails(android: androidDetails);
