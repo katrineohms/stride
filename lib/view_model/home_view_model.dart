@@ -23,11 +23,6 @@ class HomeViewModel {
     MovesenseConnectViewModel? movesense,
   }) : movesense = movesense ?? MovesenseService().viewModel {
     unawaited(_dataService.init());
-
-    if (initialClients != null && initialClients.isNotEmpty) {
-      // Initialize with provided clients and persist them
-      unawaited(_dataService.replaceAll(initialClients));
-    }
   }
 
   // ======= Public Accessors =======
@@ -56,13 +51,8 @@ class HomeViewModel {
     focusedDay = day;
   }
 
-  /// Get clients who have an appointment on the given day
+  /// Get clients who have a session on the given day
   List<Client> getClientsForDay(DateTime day) {
     return _dataService.getClientsForDay(day);
-  }
-
-  /// Search clients by name
-  List<Client> searchClients(String query) {
-    return _dataService.searchClients(query);
   }
 }

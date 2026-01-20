@@ -5,12 +5,12 @@ import 'package:stride/widgets/movesense_status_widget.dart';
 // Files
 import '../model/clients.dart';
 import '../view_model/edit_client_view_model.dart';
-import '../view_model/widgets_view_model/appointment_form_view_model.dart';
 import '../view_model/widgets_view_model/exercise_form_view_model.dart';
+import '../view_model/widgets_view_model/session_schedule_view_model.dart';
 
 // Widgets
-import '../widgets/appointments_widget.dart';
 import '../widgets/create_exercise_widget.dart';
+import '../widgets/session_schedule_widget.dart';
 
 class EditClientPage extends StatefulWidget {
   final Client client;
@@ -26,8 +26,8 @@ class _EditClientPageState extends State<EditClientPage> {
   late EditClientViewModel viewModel;
   
   // ======= Form ViewModels =======
-  late final AppointmentFormViewModel appointmentFormViewModel;
   late final ExerciseFormViewModel exerciseFormViewModel;
+  late final SessionScheduleViewModel sessionScheduleViewModel;
 
   late TextEditingController _nameController;
   late TextEditingController _ageController;
@@ -41,8 +41,9 @@ class _EditClientPageState extends State<EditClientPage> {
     viewModel.init();
     
     // Initialize form ViewModels
-    appointmentFormViewModel = AppointmentFormViewModel();
     exerciseFormViewModel = ExerciseFormViewModel();
+    sessionScheduleViewModel = SessionScheduleViewModel();
+    sessionScheduleViewModel.initialize(viewModel.sessions);
 
     _nameController = TextEditingController(text: viewModel.name);
     _ageController = TextEditingController(text: viewModel.age.toString());
@@ -191,12 +192,16 @@ class _EditClientPageState extends State<EditClientPage> {
                 ),
               ),
 
-              // ===== Appointments =====
-              AppointmentFormWidget(
-                viewModel: appointmentFormViewModel,
-                initialAppointments: viewModel.appointments,
-                onCreate: (a) => setState(() => viewModel.addAppointment(a)),
-                onRemove: (a) => setState(() => viewModel.removeAppointment(a)),
+              // ===== Scheduled Sessions =====
+              SessionScheduleWidget(
+                viewModel: sessionScheduleViewModel,
+                initialSessions: viewModel.sessions,
+                onCreate: (session) => setState(() {
+                  viewModel.addSession(session);
+                }),
+                onRemove: (session) => setState(() {
+                  viewModel.removeSession(session);
+                }),
               ),
 
               const SizedBox(height: 12),

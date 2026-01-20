@@ -11,8 +11,6 @@ import 'package:sembast/sembast_io.dart';
 import '../model/clients.dart';
 
 /// ============= Client Data Service =============
-/// Centralized service for managing client data persisted with Sembast.
-/// All mutating operations write to disk while keeping an in-memory cache.
 class ClientDataService {
   // Singleton instance
   static final ClientDataService _instance = ClientDataService._internal();
@@ -30,21 +28,14 @@ class ClientDataService {
 
   factory ClientDataService() => _instance;
 
-  /// Ensure the database is opened and cache is hydrated.
-  /// Optionally seed with dummy data if the store is empty.
-  Future<void> init({bool seedDummyData = false}) {
-    _initFuture ??= _openAndLoad(seedDummyData: seedDummyData);
+  Future<void> init() {
+    _initFuture ??= _openAndLoad();
     return _initFuture!;
   }
 
-  Future<void> _openAndLoad({required bool seedDummyData}) async {
+  Future<void> _openAndLoad() async {
     final db = await _openDatabase();
     await _loadFromStore(db);
-
-    if (seedDummyData && _clients.isEmpty) {
-      _clients.addAll(_generateDummyClients());
-      await _persistAll(db);
-    }
   }
 
   Future<Database> _openDatabase() async {
@@ -68,15 +59,6 @@ class ClientDataService {
       );
   }
 
-  Future<void> _persistAll(Database db) async {
-    await db.transaction((txn) async {
-      await _store.delete(txn);
-      for (final client in _clients) {
-        await _store.record(client.clientId).put(txn, _clientToMap(client));
-      }
-    });
-  }
-
   Future<void> _saveClient(Database db, Client client) async {
     await _store.record(client.clientId).put(db, _clientToMap(client));
   }
@@ -94,7 +76,7 @@ class ClientDataService {
     }
   }
 
-  // ===== CRUD Operations =====
+  // ===== Data Modification =====
   /// Add a new client and persist to disk.
   Future<void> addClient(Client client) async {
     await init();
@@ -123,132 +105,7 @@ class ClientDataService {
     await _store.record(clientId).delete(db);
   }
 
-  /// Replace all clients with a provided list and persist.
-  Future<void> replaceAll(List<Client> clients) async {
-    await init();
-    _clients
-      ..clear()
-      ..addAll(clients);
-    final db = await _openDatabase();
-    await _persistAll(db);
-  }
-
-  // ===== Data Initialization =====
-  /// Initialize with dummy data and persist (useful for demos/dev).
-  Future<void> initializeDummyData({bool persist = true}) async {
-    await init();
-    _clients
-      ..clear()
-      ..addAll(_generateDummyClients());
-    if (persist) {
-      final db = await _openDatabase();
-      await _persistAll(db);
-    }
-  }
-
-  /// Generate dummy clients for testing.
-  List<Client> _generateDummyClients() {
-    final now = DateTime.now();
-
-    return [
-      Client(
-        clientId: '1',
-        name: 'AnnaDummy',
-        age: 25,
-        gender: 'Female',
-        active: 0,
-        motivation: 'Motivated',
-          exerciseTemplates: [
-          CountableExercise(
-            exerciseId: '1_1',
-            name: 'Push-ups',
-            description: 'Standard push-ups',
-            sets: 3,
-            reps: 12,
-          ),
-          TimeableExercise(
-            exerciseId: '1_2',
-            name: 'Running',
-            description: 'Treadmill running',
-            time: 30,
-          ),
-        ],
-          sessions: [
-            Session(
-              sessionId: 's1_1',
-              startTime:
-                  (now.add(const Duration(hours: 1)).millisecondsSinceEpoch ~/ 1000),
-              hrReadings: const [],
-              startLocationCity: null,
-              notes: 'Scheduled follow-up',
-            ),
-            Session(
-              sessionId: 's1_2',
-              startTime:
-                  (now.add(const Duration(days: 3)).millisecondsSinceEpoch ~/ 1000),
-              hrReadings: const [],
-              startLocationCity: null,
-              notes: 'Long run',
-            ),
-          ],
-      ),
-      Client(
-        clientId: '2',
-        name: 'MarkDummy',
-        age: 30,
-        gender: 'Male',
-        active: 1,
-        motivation: 'Needs support',
-        exerciseTemplates: const [],
-        sessions: [
-          Session(
-            sessionId: 's2_1',
-            startTime:
-                (now.add(const Duration(days: 2)).millisecondsSinceEpoch ~/ 1000),
-            hrReadings: const [],
-            startLocationCity: null,
-          ),
-        ],
-      ),
-      Client(
-        clientId: '3',
-        name: 'SophiaDummy',
-        age: 28,
-        gender: 'Female',
-        active: 2,
-        motivation: 'Struggling',
-        exerciseTemplates: const [],
-        sessions: [
-          Session(
-            sessionId: 's3_1',
-            startTime:
-                (now.add(const Duration(days: 5)).millisecondsSinceEpoch ~/ 1000),
-            hrReadings: const [],
-            startLocationCity: null,
-            notes: 'Assessment',
-          ),
-          Session(
-            sessionId: 's3_2',
-            startTime:
-                (now.add(const Duration(days: 7)).millisecondsSinceEpoch ~/ 1000),
-            hrReadings: const [],
-            startLocationCity: null,
-            notes: 'Check-in',
-          ),
-        ],
-      ),
-    ];
-  }
-
   // ===== Search & Filter =====
-  /// Search clients by name.
-  List<Client> searchClients(String query) {
-    if (query.isEmpty) return getClients();
-    return _clients
-        .where((c) => c.name.toLowerCase().contains(query.toLowerCase()))
-        .toList();
-  }
-
   /// Get clients with sessions on a given day.
   List<Client> getClientsForDay(DateTime day) {
     return _clients.where((client) {
@@ -263,19 +120,10 @@ class ClientDataService {
     }).toList();
   }
 
-  // ===== Utility =====
-  /// Clear all data from cache and storage.
-  Future<void> clear() async {
-    await init();
-    _clients.clear();
-    final db = await _openDatabase();
-    await _store.delete(db);
-  }
-
   /// Get client count from the in-memory cache.
   int getClientCount() => _clients.length;
 
-  // ===== Serialization Helpers =====
+  // ===== Serialization Helpers: Client =====
   Map<String, Object?> _clientToMap(Client client) {
     return {
       'clientId': client.clientId,
@@ -324,6 +172,7 @@ class ClientDataService {
     );
   }
 
+  // ===== Serialization Helpers: Exercise =====
   Map<String, Object?> _exerciseToMap(Exercise exercise) {
     if (exercise is CountableExercise) {
       return {
@@ -385,7 +234,7 @@ class ClientDataService {
     }
   }
 
-
+  // ===== Serialization Helpers: Session =====
   Map<String, Object?> _sessionToMap(Session session) {
     return {
       'sessionId': session.sessionId,
@@ -442,6 +291,7 @@ class ClientDataService {
     );
   }
 
+  // ===== Serialization Helpers: HRR =====
   HeartRateRecovery _hrrFromMap(Map<String, Object?> map) {
     return HeartRateRecovery(
       high: (map['high'] as num?)?.toInt() ?? 0,

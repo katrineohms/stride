@@ -1,38 +1,56 @@
-class Exercise {
-  final String exerciseId;
+// Client model
+class Client {
+  final String clientId;
   final String name;
-  final String description;
+  final int age;
+  final String gender;
+  final int active;
+  final String motivation;
+  /// Exercise templates owned by the client (copied into sessions when used)
+  final List<Exercise> exerciseTemplates;
+  final Map<String, HeartRateRecovery> hrrResults;
+  final List<Session> sessions;
 
-  Exercise({
-    required this.exerciseId,
+  Client({
+    required this.clientId,
     required this.name,
-    required this.description,
-  });
+    required this.age,
+    required this.gender,
+    required this.active,
+    required this.motivation,
+    List<Exercise>? exerciseTemplates,
+    Map<String, HeartRateRecovery>? hrrResults,
+    List<Session>? sessions,
+  })  : exerciseTemplates = List.unmodifiable(exerciseTemplates ?? []),
+        hrrResults = Map.unmodifiable(hrrResults ?? {}),
+        sessions = List.unmodifiable(sessions ?? []);
+
+  Client copyWith({
+    String? clientId,
+    String? name,
+    int? age,
+    String? gender,
+    int? active,
+    String? motivation,
+    List<Exercise>? exerciseTemplates,
+    Map<String, HeartRateRecovery>? hrrResults,
+    List<Session>? sessions,
+  }) {
+    return Client(
+      clientId: clientId ?? this.clientId,
+      name: name ?? this.name,
+      age: age ?? this.age,
+      gender: gender ?? this.gender,
+      active: active ?? this.active,
+      motivation: motivation ?? this.motivation,
+      exerciseTemplates: exerciseTemplates ?? this.exerciseTemplates,
+      hrrResults: hrrResults ?? this.hrrResults,
+      sessions: sessions ?? this.sessions,
+    );
+  }
 }
 
-class HeartRateRecovery {
-  final int high;
-  final int low;
-
-  const HeartRateRecovery({required this.high, required this.low});
-
-  int get delta => high - low;
-}
-
-class HrReading {
-  final int timestamp; // Unix timestamp in seconds
-  final int heartRate;
-
-  const HrReading({required this.timestamp, required this.heartRate});
-}
-
-class Appointment {
-  final int timestamp; // Unix timestamp in seconds
-  final String notes;
-
-  const Appointment({required this.timestamp, this.notes = ''});
-}
-
+// Session model
 class Session {
   final String sessionId;
   final int startTime; // scheduled or actual start, Unix seconds
@@ -87,6 +105,37 @@ class Session {
   }
 }
 
+
+// Heart rate model
+class HeartRateRecovery {
+  final int high;
+  final int low;
+
+  const HeartRateRecovery({required this.high, required this.low});
+
+  int get delta => high - low;
+}
+
+class HrReading {
+  final int timestamp;
+  final int heartRate;
+
+  const HrReading({required this.timestamp, required this.heartRate});
+}
+
+// Exercise
+class Exercise {
+  final String exerciseId;
+  final String name;
+  final String description;
+
+  Exercise({
+    required this.exerciseId,
+    required this.name,
+    required this.description,
+  });
+}
+
 class CountableExercise extends Exercise {
   final int reps;
   final int sets;
@@ -109,56 +158,4 @@ class TimeableExercise extends Exercise {
     required super.description,
     required this.time,
   });
-
-}
-
-class Client {
-  final String clientId;
-  final String name;
-  final int age;
-  final String gender;
-  final int active;
-  final String motivation;
-  /// Exercise templates owned by the client (copied into sessions when used)
-  final List<Exercise> exerciseTemplates;
-  final Map<String, HeartRateRecovery> hrrResults;
-  final List<Session> sessions;
-
-  Client({
-    required this.clientId,
-    required this.name,
-    required this.age,
-    required this.gender,
-    required this.active,
-    required this.motivation,
-    List<Exercise>? exerciseTemplates,
-    Map<String, HeartRateRecovery>? hrrResults,
-    List<Session>? sessions,
-  })  : exerciseTemplates = List.unmodifiable(exerciseTemplates ?? []),
-        hrrResults = Map.unmodifiable(hrrResults ?? {}),
-        sessions = List.unmodifiable(sessions ?? []);
-
-  Client copyWith({
-    String? clientId,
-    String? name,
-    int? age,
-    String? gender,
-    int? active,
-    String? motivation,
-    List<Exercise>? exerciseTemplates,
-    Map<String, HeartRateRecovery>? hrrResults,
-    List<Session>? sessions,
-  }) {
-    return Client(
-      clientId: clientId ?? this.clientId,
-      name: name ?? this.name,
-      age: age ?? this.age,
-      gender: gender ?? this.gender,
-      active: active ?? this.active,
-      motivation: motivation ?? this.motivation,
-      exerciseTemplates: exerciseTemplates ?? this.exerciseTemplates,
-      hrrResults: hrrResults ?? this.hrrResults,
-      sessions: sessions ?? this.sessions,
-    );
-  }
 }

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:stride/service/client_data_service.dart';
-import 'package:stride/view/home_view.dart'; // import your HomePage
+import 'package:stride/view/home_view.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await ClientDataService().init(seedDummyData: true);
+  await ClientDataService().init();
   runApp(const MyApp());
 }
 

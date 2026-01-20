@@ -194,7 +194,7 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
                             IconButton(
                               icon: const Icon(Icons.add, size: 24),
                               onPressed: () {
-                                // TODO: Handle plus button click (for adding appointments)
+                                // TODO: Add new session scheduling flow
                               },
                             ),
                             IconButton(

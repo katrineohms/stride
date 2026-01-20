@@ -23,10 +23,6 @@ class ClientOverviewViewModel {
     MovesenseConnectViewModel? movesense,
   }) : movesense = movesense ?? MovesenseService().viewModel {
     unawaited(_dataService.init());
-
-    if (initialClients != null && initialClients.isNotEmpty) {
-      unawaited(_dataService.replaceAll(initialClients));
-    }
   }
 
   List<Client> get clients => _dataService.getClients();
@@ -43,9 +39,6 @@ class ClientOverviewViewModel {
     await _dataService.deleteClient(clientId);
   }
 
-  List<Client> searchClients(String query) {
-    return _dataService.searchClients(query);
-  }
 
   // Example method using getStatusColor
   Color getClientStatusColor(Client client) {

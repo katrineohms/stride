@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 // Files
 import '../model/clients.dart';
 import '../view_model/create_client_view_model.dart';
-import '../view_model/widgets_view_model/appointment_form_view_model.dart';
 import '../view_model/widgets_view_model/exercise_form_view_model.dart';
+import '../view_model/widgets_view_model/session_schedule_view_model.dart';
 
 // Widgets
 import '../widgets/movesense_status_widget.dart';
 import '../widgets/create_exercise_widget.dart';
-import '../widgets/appointments_widget.dart';
+import '../widgets/session_schedule_widget.dart';
 
 /// Page for creating a new client
 class CreateClientPage extends StatefulWidget {
@@ -27,8 +27,8 @@ class _CreateClientPageState extends State<CreateClientPage> {
   final CreateClientViewModel viewModel = CreateClientViewModel();
   
   // ======= Form ViewModels =======
-  late final AppointmentFormViewModel appointmentFormViewModel;
   late final ExerciseFormViewModel exerciseFormViewModel;
+  late final SessionScheduleViewModel sessionScheduleViewModel;
 
   // ======= Controllers =======
   final TextEditingController _nameController = TextEditingController();
@@ -39,8 +39,8 @@ class _CreateClientPageState extends State<CreateClientPage> {
   void initState() {
     super.initState();
     // Initialize form ViewModels
-    appointmentFormViewModel = AppointmentFormViewModel();
     exerciseFormViewModel = ExerciseFormViewModel();
+    sessionScheduleViewModel = SessionScheduleViewModel();
   }
 
   @override
@@ -219,12 +219,18 @@ class _CreateClientPageState extends State<CreateClientPage> {
                 ),
               ),
 
-              // ======= Appointments =======
-              AppointmentFormWidget(
-                viewModel: appointmentFormViewModel,
-                onCreate: (appointment) {
+              // ======= Scheduled Sessions =======
+              SessionScheduleWidget(
+                viewModel: sessionScheduleViewModel,
+                initialSessions: viewModel.scheduledSessions,
+                onCreate: (session) {
                   setState(() {
-                    viewModel.appointments.add(appointment);
+                    viewModel.addScheduledSession(session);
+                  });
+                },
+                onRemove: (session) {
+                  setState(() {
+                    viewModel.removeScheduledSession(session);
                   });
                 },
               ),

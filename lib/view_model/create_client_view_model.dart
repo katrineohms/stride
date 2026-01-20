@@ -1,6 +1,7 @@
 // Packages
-import '../model/clients.dart';
+import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
+import '../model/clients.dart';
 import '../view_model/movesense_connect_view_model.dart';
 
 // Services
@@ -14,9 +15,10 @@ class CreateClientViewModel {
   int? age;
   String gender = 'Male';
   int active = 0; // 0 = green, 1 = yellow, 2 = red
-  List<Appointment> appointments = []; // multiple appointments
   String motivation = '';
+  final List<Session> scheduledSessions = [];
   final MovesenseConnectViewModel movesense;
+  final _uuid = const Uuid();
 
   // Exercise templates stored on the client
   List<Exercise> exerciseTemplates = [];
@@ -41,16 +43,6 @@ class CreateClientViewModel {
       throw Exception('Cannot create client: invalid data');
     }
 
-    final sessionList = appointments
-        .map((a) => Session(
-              sessionId: const Uuid().v4(),
-              startTime: a.timestamp,
-              hrReadings: const [],
-              startLocationCity: null,
-              notes: a.notes,
-            ))
-        .toList();
-
     return Client(
       clientId: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
@@ -60,7 +52,37 @@ class CreateClientViewModel {
       motivation: motivation,
       exerciseTemplates: exerciseTemplates,
       hrrResults: {},
-      sessions: sessionList,
+      sessions: List.unmodifiable(scheduledSessions),
+    );
+  }
+
+  void addScheduledSession(Session session) {
+    scheduledSessions.add(session);
+  }
+
+  void removeScheduledSession(Session session) {
+    scheduledSessions.remove(session);
+  }
+
+  Session buildSessionFromPick(DateTime date, TimeOfDay time) {
+    final ts = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+    ).millisecondsSinceEpoch ~/
+        1000;
+
+    return Session(
+      sessionId: _uuid.v4(),
+      startTime: ts,
+      endTime: null,
+      hrReadings: const [],
+      startLocationCity: null,
+      exercisesPerformed: const [],
+      hrrResults: const {},
+      notes: null,
     );
   }
 }
