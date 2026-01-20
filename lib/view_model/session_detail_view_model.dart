@@ -14,9 +14,10 @@ import '../service/movesense_service.dart';
 /// ViewModel for session detail view - manages a specific session execution
 class SessionDetailViewModel extends ChangeNotifier {
   final Client client;
-  Session latestSession;
+  late Session latestSession;
   final MovesenseConnectViewModel movesense;
   final UiEventNotifier events;
+  final String _sessionId;
 
   final ClientDataService _dataService = ClientDataService();
   final SessionService _sessionService = SessionService();
@@ -29,12 +30,22 @@ class SessionDetailViewModel extends ChangeNotifier {
     UiEventNotifier? eventNotifier,
   })  : movesense = movesenseViewModel ?? MovesenseService().viewModel,
         events = eventNotifier ?? UiEventNotifier(),
+        _sessionId = session.sessionId,
         latestSession = session;
 
   void attach() {
     if (_attached) return;
+    _refreshSessionFromStorage();
     _sessionService.addListener(_onSessionServiceChanged);
     _attached = true;
+  }
+
+  void _refreshSessionFromStorage() {
+    final refreshed = _dataService.getClientById(client.clientId);
+    if (refreshed == null) return;
+    final foundSession = refreshed.sessions
+        .firstWhere((s) => s.sessionId == _sessionId, orElse: () => latestSession);
+    latestSession = foundSession;
   }
 
   void _onSessionServiceChanged() {
@@ -145,4 +156,14 @@ class SessionDetailViewModel extends ChangeNotifier {
   Session? get activeSession => _sessionService.activeSession;
 
   Session get session => latestSession;
+
+  /// Get all previous completed sessions (excluding the current session)
+  List<Session> get previousSessions {
+    final refreshed = _dataService.getClientById(client.clientId);
+    if (refreshed == null) return [];
+    return refreshed.sessions
+        .where((s) => s.endTime != null && s.sessionId != _sessionId)
+        .toList()
+      ..sort((a, b) => b.endTime!.compareTo(a.endTime!));
+  }
 }

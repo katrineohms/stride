@@ -72,6 +72,15 @@ class ClientDetailViewModel extends ChangeNotifier {
   /// Exercise templates remain tied to the client
   List<Exercise> get exerciseTemplates => _client.exerciseTemplates;
 
+  /// Refresh client from data store
+  Future<void> refreshClient() async {
+    final refreshed = _dataService.getClientById(_client.clientId);
+    if (refreshed != null) {
+      _client = refreshed;
+      notifyListeners();
+    }
+  }
+
   /// Update the client and optionally persist
   Future<void> updateClient(Client updatedClient, {bool persist = true}) async {
     _client = updatedClient;

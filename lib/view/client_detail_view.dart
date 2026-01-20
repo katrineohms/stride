@@ -26,39 +26,49 @@ class ClientDetailPage extends StatefulWidget {
   State<ClientDetailPage> createState() => _ClientDetailPageState();
 }
 
-class _ClientDetailPageState extends State<ClientDetailPage> {
+class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBindingObserver {
   Client get _client => widget.viewModel.client;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     widget.viewModel.attach();
     widget.viewModel.addListener(_onClientChanged);
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      // Refresh client data when returning to this view
+      widget.viewModel.refreshClient();
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     widget.viewModel.removeListener(_onClientChanged);
     widget.viewModel.dispose();
     super.dispose();
   }
 
   void _onClientChanged() {
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   List<Session> get _previousSessions {
-    final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     return _client.sessions
-        .where((s) => s.endTime != null && s.startTime < now)
+        .where((s) => s.endTime != null)
         .toList()
-      ..sort((a, b) => b.startTime.compareTo(a.startTime));
+      ..sort((a, b) => b.endTime!.compareTo(a.endTime!));
   }
 
   List<Session> get _upcomingSessions {
-    final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     return _client.sessions
-        .where((s) => s.startTime >= now && s.endTime == null)
+        .where((s) => s.endTime == null)
         .toList()
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
   }
@@ -115,7 +125,10 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
             const SizedBox(height: 16),
 
             // ===== Personal Info =====
-            PersonalInfoCard(client: _client),
+            SizedBox(
+              width: double.infinity,
+              child: PersonalInfoCard(client: _client),
+            ),
             const SizedBox(height: 16),
 
             // ===== Upcoming Sessions =====
@@ -125,8 +138,9 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
             ),
             const SizedBox(height: 8),
             if (_upcomingSessions.isEmpty)
-              const Card(
-                child: Padding(
+              Card(
+                color: Theme.of(context).cardColor,
+                child: const Padding(
                   padding: EdgeInsets.all(16),
                   child: Text('No upcoming sessions'),
                 ),
@@ -137,6 +151,7 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
                   session.startTime * 1000,
                 );
                 return Card(
+                  color: Theme.of(context).cardColor,
                   child: ListTile(
                     leading: const Icon(Icons.calendar_today),
                     title: Text(DateFormat('MMMM d, y').format(date)),
@@ -167,8 +182,9 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
             ),
             const SizedBox(height: 8),
             if (_previousSessions.isEmpty)
-              const Card(
-                child: Padding(
+              Card(
+                color: Theme.of(context).cardColor,
+                child: const Padding(
                   padding: EdgeInsets.all(16),
                   child: Text('No previous sessions'),
                 ),
@@ -179,6 +195,7 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
                   session.startTime * 1000,
                 );
                 return Card(
+                  color: Theme.of(context).cardColor,
                   child: ListTile(
                     leading: const Icon(Icons.history),
                     title: Text(DateFormat('MMMM d, y').format(date)),
@@ -213,8 +230,9 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
             ),
             const SizedBox(height: 8),
             if (_client.exerciseTemplates.isEmpty)
-              const Card(
-                child: Padding(
+              Card(
+                color: Theme.of(context).cardColor,
+                child: const Padding(
                   padding: EdgeInsets.all(16),
                   child: Text('No exercise templates'),
                 ),
@@ -223,6 +241,7 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
               ..._client.exerciseTemplates.map((exercise) {
                 return ExerciseTemplateCard(exercise: exercise);
               }),
+              const SizedBox(height: 50),
           ],
         ),
       ),

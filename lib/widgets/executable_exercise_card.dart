@@ -36,6 +36,7 @@ class ExecutableExerciseCard extends StatelessWidget {
 
   Widget _buildCountableCard(BuildContext context, CountableExercise ex) {
     return Card(
+      color: Theme.of(context).cardColor,
       margin: const EdgeInsets.only(bottom: 8),
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -93,6 +94,7 @@ class ExecutableExerciseCard extends StatelessWidget {
 
   Widget _buildTimeableCard(BuildContext context, TimeableExercise ex) {
     return Card(
+      color: Theme.of(context).cardColor,
       margin: const EdgeInsets.only(bottom: 8),
       child: Padding(
         padding: const EdgeInsets.all(12),

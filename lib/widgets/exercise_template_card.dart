@@ -25,6 +25,7 @@ class ExerciseTemplateCard extends StatelessWidget {
     }
 
     return Card(
+      color: Theme.of(context).cardColor,
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: const Icon(Icons.fitness_center),

@@ -284,146 +284,40 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
             const SizedBox(height: 16),
 
             // ===== Client Info =====
-            PersonalInfoCard(client: _client),
+            SizedBox(
+              width: double.infinity,
+              child: PersonalInfoCard(client: _client),
+            ),
             const SizedBox(height: 16),
 
             // ===== HR Session Controls =====
-            Text(
-              'Heart Rate Session',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 8),
-            ElevatedButton.icon(
-              onPressed: () async {
-                if (isActive) {
-                  await widget.viewModel.stopSession();
-                } else {
-                  await widget.viewModel.startSession();
-                }
-                if (mounted) setState(() {});
-              },
-              icon: Icon(isActive ? Icons.stop : Icons.play_arrow),
-              label: Text(isActive ? 'Stop Session' : 'Start Session'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isActive ? Colors.red : null,
-                foregroundColor: isActive ? Colors.white : null,
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  if (isActive) {
+                    await widget.viewModel.stopSession();
+                  } else {
+                    await widget.viewModel.startSession();
+                  }
+                  if (mounted) setState(() {});
+                },
+                icon: Icon(isActive ? Icons.stop : Icons.play_arrow),
+                label: Text(isActive ? 'Stop Session' : 'Start Session'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isActive ? Colors.red : null,
+                  foregroundColor: isActive ? Colors.white : null,
+                ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
-            // Live stats when session running
-            if (isActive) ...[
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _StatTile(
-                              label: 'Current HR',
-                              value: liveHr != null ? '$liveHr bpm' : '--',
-                            ),
-                          ),
-                          Expanded(
-                            child: _StatTile(
-                              label: 'Duration',
-                              value: _formatDuration(liveDuration),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        activeSession?.startLocationCity ?? 'Location: --',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
+            // Session graph (only after session ends and has data)
+            if (!isActive && latestSession.hrReadings.isNotEmpty)
+              SessionGraphCard(session: latestSession),
 
-            // Latest completed session stats/graph
-            if (!isActive && latestSession.hrReadings.isNotEmpty) ...[
-              Card(
-                color: Theme.of(context).cardColor,
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Latest Session',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close, size: 20),
-                            onPressed: () {
-                              widget.viewModel.deleteLatestSession();
-                              setState(() {});
-                            },
-                            tooltip: 'Delete session',
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _buildSessionTimeString(latestSession),
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                      if (latestSession.startLocationCity != null) ...[
-                        const SizedBox(height: 6),
-                        Text(
-                          'Location: ${latestSession.startLocationCity}',
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                      ],
-                      const SizedBox(height: 12),
-                      // Stats row
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _buildStatItem(
-                            'Avg',
-                            '${_averageHr(latestSession.hrReadings)}',
-                            'bpm',
-                          ),
-                          _buildStatItem(
-                            'Max',
-                            '${_maxHr(latestSession.hrReadings)}',
-                            'bpm',
-                          ),
-                          _buildStatItem(
-                            'Min',
-                            '${_minHr(latestSession.hrReadings)}',
-                            'bpm',
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      // Chart embedded
-                      SessionGraphCard(session: latestSession),
-                    ],
-                  ),
-                ),
-              ),
+            if (!isActive && latestSession.hrReadings.isNotEmpty)
               const SizedBox(height: 16),
-            ],
-            const SizedBox(height: 4),
 
             // ===== Exercises =====
             Text(
@@ -446,6 +340,7 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
                 hrr: hrr,
               );
             }),
+            const SizedBox(height: 50),
           ],
         ),
       ),

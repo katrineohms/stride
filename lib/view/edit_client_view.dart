@@ -137,7 +137,7 @@ class _EditClientPageState extends State<EditClientPage> {
                         children: [
                           Expanded(
                             child: DropdownButtonFormField<String>(
-                              value: viewModel.gender,
+                              initialValue: viewModel.gender,
                               decoration: const InputDecoration(
                                 labelText: 'Gender',
                                 border: OutlineInputBorder(),
