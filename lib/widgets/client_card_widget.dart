@@ -31,16 +31,10 @@ Color getStatusColor(int active) {
 
 /// ===== Helper to get next upcoming appointment =====
 DateTime? getNextAppointment(Client client) {
-  final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-  final futureAppointments = client.appointments
-      .where((a) => a.timestamp >= now)
-      .toList();
-
-  if (futureAppointments.isEmpty) return null;
-
-  futureAppointments.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+  final upcoming = client.upcomingAppointments;
+  if (upcoming.isEmpty) return null;
   return DateTime.fromMillisecondsSinceEpoch(
-    futureAppointments.first.timestamp * 1000,
+    upcoming.first.appointment.timestamp * 1000,
   );
 }
 
@@ -98,6 +92,8 @@ class ClientDetailViewWidget extends StatefulWidget {
   final void Function(String, bool?) onToggleDone;
   final ValueChanged<Client>? onClientUpdated;
   final VoidCallback? onMovesenseTap;
+  final bool isSessionMode; // true = session view, false = client view
+  final Session? activeSession; // required if isSessionMode = true
 
   const ClientDetailViewWidget({
     super.key,
@@ -107,6 +103,8 @@ class ClientDetailViewWidget extends StatefulWidget {
     required this.onToggleDone,
     this.onClientUpdated,
     this.onMovesenseTap,
+    this.isSessionMode = false,
+    this.activeSession,
   });
 
   @override
@@ -115,14 +113,12 @@ class ClientDetailViewWidget extends StatefulWidget {
 
 class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
   late Client _client;
-  late Map<String, HeartRateRecovery> _hrrResults;
   late final StreamSubscription<UiEvent> _eventSub;
 
   @override
   void initState() {
     super.initState();
     _client = widget.viewModel.client;
-    _hrrResults = Map<String, HeartRateRecovery>.from(_client.hrrResults);
     _eventSub = widget.viewModel.events.stream.listen((event) {
       if (!mounted) return;
       if (event is SnackBarEvent) {
@@ -219,9 +215,6 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
                                   if (mounted) {
                                     setState(() {
                                       _client = updatedClient;
-                                      _hrrResults = Map<String,
-                                              HeartRateRecovery>.from(
-                                          updatedClient.hrrResults);
                                     });
                                   }
                                   if (context.mounted) {
@@ -273,8 +266,11 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
           ),
           const SizedBox(height: 16),
 
-          // ===== Session Control =====
-          _buildSessionControl(context),
+          // ===== Session Control (client view) or Active Session (session view) =====
+          if (!widget.isSessionMode)
+            _buildSessionControl(context)
+          else if (widget.activeSession != null)
+            _buildActiveSessionDisplay(context, widget.activeSession!),
           const SizedBox(height: 16),
 
           // ===== Personal Info Card =====
@@ -318,50 +314,53 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
           ),
           const SizedBox(height: 16),
 
-          // ===== Appointments Card =====
-          SizedBox(
-            width: double.infinity,
-            child: Card(
-              color: Theme.of(context).cardColor,
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Appointments',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+          // ===== Appointments Card (client view only) =====
+          if (!widget.isSessionMode) ...[
+            SizedBox(
+              width: double.infinity,
+              child: Card(
+                color: Theme.of(context).cardColor,
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Appointments',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    if (client.appointments.isEmpty)
-                      const Text('No upcoming appointments')
-                    else
-                      ...client.appointments.map((a) {
-                        final dt = DateTime.fromMillisecondsSinceEpoch(
-                          a.timestamp * 1000,
-                        );
-                        final hour = dt.hour.toString().padLeft(2, '0');
-                        final minute = dt.minute.toString().padLeft(2, '0');
-                        final dateStr =
-                            '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 2),
-                          child: Text('$dateStr $hour:$minute'),
-                        );
-                      }),
-                  ],
+                      const SizedBox(height: 8),
+                      if (client.upcomingAppointments.isEmpty)
+                        const Text('No upcoming appointments')
+                      else
+                        ...client.upcomingAppointments.map((session) {
+                          final a = session.appointment;
+                          final dt = DateTime.fromMillisecondsSinceEpoch(
+                            a.timestamp * 1000,
+                          );
+                          final hour = dt.hour.toString().padLeft(2, '0');
+                          final minute = dt.minute.toString().padLeft(2, '0');
+                          final dateStr =
+                              '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 2),
+                            child: Text('$dateStr $hour:$minute'),
+                          );
+                        }),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
+          ],
 
           // ===== Exercises =====
           const Text(
@@ -370,10 +369,13 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
           ),
           const SizedBox(height: 8),
           Column(
-            children: client.exercises.map((exercise) {
+            children: client.exerciseTemplates.map((exercise) {
               final done = widget.exerciseDone[exercise.exerciseId] ?? false;
               final stopWatch = widget.stopWatches[exercise.exerciseId];
-              final hrr = _hrrResults[exercise.exerciseId];
+              // Get HRR from latest session if available
+              final hrr = client.sessions.isNotEmpty 
+                  ? client.sessions.last.hrrResults[exercise.exerciseId]
+                  : null;
 
               return SizedBox(
                 width: double.infinity,
@@ -398,10 +400,12 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
                                 exercise.name,
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  decoration: done
+                                  decoration: (widget.isSessionMode || done)
                                       ? TextDecoration.lineThrough
                                       : null,
-                                  color: done ? Colors.grey : null,
+                                  color: (widget.isSessionMode || done) 
+                                      ? Colors.grey 
+                                      : null,
                                 ),
                               ),
                             ),
@@ -415,105 +419,107 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
                         ),
                         const SizedBox(height: 8),
 
-                        // Row: checkbox / stopwatch + heart button
-                        Row(
-                          children: [
-                            if (exercise is CountableExercise)
-                              Expanded(
-                                child: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Checkbox(
-                                    value: done,
-                                    onChanged: (val) => widget.onToggleDone(
-                                      exercise.exerciseId,
-                                      val,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            if (exercise is TimeableExercise &&
-                                stopWatch != null)
-                              Expanded(
-                                child: StopwatchWidget(
-                                  stopWatchTimer: stopWatch,
-                                ),
-                              ),
-
-                            if (hrr != null)
-                              Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'High: ${hrr.high}',
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                    Text(
-                                      'Low: ${hrr.low}',
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                    Text(
-                                      'HRR: ${hrr.delta}',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
+                        // Row: checkbox / stopwatch + heart button (only in session mode)
+                        if (widget.isSessionMode) ...[
+                          Row(
+                            children: [
+                              if (exercise is CountableExercise)
+                                Expanded(
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Checkbox(
+                                      value: done,
+                                      onChanged: (val) => widget.onToggleDone(
+                                        exercise.exerciseId,
+                                        val,
                                       ),
                                     ),
-                                  ],
-                                ),
-                              ),
-
-                            // Heart button (changes style after HRR captured)
-                            Builder(
-                              builder: (context) {
-                                final hasHrr = hrr != null;
-                                final borderRadius = BorderRadius.circular(20);
-                                final borderColor =
-                                    Theme.of(context).colorScheme.primary;
-                                return Material(
-                                  color: hasHrr
-                                      ? Colors.white
-                                      : Theme.of(context)
-                                          .colorScheme
-                                          .primary,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: borderRadius,
-                                    side: hasHrr
-                                        ? BorderSide(color: borderColor)
-                                        : BorderSide.none,
                                   ),
-                                  elevation: 1,
-                                  child: InkWell(
-                                    customBorder: RoundedRectangleBorder(
+                                ),
+                              if (exercise is TimeableExercise &&
+                                  stopWatch != null)
+                                Expanded(
+                                  child: StopwatchWidget(
+                                    stopWatchTimer: stopWatch,
+                                  ),
+                                ),
+
+                              if (hrr != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'High: ${hrr.high}',
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
+                                      Text(
+                                        'Low: ${hrr.low}',
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
+                                      Text(
+                                        'HRR: ${hrr.delta}',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                              // Heart button (changes style after HRR captured)
+                              Builder(
+                                builder: (context) {
+                                  final hasHrr = hrr != null;
+                                  final borderRadius = BorderRadius.circular(20);
+                                  final borderColor =
+                                      Theme.of(context).colorScheme.primary;
+                                  return Material(
+                                    color: hasHrr
+                                        ? Colors.white
+                                        : Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                    shape: RoundedRectangleBorder(
                                       borderRadius: borderRadius,
+                                      side: hasHrr
+                                          ? BorderSide(color: borderColor)
+                                          : BorderSide.none,
                                     ),
-                                    onTap: () => _startHeartRateRecovery(
-                                      context,
-                                      exercise.exerciseId,
-                                      exercise.name,
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8),
-                                      child: Icon(
-                                        Icons.favorite,
-                                        color: hasHrr
-                                            ? const Color.fromARGB(
-                                                255,
-                                                210,
-                                                57,
-                                                62,
-                                              )
-                                            : Colors.white,
-                                        size: 16,
+                                    elevation: 1,
+                                    child: InkWell(
+                                      customBorder: RoundedRectangleBorder(
+                                        borderRadius: borderRadius,
+                                      ),
+                                      onTap: () => _startHeartRateRecovery(
+                                        context,
+                                        exercise.exerciseId,
+                                        exercise.name,
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8),
+                                        child: Icon(
+                                          Icons.favorite,
+                                          color: hasHrr
+                                              ? const Color.fromARGB(
+                                                  255,
+                                                  210,
+                                                  57,
+                                                  62,
+                                                )
+                                              : Colors.white,
+                                          size: 16,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -623,18 +629,15 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
     final minHr = readings.reduce(min);
     final recovery = maxHr - minHr;
 
+    // Save HRR to the latest session via view model
+    await widget.viewModel.setHeartRateRecovery(
+      exerciseId,
+      HeartRateRecovery(high: maxHr, low: minHr),
+    );
+
     if (mounted) {
       setState(() {
-        final updated = _client.copyWith(
-          hrrResults: Map<String, HeartRateRecovery>.from(_hrrResults)
-            ..[exerciseId] = HeartRateRecovery(high: maxHr, low: minHr),
-        );
-        widget.viewModel.setHeartRateRecovery(
-          exerciseId,
-          HeartRateRecovery(high: maxHr, low: minHr),
-        );
-        _hrrResults = Map<String, HeartRateRecovery>.from(updated.hrrResults);
-        _client = updated;
+        _client = widget.viewModel.client;
       });
     }
 
@@ -981,6 +984,103 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
               const Center(
                 child: Text('No heart rate data recorded'),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Build active session display card
+  Widget _buildActiveSessionDisplay(BuildContext context, Session session) {
+    final startTime = DateTime.fromMillisecondsSinceEpoch(session.startTime * 1000);
+    final elapsed = DateTime.now().difference(startTime);
+    final elapsedStr = 
+        '${elapsed.inHours.toString().padLeft(2, '0')}:'
+        '${(elapsed.inMinutes % 60).toString().padLeft(2, '0')}:'
+        '${(elapsed.inSeconds % 60).toString().padLeft(2, '0')}';
+
+    // Get latest HR reading
+    final latestHr = session.hrReadings.isNotEmpty 
+        ? session.hrReadings.last.heartRate 
+        : 0;
+
+    return Card(
+      color: Theme.of(context).cardColor,
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Active Session',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                Column(
+                  children: [
+                    const Text(
+                      'Duration',
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      elapsedStr,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                Column(
+                  children: [
+                    const Text(
+                      'Current HR',
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '$latestHr',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromARGB(255, 210, 57, 62),
+                      ),
+                    ),
+                    const Text(
+                      'bpm',
+                      style: TextStyle(fontSize: 10, color: Colors.grey),
+                    ),
+                  ],
+                ),
+                Column(
+                  children: [
+                    const Text(
+                      'Session Exercise',
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${session.exercises.length}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ],
         ),
       ),

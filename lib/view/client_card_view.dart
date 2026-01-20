@@ -43,7 +43,7 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
     }
     _stopWatches.clear();
 
-    for (final ex in client.exercises) {
+    for (final ex in client.exerciseTemplates) {
       if (ex is CountableExercise) {
         _exerciseDone[ex.exerciseId] = false;
       } else if (ex is TimeableExercise) {

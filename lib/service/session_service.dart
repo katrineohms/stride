@@ -44,16 +44,33 @@ class SessionService extends ChangeNotifier {
       throw Exception('No Movesense device connected.');
     }
 
+    // Find the client and their next upcoming appointment
+    final client = ClientDataService().getClientById(clientId);
+    if (client == null) {
+      throw Exception('Client not found.');
+    }
+
+    final upcomingAppointments = client.upcomingAppointments;
+    if (upcomingAppointments.isEmpty) {
+      throw Exception('No upcoming appointments. Create an appointment first.');
+    }
+
+    // Get the next appointment session
+    final appointmentSession = upcomingAppointments.first;
+
     final sessionId = const Uuid().v4();
     final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
     final startCity = await _gpsService.getLocationCityName();
 
+    // Create session with the appointment marked as in progress
     _activeSession = Session(
       sessionId: sessionId,
+      appointment: appointmentSession.appointment,
       startTime: now,
-      hrReadings: [],
+      hrReadings: const [],
       startLocationCity: startCity,
+      exercises: client.exerciseTemplates, // Copy template exercises to session
     );
     _activeClientId = clientId;
     _pendingReadings.clear();
@@ -103,16 +120,20 @@ class SessionService extends ChangeNotifier {
     // Flush remaining readings
     _flushReadings();
 
-    // Mark session as ended
+    // Mark session as ended and appointment as completed
     final endTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     _activeSession = _activeSession!.copyWith(
       endTime: endTime,
+      appointment: _activeSession!.appointment.copyWith(isCompleted: true),
     );
 
-    // Save session to client
+    // Save session to client, replacing the placeholder appointment session
     final client = ClientDataService().getClientById(_activeClientId!);
     if (client != null) {
-      final updatedSessions = List<Session>.from(client.sessions)
+      // Remove the original placeholder session and add the completed one
+      final updatedSessions = client.sessions
+          .where((s) => s.sessionId != _activeSession!.sessionId)
+          .toList()
         ..add(_activeSession!);
       final updatedClient = client.copyWith(sessions: updatedSessions);
       await ClientDataService().updateClient(updatedClient);

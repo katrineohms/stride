@@ -47,16 +47,8 @@ class ClientDetailViewModel extends ChangeNotifier {
   // ===== Next Appointment =====
   /// Returns the soonest future appointment, or null if none
   Appointment? get nextAppointment {
-    final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-
-    final futureAppointments = _client.appointments
-        .where((a) => a.timestamp >= now)
-        .toList();
-
-    if (futureAppointments.isEmpty) return null;
-
-    futureAppointments.sort((a, b) => a.timestamp.compareTo(b.timestamp));
-    return futureAppointments.first;
+    final upcoming = _client.upcomingAppointments;
+    return upcoming.isEmpty ? null : upcoming.first.appointment;
   }
 
   /// Formatted string for the next appointment (YYYY-MM-DD HH:MM)
@@ -72,8 +64,16 @@ class ClientDetailViewModel extends ChangeNotifier {
     return '$dateStr $hour:$minute';
   }
 
-  /// Exercises remain tied to the client
-  List<Exercise> get exercises => _client.exercises;
+  /// Exercise templates for this client
+  List<Exercise> get exerciseTemplates => _client.exerciseTemplates;
+
+  /// Get exercises from the active session, if any
+  List<Exercise> get activeSessionExercises {
+    if (!isSessionActiveForClient || _sessionService.activeSession == null) {
+      return const [];
+    }
+    return _sessionService.activeSession!.exercises;
+  }
 
   /// Update the client and optionally persist
   Future<void> updateClient(Client updatedClient, {bool persist = true}) async {
@@ -84,11 +84,19 @@ class ClientDetailViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Replace/merge HRR results and persist
+  /// Replace/merge HRR results in the latest session and persist
   Future<void> setHeartRateRecovery(String exerciseId, HeartRateRecovery hrr) async {
-    final updatedHrr = Map<String, HeartRateRecovery>.from(_client.hrrResults)
+    if (_client.sessions.isEmpty) return;
+    
+    final latestSession = _client.sessions.last;
+    final updatedHrr = Map<String, HeartRateRecovery>.from(latestSession.hrrResults)
       ..[exerciseId] = hrr;
-    await updateClient(_client.copyWith(hrrResults: updatedHrr));
+    
+    final updatedSession = latestSession.copyWith(hrrResults: updatedHrr);
+    final updatedSessions = List<Session>.from(_client.sessions)
+      ..[_client.sessions.length - 1] = updatedSession;
+    
+    await updateClient(_client.copyWith(sessions: updatedSessions));
   }
 
   /// Remove the latest session (used by UI delete button)

@@ -4,7 +4,18 @@ import 'package:stride/view/home_view.dart'; // import your HomePage
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await ClientDataService().init(seedDummyData: true);
+  
+  // Clear old database and reinitialize with new structure
+  // Set to false after first run if you want to keep data
+  //const forceReinitialize = true;
+  
+  final dataService = ClientDataService();
+  await dataService.init();
+  
+  //if (forceReinitialize) {
+    // await dataService.initializeDummyData(persist: true);
+  //}
+  
   runApp(const MyApp());
 }
 

@@ -46,15 +46,25 @@ class CreateClientViewModel {
       throw Exception('Cannot create client: invalid data');
     }
 
+    // Convert appointments to sessions
+    final sessions = appointments.map((appointment) {
+      return Session(
+        sessionId: '${DateTime.now().millisecondsSinceEpoch}_${appointment.timestamp}',
+        appointment: appointment,
+        startTime: appointment.timestamp,
+        hrReadings: const [],
+      );
+    }).toList();
+
     return Client(
       clientId: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
       age: age!,
       gender: gender,
       active: active,
-      appointments: appointments,
       motivation: motivation,
-      exercises: exercises
+      exerciseTemplates: exercises,
+      sessions: sessions,
     );
   }
 }

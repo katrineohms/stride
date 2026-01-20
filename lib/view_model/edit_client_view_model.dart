@@ -21,13 +21,13 @@ class EditClientViewModel {
   late int active = client.active;
 
   // Appointments & exercises
-  List<Appointment> appointments = [];
-  List<Exercise> exercises = [];
+  List<Session> sessions = [];
+  List<Exercise> exerciseTemplates = [];
 
   // Initialize lists
   void init() {
-    appointments = List.from(client.appointments);
-    exercises = List.from(client.exercises);
+    sessions = List.from(client.sessions);
+    exerciseTemplates = List.from(client.exerciseTemplates);
   }
 
   // ===== Personal Info Updates =====
@@ -37,17 +37,36 @@ class EditClientViewModel {
       motivation = newMotivation;
   void updateActive(int newActive) => active = newActive;
 
-  // ===== Appointments =====
-  void addAppointment(Appointment a) => appointments.add(a);
-  void removeAppointment(Appointment a) => appointments.remove(a);
+  // ===== Appointments (via Sessions) =====
+  void addAppointment(Appointment a) {
+    // Create a new session with this appointment
+    final session = Session(
+      sessionId: '${client.clientId}_${DateTime.now().millisecondsSinceEpoch}',
+      appointment: a,
+      startTime: a.timestamp,
+      hrReadings: const [],
+    );
+    sessions.add(session);
+  }
 
-  // ===== Exercises =====
-  void addExercise(Exercise ex) => exercises.add(ex);
-  void removeExercise(Exercise ex) => exercises.remove(ex);
+  void removeAppointment(Appointment a) {
+    sessions.removeWhere((s) => 
+      s.appointment.timestamp == a.timestamp && 
+      s.appointment.notes == a.notes
+    );
+  }
+
+  /// Get list of appointments for the appointment widget
+  List<Appointment> get appointments => 
+      sessions.map((s) => s.appointment).toList();
+
+  // ===== Exercise Templates =====
+  void addExercise(Exercise ex) => exerciseTemplates.add(ex);
+  void removeExercise(Exercise ex) => exerciseTemplates.remove(ex);
 
   void updateExercise(int index, Exercise updated) {
-    if (index >= 0 && index < exercises.length) {
-      exercises[index] = updated;
+    if (index >= 0 && index < exerciseTemplates.length) {
+      exerciseTemplates[index] = updated;
     }
   }
 
@@ -66,8 +85,8 @@ class EditClientViewModel {
       age: age,
       motivation: motivation,
       active: active,
-      appointments: appointments,
-      exercises: exercises,
+      sessions: sessions,
+      exerciseTemplates: exerciseTemplates,
     );
   }
 }
