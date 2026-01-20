@@ -5,8 +5,10 @@ import 'package:table_calendar/table_calendar.dart';
 // Files
 import '../view/client_list_view.dart';
 import 'client_detail_view.dart';
+import 'session_detail_view.dart';
 import '../view_model/home_view_model.dart';
 import '../view_model/client_detail_view_model.dart';
+import '../view_model/session_detail_view_model.dart';
 import '../view/movesense_connect_view.dart';
 
 // Widgets
@@ -251,14 +253,35 @@ class _HomePageState extends State<HomePage> {
 
                 return Column(
                   children: clientsForDay.map((client) {
+                    // Find the session for the selected day
+                    final selectedDayStart = DateTime(
+                      selectedDay.year,
+                      selectedDay.month,
+                      selectedDay.day,
+                    ).millisecondsSinceEpoch ~/ 1000;
+                    final selectedDayEnd = DateTime(
+                      selectedDay.year,
+                      selectedDay.month,
+                      selectedDay.day,
+                      23, 59, 59,
+                    ).millisecondsSinceEpoch ~/ 1000;
+                    
+                    final sessionForDay = client.sessions.firstWhere(
+                      (s) => s.startTime >= selectedDayStart && s.startTime <= selectedDayEnd,
+                      orElse: () => client.sessions.first, // Fallback to first session
+                    );
+
                     return ClientCard(
                       client: client,
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => ClientDetailPage(
-                              viewModel: ClientDetailViewModel(client: client),
+                            builder: (context) => SessionDetailPage(
+                              viewModel: SessionDetailViewModel(
+                                client: client,
+                                session: sessionForDay,
+                              ),
                             ),
                           ),
                         );
