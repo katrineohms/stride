@@ -1,13 +1,16 @@
 // Packages
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:stop_watch_timer/stop_watch_timer.dart';
 
 // Files
 import '../model/_models.dart';
 import '../view_model/session_detail_view_model.dart';
+import '../view_model/client_detail_view_model.dart';
 import '../view_model/widgets_view_model/ui_event.dart';
 import '../view/movesense_connect_view.dart';
+import '../view/client_detail_view.dart';
 
 // Widgets
 import '../widgets/movesense_status_widget.dart';
@@ -30,6 +33,7 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
   final Map<String, StopWatchTimer> _stopWatches = {};
   late StreamSubscription<UiEvent> _eventSub;
   Timer? _ticker;
+  Session? _displaySession;
 
   Client get _client => widget.viewModel.client;
 
@@ -115,7 +119,7 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
   @override
   Widget build(BuildContext context) {
     final isActive = widget.viewModel.isActiveForClient;
-    final latestSession = widget.viewModel.activeSession;
+    final displaySession = _displaySession ?? widget.viewModel.activeSession;
 
     return Scaffold(
       appBar: AppBar(
@@ -195,19 +199,30 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
               const SizedBox(height: 16),
 
             // ===== HR Session Controls =====
-            if (!(isActive == false && latestSession.hrReadings.isNotEmpty))
+            if (!(isActive == false && displaySession.hrReadings.isNotEmpty))
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () async {
                     if (isActive) {
                       await widget.viewModel.stopSession();
-                      // Refresh session from storage to ensure HRR data is loaded
-                      widget.viewModel.attach();
+                      // Refresh client data with the newly completed session
+                      final updatedClient = await widget.viewModel.getLatestClient();
+                      if (mounted && updatedClient != null) {
+                        // Navigate to client detail view
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ClientDetailPage(
+                              viewModel: ClientDetailViewModel(client: updatedClient),
+                            ),
+                          ),
+                        );
+                      }
                     } else {
                       await widget.viewModel.startSession();
+                      if (mounted) setState(() {});
                     }
-                    if (mounted) setState(() {});
                   },
                   icon: Icon(isActive ? Icons.stop : Icons.play_arrow),
                   label: Text(isActive ? 'Stop Session' : 'Start Session'),
@@ -217,15 +232,46 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
                   ),
                 ),
               ),
-            if (!(isActive == false && latestSession.hrReadings.isNotEmpty))
+            if (!(isActive == false && displaySession.hrReadings.isNotEmpty))
               const SizedBox(height: 16),
 
-            // Session graph (only after session ends and has data)
-            if (!isActive && latestSession.hrReadings.isNotEmpty)
-              SessionGraphCard(session: latestSession),
-
-            if (!isActive && latestSession.hrReadings.isNotEmpty)
+            // Session Summary Card (only after session ends and has data)
+            if (!isActive && displaySession.hrReadings.isNotEmpty) ...[
+              SizedBox(
+                width: double.infinity,
+                child: Card(
+                  color: Theme.of(context).cardColor,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Session Completed',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Date: ${DateFormat('MMMM d, y - HH:mm').format(DateTime.fromMillisecondsSinceEpoch(displaySession.startTime * 1000))}',
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Duration: ${displaySession.duration.inHours}:${(displaySession.duration.inMinutes.remainder(60)).toString().padLeft(2, '0')}',
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
               const SizedBox(height: 16),
+              SessionGraphCard(session: displaySession),
+              const SizedBox(height: 16),
+            ],
 
             // ===== Exercises =====
             Text(
@@ -247,7 +293,7 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: latestSession.hrReadings.isNotEmpty
+                onPressed: displaySession.hrReadings.isNotEmpty
                     ? () {
                         showDialog<void>(
                           context: context,
@@ -275,7 +321,7 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
                 icon: const Icon(Icons.delete),
                 label: const Text('Delete Session'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: latestSession.hrReadings.isNotEmpty ? Colors.red : Colors.grey,
+                  backgroundColor: displaySession.hrReadings.isNotEmpty ? Colors.red : Colors.grey,
                   foregroundColor: Colors.white,
                 ),
               ),

@@ -56,6 +56,34 @@ class SessionDetailViewModel extends ChangeNotifier {
     return _sessionService.activeSession ?? session;
   }
 
+  /// Get the latest session from the database for this session ID
+  Future<Session?> getLatestSession() async {
+    try {
+      final updatedClient = _dataService.getClientById(client.clientId);
+      if (updatedClient != null && updatedClient.sessions.isNotEmpty) {
+        // Find the session with matching ID, or return the last one if it matches
+        for (final s in updatedClient.sessions) {
+          if (s.sessionId == session.sessionId) {
+            return s;
+          }
+        }
+      }
+    } catch (e) {
+      print('Error getting latest session: $e');
+    }
+    return null;
+  }
+
+  /// Get the latest client data from the database
+  Future<Client?> getLatestClient() async {
+    try {
+      return _dataService.getClientById(client.clientId);
+    } catch (e) {
+      print('Error getting latest client: $e');
+    }
+    return null;
+  }
+
   /// Start HR monitoring for this session
   Future<void> startSession() async {
     try {
