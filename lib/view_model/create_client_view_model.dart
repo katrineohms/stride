@@ -1,7 +1,7 @@
 // Packages
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
-import '../model/clients.dart';
+import '../model/_models.dart';
 import '../view_model/movesense_connect_view_model.dart';
 
 // Services

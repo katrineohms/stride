@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 
 // Files
-import '../model/clients.dart';
+import '../model/_models.dart';
 import '../view_model/widgets_view_model/session_schedule_view_model.dart';
 
 /// Session scheduling widget 

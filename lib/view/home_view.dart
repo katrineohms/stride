@@ -4,9 +4,9 @@ import 'package:table_calendar/table_calendar.dart';
 
 // Files
 import '../view/client_list_view.dart';
-import '../view/client_card_view.dart';
+import 'client_detail_view.dart';
 import '../view_model/home_view_model.dart';
-import '../view_model/client_card_view_model.dart';
+import '../view_model/client_detail_view_model.dart';
 import '../view/movesense_connect_view.dart';
 
 // Widgets

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:stride/widgets/movesense_status_widget.dart';
 
 // Files
-import '../model/clients.dart';
+import '../model/_models.dart';
 import '../view_model/edit_client_view_model.dart';
 import '../view_model/widgets_view_model/exercise_form_view_model.dart';
 import '../view_model/widgets_view_model/session_schedule_view_model.dart';

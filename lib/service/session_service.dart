@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
-import '../model/clients.dart';
+import '../model/_models.dart';
 import '../service/movesense_service.dart';
 import '../service/client_data_service.dart';
 import '../service/notification_service.dart';

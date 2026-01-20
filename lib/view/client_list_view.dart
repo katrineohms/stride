@@ -2,11 +2,11 @@
 import 'package:flutter/material.dart';
 
 // Files
-import '../model/clients.dart';
+import '../model/_models.dart';
 import '../view/create_client_view.dart';
-import '../view/client_card_view.dart';
+import 'client_detail_view.dart';
 import '../view_model/client_list_view_model.dart';
-import '../view_model/client_card_view_model.dart';
+import '../view_model/client_detail_view_model.dart';
 
 // Widgets
 import '../widgets/client_card_widget.dart';

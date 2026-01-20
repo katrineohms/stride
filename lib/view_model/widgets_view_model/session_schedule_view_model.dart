@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 // Files
-import '../../model/clients.dart';
+import '../../model/_models.dart';
 
 /// ViewModel for managing session scheduling state and logic.
 class SessionScheduleViewModel {

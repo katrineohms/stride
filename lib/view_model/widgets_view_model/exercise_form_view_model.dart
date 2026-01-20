@@ -1,5 +1,5 @@
 // Files
-import '../../model/clients.dart';
+import '../../model/_models.dart';
 
 /// ViewModel for managing exercise form state and logic
 class ExerciseFormViewModel {

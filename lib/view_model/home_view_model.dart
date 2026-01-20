@@ -1,7 +1,7 @@
 import 'dart:async';
 
 // Files
-import '../model/clients.dart';
+import '../model/_models.dart';
 import '../view_model/movesense_connect_view_model.dart';
 
 // Services

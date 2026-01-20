@@ -8,8 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:stop_watch_timer/stop_watch_timer.dart';
 
 // Files
-import '../model/clients.dart';
-import '../view_model/client_card_view_model.dart';
+import '../model/_models.dart';
+import '../view_model/client_detail_view_model.dart';
 import '../view_model/widgets_view_model/ui_event.dart';
 import '../view/edit_client_view.dart';
 import '../widgets/movesense_status_widget.dart';

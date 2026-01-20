@@ -4,7 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 // Files
-import '../model/clients.dart';
+import '../model/_models.dart';
 import '../view_model/movesense_connect_view_model.dart';
 
 // Widgets
