@@ -76,26 +76,26 @@ class ClientDetailViewModel extends ChangeNotifier {
   List<Exercise> get exercises => _client.exercises;
 
   /// Update the client and optionally persist
-  void updateClient(Client updatedClient, {bool persist = true}) {
+  Future<void> updateClient(Client updatedClient, {bool persist = true}) async {
     _client = updatedClient;
     if (persist) {
-      _dataService.updateClient(_client);
+      await _dataService.updateClient(_client);
     }
     notifyListeners();
   }
 
   /// Replace/merge HRR results and persist
-  void setHeartRateRecovery(String exerciseId, HeartRateRecovery hrr) {
+  Future<void> setHeartRateRecovery(String exerciseId, HeartRateRecovery hrr) async {
     final updatedHrr = Map<String, HeartRateRecovery>.from(_client.hrrResults)
       ..[exerciseId] = hrr;
-    updateClient(_client.copyWith(hrrResults: updatedHrr));
+    await updateClient(_client.copyWith(hrrResults: updatedHrr));
   }
 
   /// Remove the latest session (used by UI delete button)
-  void deleteLatestSession() {
+  Future<void> deleteLatestSession() async {
     if (_client.sessions.isEmpty) return;
     final updatedSessions = List<Session>.from(_client.sessions)..removeLast();
-    updateClient(_client.copyWith(sessions: updatedSessions));
+    await updateClient(_client.copyWith(sessions: updatedSessions));
   }
 
   /// Start a session and emit UI events for success or failure.
@@ -126,7 +126,7 @@ class ClientDetailViewModel extends ChangeNotifier {
       await _sessionService.stopSession();
       final refreshed = _dataService.getClientById(_client.clientId);
       if (refreshed != null) {
-        updateClient(refreshed, persist: false);
+        await updateClient(refreshed, persist: false);
       }
       events.emit(const SnackBarEvent('Session stopped and saved.'));
     } catch (e) {

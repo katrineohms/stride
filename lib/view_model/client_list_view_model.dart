@@ -1,3 +1,5 @@
+import 'dart:async';
+
 // Packages
 import 'package:flutter/material.dart';
 
@@ -20,26 +22,25 @@ class ClientOverviewViewModel {
     List<Client>? initialClients,
     MovesenseConnectViewModel? movesense,
   }) : movesense = movesense ?? MovesenseService().viewModel {
+    unawaited(_dataService.init());
+
     if (initialClients != null && initialClients.isNotEmpty) {
-      _dataService.clear();
-      for (final client in initialClients) {
-        _dataService.addClient(client);
-      }
+      unawaited(_dataService.replaceAll(initialClients));
     }
   }
 
   List<Client> get clients => _dataService.getClients();
 
-  void addClient(Client client) {
-    _dataService.addClient(client);
+  Future<void> addClient(Client client) async {
+    await _dataService.addClient(client);
   }
 
-  void updateClient(Client client) {
-    _dataService.updateClient(client);
+  Future<void> updateClient(Client client) async {
+    await _dataService.updateClient(client);
   }
 
-  void deleteClient(String clientId) {
-    _dataService.deleteClient(clientId);
+  Future<void> deleteClient(String clientId) async {
+    await _dataService.deleteClient(clientId);
   }
 
   List<Client> searchClients(String query) {

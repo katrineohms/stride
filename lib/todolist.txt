@@ -1,17 +1,40 @@
 ToDo list: 
 Frontend:
+
+
+
+NiceToDo: 
+- Re-add gender in creation/edit menu
+- Disconnect from BT
+- Faster GPS/loading icon? 
 - When stopwatch runs out, blank out exercise 
+- Updating view when returning to home screen (i.e. after client creation)
+- Edit exercises (without edit client)
+- Add appointment (without edit client)
 
-Both: 
-- Edit clients
-    v UI
-    v Class updates
-    - Updating view
-    - Saving
-- Edit exercises
+ToDay: 
+Database and storage
+---------------------------------
+- Create a branch of client_card_view into session_card_view
+	- Client_card_view: 
+		movesense
+		personal info
+		previous sessions (clickable to view session data)
+		upcoming appointments
+		exercises (without timers, hrr button, checks) 
+    - Session_card_view
+        movesense
+        HR session
+        personal info
+        exercises (with timers, hrr button, checks)
+
+- Split UI appointments into previous sessions/upcoming sessions. 
+- Save exercises under session ID instead of client ID 
+	- Creating new exercise cards for each session. 
+        - Each exercise in each session has UI and data (checks, timed, HRR, etc.)
+	- Creating a new HR session for each session/appointment
+	    - HR saved for each session (potentially in a condensed view to not overload storage)
 
 
-Backend:
-Filter HR session data a bit
 
 

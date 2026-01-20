@@ -115,7 +115,7 @@ class SessionService extends ChangeNotifier {
       final updatedSessions = List<Session>.from(client.sessions)
         ..add(_activeSession!);
       final updatedClient = client.copyWith(sessions: updatedSessions);
-      ClientDataService().updateClient(updatedClient);
+      await ClientDataService().updateClient(updatedClient);
     }
 
     // Clear state
