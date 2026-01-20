@@ -237,7 +237,7 @@ class _CreateClientPageState extends State<CreateClientPage> {
                 onCreate: (exercise) {
                   setState(() {
                     // Add the exercise to the client in the view model
-                    viewModel.exercises.add(exercise);
+                    viewModel.exerciseTemplates.add(exercise);
                   });
                 },
               ),

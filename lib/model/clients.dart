@@ -26,26 +26,43 @@ class HrReading {
   const HrReading({required this.timestamp, required this.heartRate});
 }
 
+class Appointment {
+  final int timestamp; // Unix timestamp in seconds
+  final String notes;
+
+  const Appointment({required this.timestamp, this.notes = ''});
+}
+
 class Session {
   final String sessionId;
-  final int startTime; // Unix timestamp in seconds
+  final int startTime; // scheduled or actual start, Unix seconds
   final int? endTime; // null if session is active
   final List<HrReading> hrReadings;
   final String? startLocationCity; // city name from reverse geocoding
+  final List<Exercise> exercisesPerformed;
+  final Map<String, HeartRateRecovery> hrrResults;
+  final String? notes;
 
-  const Session({
+  Session({
     required this.sessionId,
     required this.startTime,
     this.endTime,
-    required this.hrReadings,
+    required List<HrReading> hrReadings,
     this.startLocationCity,
-  });
+    List<Exercise>? exercisesPerformed,
+    Map<String, HeartRateRecovery>? hrrResults,
+    this.notes,
+  })  : hrReadings = List.unmodifiable(hrReadings),
+        exercisesPerformed = List.unmodifiable(exercisesPerformed ?? []),
+        hrrResults = Map.unmodifiable(hrrResults ?? {});
 
   bool get isActive => endTime == null;
-  
+
   Duration get duration => Duration(
-    seconds: (endTime ?? (DateTime.now().millisecondsSinceEpoch ~/ 1000)) - startTime,
-  );
+        seconds:
+            (endTime ?? (DateTime.now().millisecondsSinceEpoch ~/ 1000)) -
+                startTime,
+      );
 
   Session copyWith({
     String? sessionId,
@@ -53,6 +70,9 @@ class Session {
     int? endTime,
     List<HrReading>? hrReadings,
     String? startLocationCity,
+    List<Exercise>? exercisesPerformed,
+    Map<String, HeartRateRecovery>? hrrResults,
+    String? notes,
   }) {
     return Session(
       sessionId: sessionId ?? this.sessionId,
@@ -60,6 +80,9 @@ class Session {
       endTime: endTime ?? this.endTime,
       hrReadings: hrReadings ?? this.hrReadings,
       startLocationCity: startLocationCity ?? this.startLocationCity,
+      exercisesPerformed: exercisesPerformed ?? this.exercisesPerformed,
+      hrrResults: hrrResults ?? this.hrrResults,
+      notes: notes ?? this.notes,
     );
   }
 }
@@ -89,26 +112,15 @@ class TimeableExercise extends Exercise {
 
 }
 
-class Appointment {
-  final int timestamp; // Unix timestamp (seconds since epoch)
-  final String? notes; // optional notes
-
-  Appointment({
-    required this.timestamp,
-    this.notes,
-  });
-
-  DateTime get dateTime => DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
-}
 class Client {
   final String clientId;
   final String name;
   final int age;
   final String gender;
   final int active;
-  final List<Appointment> appointments;
   final String motivation;
-  final List<Exercise> exercises;
+  /// Exercise templates owned by the client (copied into sessions when used)
+  final List<Exercise> exerciseTemplates;
   final Map<String, HeartRateRecovery> hrrResults;
   final List<Session> sessions;
 
@@ -118,15 +130,13 @@ class Client {
     required this.age,
     required this.gender,
     required this.active,
-    List<Appointment>? appointments,
     required this.motivation,
-    List<Exercise>? exercises,
+    List<Exercise>? exerciseTemplates,
     Map<String, HeartRateRecovery>? hrrResults,
     List<Session>? sessions,
-  })  : appointments = List.unmodifiable(appointments ?? []),
-      exercises = List.unmodifiable(exercises ?? []),
-      hrrResults = Map.unmodifiable(hrrResults ?? {}),
-      sessions = List.unmodifiable(sessions ?? []);
+  })  : exerciseTemplates = List.unmodifiable(exerciseTemplates ?? []),
+        hrrResults = Map.unmodifiable(hrrResults ?? {}),
+        sessions = List.unmodifiable(sessions ?? []);
 
   Client copyWith({
     String? clientId,
@@ -134,9 +144,8 @@ class Client {
     int? age,
     String? gender,
     int? active,
-    List<Appointment>? appointments,
     String? motivation,
-    List<Exercise>? exercises,
+    List<Exercise>? exerciseTemplates,
     Map<String, HeartRateRecovery>? hrrResults,
     List<Session>? sessions,
   }) {
@@ -146,9 +155,8 @@ class Client {
       age: age ?? this.age,
       gender: gender ?? this.gender,
       active: active ?? this.active,
-      appointments: appointments ?? this.appointments,
       motivation: motivation ?? this.motivation,
-      exercises: exercises ?? this.exercises,
+      exerciseTemplates: exerciseTemplates ?? this.exerciseTemplates,
       hrrResults: hrrResults ?? this.hrrResults,
       sessions: sessions ?? this.sessions,
     );

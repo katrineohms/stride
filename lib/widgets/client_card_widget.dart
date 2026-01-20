@@ -29,18 +29,18 @@ Color getStatusColor(int active) {
   }
 }
 
-/// ===== Helper to get next upcoming appointment =====
-DateTime? getNextAppointment(Client client) {
+/// ===== Helper to get next upcoming session time =====
+DateTime? getNextSessionTime(Client client) {
   final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-  final futureAppointments = client.appointments
-      .where((a) => a.timestamp >= now)
+  final futureSessions = client.sessions
+      .where((s) => s.startTime >= now && s.endTime == null)
       .toList();
 
-  if (futureAppointments.isEmpty) return null;
+  if (futureSessions.isEmpty) return null;
 
-  futureAppointments.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+  futureSessions.sort((a, b) => a.startTime.compareTo(b.startTime));
   return DateTime.fromMillisecondsSinceEpoch(
-    futureAppointments.first.timestamp * 1000,
+    futureSessions.first.startTime * 1000,
   );
 }
 
@@ -53,12 +53,12 @@ class ClientCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final nextAppointment = getNextAppointment(client);
+      final nextSession = getNextSessionTime(client);
 
-    final timeStr = nextAppointment != null
-        ? '${nextAppointment.hour.toString().padLeft(2, '0')}:'
-              '${nextAppointment.minute.toString().padLeft(2, '0')}'
-        : 'No upcoming';
+      final timeStr = nextSession != null
+      ? '${nextSession.hour.toString().padLeft(2, '0')}:'
+        '${nextSession.minute.toString().padLeft(2, '0')}'
+      : 'No upcoming';
 
     return Card(
       color: Theme.of(context).cardColor,
@@ -238,7 +238,6 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 4),
                     Row(
                       children: [
@@ -318,7 +317,7 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
           ),
           const SizedBox(height: 16),
 
-          // ===== Appointments Card =====
+          // ===== Sessions Card (scheduled) =====
           SizedBox(
             width: double.infinity,
             child: Card(
@@ -333,29 +332,14 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Appointments',
+                      'Upcoming Sessions',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    if (client.appointments.isEmpty)
-                      const Text('No upcoming appointments')
-                    else
-                      ...client.appointments.map((a) {
-                        final dt = DateTime.fromMillisecondsSinceEpoch(
-                          a.timestamp * 1000,
-                        );
-                        final hour = dt.hour.toString().padLeft(2, '0');
-                        final minute = dt.minute.toString().padLeft(2, '0');
-                        final dateStr =
-                            '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 2),
-                          child: Text('$dateStr $hour:$minute'),
-                        );
-                      }),
+                    ..._buildUpcomingSessions(client),
                   ],
                 ),
               ),
@@ -370,7 +354,7 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
           ),
           const SizedBox(height: 8),
           Column(
-            children: client.exercises.map((exercise) {
+            children: client.exerciseTemplates.map((exercise) {
               final done = widget.exerciseDone[exercise.exerciseId] ?? false;
               final stopWatch = widget.stopWatches[exercise.exerciseId];
               final hrr = _hrrResults[exercise.exerciseId];
@@ -815,6 +799,40 @@ class _ClientDetailViewWidgetState extends State<ClientDetailViewWidget> {
         );
       }
     }
+  }
+
+  /// Build list of upcoming sessions for the client.
+  List<Widget> _buildUpcomingSessions(Client client) {
+    final nowSeconds = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    final upcoming = client.sessions
+        .where((s) => s.startTime >= nowSeconds)
+        .toList()
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
+
+    if (upcoming.isEmpty) {
+      return const [
+        Text('No upcoming sessions scheduled.'),
+      ];
+    }
+
+    return upcoming.map((session) {
+      final start =
+          DateTime.fromMillisecondsSinceEpoch(session.startTime * 1000);
+      final dateStr =
+          '${start.year}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}';
+      final timeStr =
+          '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')}';
+
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(child: Text('$dateStr at $timeStr')),
+          ],
+        ),
+      );
+    }).toList();
   }
 
   /// Build session graph card

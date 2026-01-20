@@ -158,7 +158,7 @@ class ClientDataService {
         gender: 'Female',
         active: 0,
         motivation: 'Motivated',
-        exercises: [
+          exerciseTemplates: [
           CountableExercise(
             exerciseId: '1_1',
             name: 'Push-ups',
@@ -173,16 +173,24 @@ class ClientDataService {
             time: 30,
           ),
         ],
-        appointments: [
-          Appointment(
-            timestamp:
-                (now.add(const Duration(hours: 1)).millisecondsSinceEpoch ~/ 1000),
-          ),
-          Appointment(
-            timestamp:
-                (now.add(const Duration(days: 3)).millisecondsSinceEpoch ~/ 1000),
-          ),
-        ],
+          sessions: [
+            Session(
+              sessionId: 's1_1',
+              startTime:
+                  (now.add(const Duration(hours: 1)).millisecondsSinceEpoch ~/ 1000),
+              hrReadings: const [],
+              startLocationCity: null,
+              notes: 'Scheduled follow-up',
+            ),
+            Session(
+              sessionId: 's1_2',
+              startTime:
+                  (now.add(const Duration(days: 3)).millisecondsSinceEpoch ~/ 1000),
+              hrReadings: const [],
+              startLocationCity: null,
+              notes: 'Long run',
+            ),
+          ],
       ),
       Client(
         clientId: '2',
@@ -191,11 +199,14 @@ class ClientDataService {
         gender: 'Male',
         active: 1,
         motivation: 'Needs support',
-        exercises: const [],
-        appointments: [
-          Appointment(
-            timestamp:
+        exerciseTemplates: const [],
+        sessions: [
+          Session(
+            sessionId: 's2_1',
+            startTime:
                 (now.add(const Duration(days: 2)).millisecondsSinceEpoch ~/ 1000),
+            hrReadings: const [],
+            startLocationCity: null,
           ),
         ],
       ),
@@ -206,15 +217,23 @@ class ClientDataService {
         gender: 'Female',
         active: 2,
         motivation: 'Struggling',
-        exercises: const [],
-        appointments: [
-          Appointment(
-            timestamp:
+        exerciseTemplates: const [],
+        sessions: [
+          Session(
+            sessionId: 's3_1',
+            startTime:
                 (now.add(const Duration(days: 5)).millisecondsSinceEpoch ~/ 1000),
+            hrReadings: const [],
+            startLocationCity: null,
+            notes: 'Assessment',
           ),
-          Appointment(
-            timestamp:
+          Session(
+            sessionId: 's3_2',
+            startTime:
                 (now.add(const Duration(days: 7)).millisecondsSinceEpoch ~/ 1000),
+            hrReadings: const [],
+            startLocationCity: null,
+            notes: 'Check-in',
           ),
         ],
       ),
@@ -230,16 +249,16 @@ class ClientDataService {
         .toList();
   }
 
-  /// Get clients with appointments on a given day.
+  /// Get clients with sessions on a given day.
   List<Client> getClientsForDay(DateTime day) {
     return _clients.where((client) {
-      return client.appointments.any((appointment) {
-        final appointmentDate = DateTime.fromMillisecondsSinceEpoch(
-          appointment.timestamp * 1000,
+      return client.sessions.any((session) {
+        final date = DateTime.fromMillisecondsSinceEpoch(
+          session.startTime * 1000,
         );
-        return appointmentDate.year == day.year &&
-            appointmentDate.month == day.month &&
-            appointmentDate.day == day.day;
+        return date.year == day.year &&
+            date.month == day.month &&
+            date.day == day.day;
       });
     }).toList();
   }
@@ -265,10 +284,7 @@ class ClientDataService {
       'gender': client.gender,
       'active': client.active,
       'motivation': client.motivation,
-      'appointments': client.appointments
-          .map((a) => {'timestamp': a.timestamp, 'notes': a.notes})
-          .toList(),
-      'exercises': client.exercises.map(_exerciseToMap).toList(),
+      'exerciseTemplates': client.exerciseTemplates.map(_exerciseToMap).toList(),
       'hrrResults': client.hrrResults.map(
         (key, value) => MapEntry(key, {'high': value.high, 'low': value.low}),
       ),
@@ -277,12 +293,7 @@ class ClientDataService {
   }
 
   Client _clientFromMap(String key, Map<String, Object?> map) {
-    final appointments = (map['appointments'] as List?)
-            ?.map((raw) => _appointmentFromMap(raw as Map<String, Object?>))
-            .toList() ??
-        const <Appointment>[];
-
-    final exercises = (map['exercises'] as List?)
+    final exerciseTemplates = (map['exerciseTemplates'] as List?)
             ?.map((raw) => _exerciseFromMap(raw as Map<String, Object?>))
             .toList() ??
         const <Exercise>[];
@@ -306,9 +317,8 @@ class ClientDataService {
       age: (map['age'] as num?)?.toInt() ?? 0,
       gender: map['gender']?.toString() ?? 'Unspecified',
       active: (map['active'] as num?)?.toInt() ?? 0,
-      appointments: appointments,
       motivation: map['motivation']?.toString() ?? '',
-      exercises: exercises,
+      exerciseTemplates: exerciseTemplates,
       hrrResults: hrrResults,
       sessions: sessions,
     );
@@ -375,12 +385,6 @@ class ClientDataService {
     }
   }
 
-  Appointment _appointmentFromMap(Map<String, Object?> map) {
-    return Appointment(
-      timestamp: (map['timestamp'] as num?)?.toInt() ?? 0,
-      notes: map['notes']?.toString(),
-    );
-  }
 
   Map<String, Object?> _sessionToMap(Session session) {
     return {
@@ -388,9 +392,14 @@ class ClientDataService {
       'startTime': session.startTime,
       'endTime': session.endTime,
       'startLocationCity': session.startLocationCity,
+      'notes': session.notes,
+      'exercisesPerformed':
+        session.exercisesPerformed.map(_exerciseToMap).toList(),
+      'hrrResults': session.hrrResults
+        .map((k, v) => MapEntry(k, {'high': v.high, 'low': v.low})),
       'hrReadings': session.hrReadings
-          .map((r) => {'timestamp': r.timestamp, 'heartRate': r.heartRate})
-          .toList(),
+        .map((r) => {'timestamp': r.timestamp, 'heartRate': r.heartRate})
+        .toList(),
     };
   }
 
@@ -408,12 +417,28 @@ class ClientDataService {
             .toList() ??
         const <HrReading>[];
 
+    final exercisesPerformed = (map['exercisesPerformed'] as List?)
+            ?.map((raw) => _exerciseFromMap(raw as Map<String, Object?>))
+            .toList() ??
+        const <Exercise>[];
+
+    final hrrResults = (map['hrrResults'] as Map?)?.map(
+          (k, v) => MapEntry(
+            k.toString(),
+            _hrrFromMap((v as Map).cast<String, Object?>()),
+          ),
+        ) ??
+        const <String, HeartRateRecovery>{};
+
     return Session(
       sessionId: map['sessionId']?.toString() ?? 'unknown',
       startTime: (map['startTime'] as num?)?.toInt() ?? 0,
       endTime: (map['endTime'] as num?)?.toInt(),
       hrReadings: hrReadings,
       startLocationCity: map['startLocationCity']?.toString(),
+      exercisesPerformed: exercisesPerformed,
+      hrrResults: hrrResults,
+      notes: map['notes']?.toString(),
     );
   }
 

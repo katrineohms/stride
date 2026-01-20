@@ -1,5 +1,6 @@
 // Packages
 import '../model/clients.dart';
+import 'package:uuid/uuid.dart';
 import '../view_model/movesense_connect_view_model.dart';
 
 // Services
@@ -17,8 +18,8 @@ class CreateClientViewModel {
   String motivation = '';
   final MovesenseConnectViewModel movesense;
 
-  // Define a list to hold exercises
-  List<Exercise> exercises = []; // Ensure Exercise is the correct type
+  // Exercise templates stored on the client
+  List<Exercise> exerciseTemplates = [];
 
   String? validateName() {
     if (name.isEmpty) return 'Enter a name';
@@ -30,15 +31,9 @@ class CreateClientViewModel {
     return null;
   }
 
-  String? validateAppointments() {
-    if (appointments.isEmpty) return 'Pick a next appointment';
-    return null;
-  }
-
   bool validateAll() {
     return validateName() == null &&
-        validateAge() == null &&
-        validateAppointments() == null;
+        validateAge() == null;
   }
 
   Client createClient() {
@@ -46,15 +41,26 @@ class CreateClientViewModel {
       throw Exception('Cannot create client: invalid data');
     }
 
+    final sessionList = appointments
+        .map((a) => Session(
+              sessionId: const Uuid().v4(),
+              startTime: a.timestamp,
+              hrReadings: const [],
+              startLocationCity: null,
+              notes: a.notes,
+            ))
+        .toList();
+
     return Client(
       clientId: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
       age: age!,
       gender: gender,
       active: active,
-      appointments: appointments,
       motivation: motivation,
-      exercises: exercises
+      exerciseTemplates: exerciseTemplates,
+      hrrResults: {},
+      sessions: sessionList,
     );
   }
 }

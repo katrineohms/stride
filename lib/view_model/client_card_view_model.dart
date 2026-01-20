@@ -44,27 +44,24 @@ class ClientDetailViewModel extends ChangeNotifier {
 
   Client get client => _client;
 
-  // ===== Next Appointment =====
-  /// Returns the soonest future appointment, or null if none
-  Appointment? get nextAppointment {
+  // ===== Next Scheduled Session =====
+  /// Returns the soonest future session by scheduled startTime
+  Session? get nextSession {
     final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-
-    final futureAppointments = _client.appointments
-        .where((a) => a.timestamp >= now)
+    final futureSessions = _client.sessions
+        .where((s) => s.startTime >= now && s.endTime == null)
         .toList();
-
-    if (futureAppointments.isEmpty) return null;
-
-    futureAppointments.sort((a, b) => a.timestamp.compareTo(b.timestamp));
-    return futureAppointments.first;
+    if (futureSessions.isEmpty) return null;
+    futureSessions.sort((a, b) => a.startTime.compareTo(b.startTime));
+    return futureSessions.first;
   }
 
-  /// Formatted string for the next appointment (YYYY-MM-DD HH:MM)
-  String get nextAppointmentFormatted {
-    final appointment = nextAppointment;
-    if (appointment == null) return 'No upcoming appointment';
+  /// Formatted string for the next session (YYYY-MM-DD HH:MM)
+  String get nextSessionFormatted {
+    final session = nextSession;
+    if (session == null) return 'No upcoming session';
 
-    final dt = DateTime.fromMillisecondsSinceEpoch(appointment.timestamp * 1000);
+    final dt = DateTime.fromMillisecondsSinceEpoch(session.startTime * 1000);
     final hour = dt.hour.toString().padLeft(2, '0');
     final minute = dt.minute.toString().padLeft(2, '0');
     final dateStr = dt.toLocal().toIso8601String().split('T')[0];
@@ -72,8 +69,8 @@ class ClientDetailViewModel extends ChangeNotifier {
     return '$dateStr $hour:$minute';
   }
 
-  /// Exercises remain tied to the client
-  List<Exercise> get exercises => _client.exercises;
+  /// Exercise templates remain tied to the client
+  List<Exercise> get exerciseTemplates => _client.exerciseTemplates;
 
   /// Update the client and optionally persist
   Future<void> updateClient(Client updatedClient, {bool persist = true}) async {

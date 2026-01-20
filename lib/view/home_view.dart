@@ -240,7 +240,7 @@ class _HomePageState extends State<HomePage> {
                   return const Padding(
                     padding: EdgeInsets.symmetric(vertical: 16),
                     child: Text(
-                      'No appointments today',
+                      'No sessions scheduled today',
                       style: TextStyle(
                         fontSize: 16,
                         fontStyle: FontStyle.italic,

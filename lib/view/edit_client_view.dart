@@ -204,7 +204,7 @@ class _EditClientPageState extends State<EditClientPage> {
               // ===== Exercises =====
               ExerciseFormWidget(
                 viewModel: exerciseFormViewModel,
-                initialExercises: viewModel.exercises,
+                initialExercises: viewModel.exerciseTemplates,
                 onCreate: (ex) => setState(() => viewModel.addExercise(ex)),
                 onRemove: (ex) => setState(() => viewModel.removeExercise(ex)),
               ),
