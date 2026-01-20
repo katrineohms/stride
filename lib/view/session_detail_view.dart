@@ -1,8 +1,10 @@
 // Packages
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:stop_watch_timer/stop_watch_timer.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 // Files
 import '../model/_models.dart';
@@ -40,6 +42,10 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
   @override
   void initState() {
     super.initState();
+    // Keep screen on during session
+    WakelockPlus.enable();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom]);
+    
     widget.viewModel.attach();
     widget.viewModel.addListener(_onSessionChanged);
     _initializeExerciseState();
@@ -81,6 +87,10 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
 
   @override
   void dispose() {
+    // Re-enable screen auto-lock when leaving session view
+    WakelockPlus.disable();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    
     for (final timer in _stopWatches.values) {
       timer.dispose();
     }
