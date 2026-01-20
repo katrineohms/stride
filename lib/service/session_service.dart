@@ -22,6 +22,8 @@ class SessionService extends ChangeNotifier {
   Timer? _saveTimer;
   Timer? _notificationTimer;
   final List<HrReading> _pendingReadings = [];
+  final List<int> _hrWindow = [];
+  static const int _medianWindowSize = 5;
   final GpsService _gpsService = GpsService();
 
   // Public accessors
@@ -61,7 +63,14 @@ class SessionService extends ChangeNotifier {
     _hrSubscription = hrStream.listen((hr) {
       if (hr > 0) {
         final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-        _pendingReadings.add(HrReading(timestamp: timestamp, heartRate: hr));
+        _hrWindow.add(hr);
+        if (_hrWindow.length > _medianWindowSize) {
+          _hrWindow.removeAt(0);
+        }
+        final filtered = _median(_hrWindow);
+        _pendingReadings.add(
+          HrReading(timestamp: timestamp, heartRate: filtered),
+        );
       }
     });
 
@@ -136,6 +145,14 @@ class SessionService extends ChangeNotifier {
     _activeSession = _activeSession!.copyWith(hrReadings: allReadings);
     _pendingReadings.clear();
     notifyListeners();
+  }
+
+  int _median(List<int> values) {
+    if (values.isEmpty) return 0;
+    final sorted = List<int>.from(values)..sort();
+    final mid = sorted.length ~/ 2;
+    if (sorted.length.isOdd) return sorted[mid];
+    return ((sorted[mid - 1] + sorted[mid]) / 2).round();
   }
 
   /// Get current HR for display
