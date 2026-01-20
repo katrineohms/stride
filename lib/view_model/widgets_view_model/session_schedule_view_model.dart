@@ -39,7 +39,6 @@ class SessionScheduleViewModel {
       hrReadings: const [],
       startLocationCity: null,
       exercisesPerformed: const [],
-      hrrResults: const {},
       notes: notes,
     );
   }

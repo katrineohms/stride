@@ -8,7 +8,6 @@ class Session {
   final List<HrReading> hrReadings;
   final String? startLocationCity; // city name from reverse geocoding
   final List<Exercise> exercisesPerformed;
-  final Map<String, HeartRateRecovery> hrrResults;
   final String? notes;
 
   Session({
@@ -18,11 +17,9 @@ class Session {
     required List<HrReading> hrReadings,
     this.startLocationCity,
     List<Exercise>? exercisesPerformed,
-    Map<String, HeartRateRecovery>? hrrResults,
     this.notes,
   })  : hrReadings = List.unmodifiable(hrReadings),
-        exercisesPerformed = List.unmodifiable(exercisesPerformed ?? []),
-        hrrResults = Map.unmodifiable(hrrResults ?? {});
+        exercisesPerformed = List.unmodifiable(exercisesPerformed ?? []);
 
   bool get isActive => endTime == null;
 
@@ -39,7 +36,6 @@ class Session {
     List<HrReading>? hrReadings,
     String? startLocationCity,
     List<Exercise>? exercisesPerformed,
-    Map<String, HeartRateRecovery>? hrrResults,
     String? notes,
   }) {
     return Session(
@@ -49,7 +45,6 @@ class Session {
       hrReadings: hrReadings ?? this.hrReadings,
       startLocationCity: startLocationCity ?? this.startLocationCity,
       exercisesPerformed: exercisesPerformed ?? this.exercisesPerformed,
-      hrrResults: hrrResults ?? this.hrrResults,
       notes: notes ?? this.notes,
     );
   }

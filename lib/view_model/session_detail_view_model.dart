@@ -14,10 +14,9 @@ import '../service/movesense_service.dart';
 /// ViewModel for session detail view - manages a specific session execution
 class SessionDetailViewModel extends ChangeNotifier {
   final Client client;
-  late Session latestSession;
+  final Session session;
   final MovesenseConnectViewModel movesense;
   final UiEventNotifier events;
-  final String _sessionId;
 
   final ClientDataService _dataService = ClientDataService();
   final SessionService _sessionService = SessionService();
@@ -25,31 +24,36 @@ class SessionDetailViewModel extends ChangeNotifier {
 
   SessionDetailViewModel({
     required this.client,
-    required Session session,
+    required this.session,
     MovesenseConnectViewModel? movesenseViewModel,
     UiEventNotifier? eventNotifier,
   })  : movesense = movesenseViewModel ?? MovesenseService().viewModel,
-        events = eventNotifier ?? UiEventNotifier(),
-        _sessionId = session.sessionId,
-        latestSession = session;
+        events = eventNotifier ?? UiEventNotifier();
 
   void attach() {
     if (_attached) return;
-    _refreshSessionFromStorage();
-    _sessionService.addListener(_onSessionServiceChanged);
     _attached = true;
+    _sessionService.addListener(_onSessionChanged);
   }
 
-  void _refreshSessionFromStorage() {
-    final refreshed = _dataService.getClientById(client.clientId);
-    if (refreshed == null) return;
-    final foundSession = refreshed.sessions
-        .firstWhere((s) => s.sessionId == _sessionId, orElse: () => latestSession);
-    latestSession = foundSession;
-  }
-
-  void _onSessionServiceChanged() {
+  void _onSessionChanged() {
     notifyListeners();
+  }
+
+  /// Check if there's an active session for this client
+  bool get isActiveForClient {
+    return _sessionService.hasActiveSession && 
+           _sessionService.activeClientId == client.clientId;
+  }
+
+  /// Get the current session duration
+  Duration? get liveDuration {
+    return _sessionService.sessionDuration;
+  }
+
+  /// Get the active session or fallback to the provided session
+  Session get activeSession {
+    return _sessionService.activeSession ?? session;
   }
 
   /// Start HR monitoring for this session
@@ -68,102 +72,51 @@ class SessionDetailViewModel extends ChangeNotifier {
     try {
       await _sessionService.stopSession();
       events.emit(SnackBarEvent('Session stopped'));
-      await _refreshLatestSession();
       notifyListeners();
     } catch (e) {
       events.emit(SnackBarEvent('Failed to stop session: $e', isError: true));
     }
   }
 
-  Future<void> _refreshLatestSession() async {
-    final refreshed = _dataService.getClientById(client.clientId);
-    if (refreshed == null) return;
-    final completed = refreshed.sessions.where((s) => s.endTime != null).toList()
-      ..sort((a, b) => b.endTime!.compareTo(a.endTime!));
-    if (completed.isNotEmpty) {
-      latestSession = completed.first;
-    }
-  }
-
-  /// Save HRR result for a specific exercise
-  Future<void> saveHrrResult(String exerciseId, HeartRateRecovery hrr) async {
-    try {
-      final updatedHrr = Map<String, HeartRateRecovery>.from(latestSession.hrrResults)
-        ..[exerciseId] = hrr;
-      final updatedSession = latestSession.copyWith(hrrResults: updatedHrr);
-      latestSession = updatedSession;
-      notifyListeners();
-    } catch (e) {
-      events.emit(SnackBarEvent('Failed to save HRR: $e', isError: true));
-    }
-  }
-
-  /// Update the session with completed exercises
-  Future<void> updateSessionExercises(List<Exercise> completedExercises) async {
-    try {
-      final updatedSession = latestSession.copyWith(
-        exercisesPerformed: completedExercises,
-      );
-      
-      final updatedSessions = client.sessions.map((s) {
-        return s.sessionId == latestSession.sessionId ? updatedSession : s;
-      }).toList();
-
-      final updatedClient = client.copyWith(sessions: updatedSessions);
-      await _dataService.updateClient(updatedClient);
-      latestSession = updatedSession;
-      notifyListeners();
-    } catch (e) {
-      events.emit(SnackBarEvent('Failed to update exercises: $e', isError: true));
-    }
-  }
-
-  /// Delete the latest session
+  /// Delete the latest session for this client
   Future<void> deleteLatestSession() async {
     try {
-      final refreshed = _dataService.getClientById(client.clientId);
-      if (refreshed == null) return;
-      final updatedSessions = List<Session>.from(refreshed.sessions)..removeLast();
-      final updatedClient = refreshed.copyWith(sessions: updatedSessions);
-      await _dataService.updateClient(updatedClient);
-      
-      final completed = updatedClient.sessions.where((s) => s.endTime != null).toList()
-        ..sort((a, b) => b.endTime!.compareTo(a.endTime!));
-      if (completed.isNotEmpty) {
-        latestSession = completed.first;
+      final updatedSessions = client.sessions.toList();
+      if (updatedSessions.isNotEmpty) {
+        updatedSessions.removeLast();
       }
+      final updatedClient = client.copyWith(sessions: updatedSessions);
+      await _dataService.updateClient(updatedClient);
+      events.emit(SnackBarEvent('Session deleted'));
       notifyListeners();
     } catch (e) {
       events.emit(SnackBarEvent('Failed to delete session: $e', isError: true));
     }
   }
 
-  @override
-  void dispose() {
-    _sessionService.removeListener(_onSessionServiceChanged);
-    events.dispose();
-    super.dispose();
+  /// Update the session with completed exercises
+  Future<void> updateSessionExercises(List<Exercise> completedExercises) async {
+    try {
+      final updatedSession = session.copyWith(
+        exercisesPerformed: completedExercises,
+      );
+      
+      final updatedSessions = client.sessions.map((s) {
+        return s.sessionId == session.sessionId ? updatedSession : s;
+      }).toList();
+
+      final updatedClient = client.copyWith(sessions: updatedSessions);
+      await _dataService.updateClient(updatedClient);
+      notifyListeners();
+    } catch (e) {
+      events.emit(SnackBarEvent('Failed to update exercises: $e', isError: true));
+    }
   }
 
-  bool get isActiveForClient =>
-      _sessionService.hasActiveSession &&
-      _sessionService.activeClientId == client.clientId;
-
-  Duration? get liveDuration => _sessionService.sessionDuration;
-
-  int? get liveHeartRate => _sessionService.currentHeartRate;
-
-  Session? get activeSession => _sessionService.activeSession;
-
-  Session get session => latestSession;
-
-  /// Get all previous completed sessions (excluding the current session)
-  List<Session> get previousSessions {
-    final refreshed = _dataService.getClientById(client.clientId);
-    if (refreshed == null) return [];
-    return refreshed.sessions
-        .where((s) => s.endTime != null && s.sessionId != _sessionId)
-        .toList()
-      ..sort((a, b) => b.endTime!.compareTo(a.endTime!));
+  @override
+  void dispose() {
+    _sessionService.removeListener(_onSessionChanged);
+    events.dispose();
+    super.dispose();
   }
 }

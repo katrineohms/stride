@@ -133,9 +133,6 @@ class ClientDataService {
       'active': client.active,
       'motivation': client.motivation,
       'exerciseTemplates': client.exerciseTemplates.map(_exerciseToMap).toList(),
-      'hrrResults': client.hrrResults.map(
-        (key, value) => MapEntry(key, {'high': value.high, 'low': value.low}),
-      ),
       'sessions': client.sessions.map(_sessionToMap).toList(),
     };
   }
@@ -145,14 +142,6 @@ class ClientDataService {
             ?.map((raw) => _exerciseFromMap(raw as Map<String, Object?>))
             .toList() ??
         const <Exercise>[];
-
-    final hrrResults = (map['hrrResults'] as Map?)?.map(
-          (k, v) => MapEntry(
-            k.toString(),
-            _hrrFromMap((v as Map).cast<String, Object?>()),
-          ),
-        ) ??
-        const <String, HeartRateRecovery>{};
 
     final sessions = (map['sessions'] as List?)
             ?.map((raw) => _sessionFromMap(raw as Map<String, Object?>))
@@ -167,7 +156,6 @@ class ClientDataService {
       active: (map['active'] as num?)?.toInt() ?? 0,
       motivation: map['motivation']?.toString() ?? '',
       exerciseTemplates: exerciseTemplates,
-      hrrResults: hrrResults,
       sessions: sessions,
     );
   }
@@ -244,8 +232,6 @@ class ClientDataService {
       'notes': session.notes,
       'exercisesPerformed':
         session.exercisesPerformed.map(_exerciseToMap).toList(),
-      'hrrResults': session.hrrResults
-        .map((k, v) => MapEntry(k, {'high': v.high, 'low': v.low})),
       'hrReadings': session.hrReadings
         .map((r) => {'timestamp': r.timestamp, 'heartRate': r.heartRate})
         .toList(),
@@ -271,14 +257,6 @@ class ClientDataService {
             .toList() ??
         const <Exercise>[];
 
-    final hrrResults = (map['hrrResults'] as Map?)?.map(
-          (k, v) => MapEntry(
-            k.toString(),
-            _hrrFromMap((v as Map).cast<String, Object?>()),
-          ),
-        ) ??
-        const <String, HeartRateRecovery>{};
-
     return Session(
       sessionId: map['sessionId']?.toString() ?? 'unknown',
       startTime: (map['startTime'] as num?)?.toInt() ?? 0,
@@ -286,16 +264,8 @@ class ClientDataService {
       hrReadings: hrReadings,
       startLocationCity: map['startLocationCity']?.toString(),
       exercisesPerformed: exercisesPerformed,
-      hrrResults: hrrResults,
       notes: map['notes']?.toString(),
     );
   }
-
-  // ===== Serialization Helpers: HRR =====
-  HeartRateRecovery _hrrFromMap(Map<String, Object?> map) {
-    return HeartRateRecovery(
-      high: (map['high'] as num?)?.toInt() ?? 0,
-      low: (map['low'] as num?)?.toInt() ?? 0,
-    );
-  }
 }
+

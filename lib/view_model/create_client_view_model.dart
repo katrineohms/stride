@@ -51,7 +51,6 @@ class CreateClientViewModel {
       active: active,
       motivation: motivation,
       exerciseTemplates: exerciseTemplates,
-      hrrResults: {},
       sessions: List.unmodifiable(scheduledSessions),
     );
   }
@@ -81,7 +80,6 @@ class CreateClientViewModel {
       hrReadings: const [],
       startLocationCity: null,
       exercisesPerformed: const [],
-      hrrResults: const {},
       notes: null,
     );
   }

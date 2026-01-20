@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 // Files
+import '../model/_models.dart';
 import '../view/client_list_view.dart';
 import 'client_detail_view.dart';
 import 'session_detail_view.dart';
@@ -253,7 +254,7 @@ class _HomePageState extends State<HomePage> {
 
                 return Column(
                   children: clientsForDay.map((client) {
-                    // Find the session for the selected day
+                    // Find or create session for the selected day
                     final selectedDayStart = DateTime(
                       selectedDay.year,
                       selectedDay.month,
@@ -266,10 +267,21 @@ class _HomePageState extends State<HomePage> {
                       23, 59, 59,
                     ).millisecondsSinceEpoch ~/ 1000;
                     
-                    final sessionForDay = client.sessions.firstWhere(
-                      (s) => s.startTime >= selectedDayStart && s.startTime <= selectedDayEnd,
-                      orElse: () => client.sessions.first, // Fallback to first session
-                    );
+                    // Try to find an existing session for this day
+                    Session? sessionForDay;
+                    try {
+                      sessionForDay = client.sessions.firstWhere(
+                        (s) => s.startTime >= selectedDayStart && s.startTime <= selectedDayEnd,
+                      );
+                    } catch (_) {
+                      // No session found for this day - create a new one
+                      sessionForDay = Session(
+                        sessionId: '${client.clientId}_$selectedDayStart',
+                        startTime: selectedDayStart,
+                        hrReadings: const [],
+                        exercisesPerformed: [],
+                      );
+                    }
 
                     return ClientCard(
                       client: client,
@@ -280,7 +292,7 @@ class _HomePageState extends State<HomePage> {
                             builder: (context) => SessionDetailPage(
                               viewModel: SessionDetailViewModel(
                                 client: client,
-                                session: sessionForDay,
+                                session: sessionForDay!,
                               ),
                             ),
                           ),

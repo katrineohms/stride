@@ -90,17 +90,18 @@ class ClientDetailViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Replace/merge HRR results and persist
-  Future<void> setHeartRateRecovery(String exerciseId, HeartRateRecovery hrr) async {
-    final updatedHrr = Map<String, HeartRateRecovery>.from(_client.hrrResults)
-      ..[exerciseId] = hrr;
-    await updateClient(_client.copyWith(hrrResults: updatedHrr));
-  }
-
   /// Remove the latest session (used by UI delete button)
   Future<void> deleteLatestSession() async {
     if (_client.sessions.isEmpty) return;
     final updatedSessions = List<Session>.from(_client.sessions)..removeLast();
+    await updateClient(_client.copyWith(sessions: updatedSessions));
+  }
+
+  /// Delete a specific session
+  Future<void> deleteSession(Session session) async {
+    final updatedSessions = _client.sessions
+        .where((s) => s.sessionId != session.sessionId)
+        .toList();
     await updateClient(_client.copyWith(sessions: updatedSessions));
   }
 

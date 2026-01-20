@@ -5,14 +5,12 @@ import 'package:stop_watch_timer/stop_watch_timer.dart';
 // Files
 import '../model/_models.dart';
 
-/// Executable exercise card - with timers, HRR buttons, and checkboxes
+/// Executable exercise card - with timers and checkboxes
 class ExecutableExerciseCard extends StatelessWidget {
   final Exercise exercise;
   final bool isDone;
   final StopWatchTimer? stopWatch;
   final ValueChanged<bool?>? onDoneChanged;
-  final VoidCallback? onHrrTap;
-  final HeartRateRecovery? hrr;
 
   const ExecutableExerciseCard({
     super.key,
@@ -20,8 +18,6 @@ class ExecutableExerciseCard extends StatelessWidget {
     this.isDone = false,
     this.stopWatch,
     this.onDoneChanged,
-    this.onHrrTap,
-    this.hrr,
   });
 
   @override
@@ -53,38 +49,12 @@ class ExecutableExerciseCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text('${ex.sets} sets × ${ex.reps} reps'),
             const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Checkbox(
-                      value: isDone,
-                      onChanged: onDoneChanged,
-                    ),
-                    const Text('Done'),
-                  ],
-                ),
-                if (hrr != null)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text('High: ${hrr!.high}', style: const TextStyle(fontSize: 12)),
-                      Text('Low: ${hrr!.low}', style: const TextStyle(fontSize: 12)),
-                      Text('HRR: ${hrr!.delta}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    ],
-                  )
-                else
-                  ElevatedButton.icon(
-                    onPressed: onHrrTap,
-                    icon: const Icon(Icons.favorite, size: 16),
-                    label: const Text('HRR'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-              ],
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Checkbox(
+                value: isDone,
+                onChanged: onDoneChanged,
+              ),
             ),
           ],
         ),
@@ -111,6 +81,42 @@ class ExecutableExerciseCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text('${ex.time} seconds'),
             const SizedBox(height: 8),
+            // HRR button and stats - always visible
+            Row(
+              children: [
+                if (stopWatch != null)
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              if (stopWatch!.isRunning) {
+                                stopWatch!.onStopTimer();
+                              } else {
+                                stopWatch!.onStartTimer();
+                              }
+                            },
+                            icon: Icon(
+                              stopWatch!.isRunning ? Icons.pause : Icons.play_arrow,
+                            ),
+                            label: Text(stopWatch!.isRunning ? 'Pause' : 'Start'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () => stopWatch!.onResetTimer(),
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Reset'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
             if (stopWatch != null) ...[
               StreamBuilder<int>(
                 stream: stopWatch!.rawTime,
@@ -133,55 +139,6 @@ class ExecutableExerciseCard extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        if (stopWatch!.isRunning) {
-                          stopWatch!.onStopTimer();
-                        } else {
-                          stopWatch!.onStartTimer();
-                        }
-                      },
-                      icon: Icon(
-                        stopWatch!.isRunning ? Icons.pause : Icons.play_arrow,
-                      ),
-                      label: Text(stopWatch!.isRunning ? 'Pause' : 'Start'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => stopWatch!.onResetTimer(),
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Reset'),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: hrr != null
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('High: ${hrr!.high} bpm', style: const TextStyle(fontSize: 12)),
-                          Text('Low: ${hrr!.low} bpm', style: const TextStyle(fontSize: 12)),
-                          Text('HRR: ${hrr!.delta} bpm', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                        ],
-                      )
-                    : ElevatedButton.icon(
-                        onPressed: onHrrTap,
-                        icon: const Icon(Icons.favorite, size: 16),
-                        label: const Text('Measure HRR'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.primary,
-                          foregroundColor: Colors.white,
-                        ),
-                      ),
-              ),
             ],
           ],
         ),

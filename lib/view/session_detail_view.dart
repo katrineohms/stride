@@ -1,6 +1,5 @@
 // Packages
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:stop_watch_timer/stop_watch_timer.dart';
 
@@ -95,160 +94,28 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
   }
 
   void _onSessionChanged() {
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   void _startTicker() {
     _ticker?.cancel();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
+      if (!mounted) {
+        _ticker?.cancel();
+        return;
+      }
       if (widget.viewModel.isActiveForClient) {
         setState(() {});
       }
     });
   }
 
-  /// Collects heart rate samples for a fixed window and shows recovery stats.
-  Future<void> _startHeartRateRecovery(
-    BuildContext context,
-    String exerciseId,
-    String exerciseName,
-  ) async {
-    final movesense = widget.viewModel.movesense;
-    final hrStream = movesense.heartRateStream;
-
-    if (!movesense.isConnected || hrStream == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No Movesense device connected.')),
-      );
-      return;
-    }
-
-    const measurementDuration = Duration(seconds: 60);
-    final readings = <int>[];
-    final timeLeft = ValueNotifier<int>(measurementDuration.inSeconds);
-    final lastHr = ValueNotifier<int?>(null);
-
-    StreamSubscription<int>? sub;
-    Timer? countdown;
-
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) {
-        return AlertDialog(
-          title: Text('Measuring HRR for $exerciseName'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 12),
-              ValueListenableBuilder<int>(
-                valueListenable: timeLeft,
-                builder: (_, seconds, _) => Text(
-                  'Time left: ${seconds}s',
-                  style: const TextStyle(fontSize: 14),
-                ),
-              ),
-              const SizedBox(height: 8),
-              ValueListenableBuilder<int?>(
-                valueListenable: lastHr,
-                builder: (_, hr, _) => Text(
-                  hr == null ? 'Waiting for data…' : 'Current HR: $hr',
-                  style: const TextStyle(fontSize: 14),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-
-    sub = hrStream.listen((hr) {
-      if (hr <= 0) return;
-      readings.add(hr);
-      lastHr.value = hr;
-    });
-
-    countdown = Timer.periodic(const Duration(seconds: 1), (t) {
-      final remaining = measurementDuration.inSeconds - t.tick;
-      if (remaining >= 0) {
-        timeLeft.value = remaining;
-      }
-      if (remaining <= 0) {
-        t.cancel();
-      }
-    });
-
-    await Future.delayed(measurementDuration);
-
-    await sub.cancel();
-    countdown.cancel();
-    timeLeft.dispose();
-    lastHr.dispose();
-
-    if (!mounted) return;
-
-    if (context.mounted) {
-      Navigator.of(context, rootNavigator: true).pop();
-    }
-
-    if (readings.isEmpty) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No heart rate data captured.')),
-        );
-      }
-      return;
-    }
-
-    final maxHr = readings.reduce(max);
-    final minHr = readings.reduce(min);
-    final recovery = maxHr - minHr;
-
-    await widget.viewModel.saveHrrResult(
-      exerciseId,
-      HeartRateRecovery(high: maxHr, low: minHr),
-    );
-
-    if (!mounted) return;
-
-    setState(() {});
-
-    if (context.mounted) {
-      showDialog<void>(
-        context: context,
-        builder: (ctx) {
-          return AlertDialog(
-            title: const Text('Heart Rate Recovery'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Exercise: $exerciseName'),
-                const SizedBox(height: 8),
-                Text('Highest HR: $maxHr bpm'),
-                Text('Lowest HR: $minHr bpm'),
-                const SizedBox(height: 8),
-                Text('Recovery (high - low): $recovery bpm'),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final isActive = widget.viewModel.isActiveForClient;
-    final latestSession = widget.viewModel.session;
+    final latestSession = widget.viewModel.activeSession;
 
     return Scaffold(
       appBar: AppBar(
@@ -304,27 +171,54 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
             ),
             const SizedBox(height: 16),
 
-            // ===== HR Session Controls =====
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  if (isActive) {
-                    await widget.viewModel.stopSession();
-                  } else {
-                    await widget.viewModel.startSession();
-                  }
-                  if (mounted) setState(() {});
-                },
-                icon: Icon(isActive ? Icons.stop : Icons.play_arrow),
-                label: Text(isActive ? 'Stop Session' : 'Start Session'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isActive ? Colors.red : null,
-                  foregroundColor: isActive ? Colors.white : null,
+            // ===== Session Timer =====
+            if (isActive)
+              Center(
+                child: Column(
+                  children: [
+                    const Text(
+                      'Elapsed Time',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _formatDuration(widget.viewModel.liveDuration),
+                      style: const TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
+            if (isActive)
+              const SizedBox(height: 16),
+
+            // ===== HR Session Controls =====
+            if (!(isActive == false && latestSession.hrReadings.isNotEmpty))
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    if (isActive) {
+                      await widget.viewModel.stopSession();
+                      // Refresh session from storage to ensure HRR data is loaded
+                      widget.viewModel.attach();
+                    } else {
+                      await widget.viewModel.startSession();
+                    }
+                    if (mounted) setState(() {});
+                  },
+                  icon: Icon(isActive ? Icons.stop : Icons.play_arrow),
+                  label: Text(isActive ? 'Stop Session' : 'Start Session'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isActive ? Colors.red : null,
+                    foregroundColor: isActive ? Colors.white : null,
+                  ),
+                ),
+              ),
+            if (!(isActive == false && latestSession.hrReadings.isNotEmpty))
+              const SizedBox(height: 16),
 
             // Session graph (only after session ends and has data)
             if (!isActive && latestSession.hrReadings.isNotEmpty)
@@ -340,24 +234,67 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
             ),
             const SizedBox(height: 8),
             ..._client.exerciseTemplates.map((exercise) {
-              final hrr = latestSession.hrrResults[exercise.exerciseId];
               return ExecutableExerciseCard(
                 exercise: exercise,
                 isDone: _exerciseDone[exercise.exerciseId] ?? false,
                 stopWatch: _stopWatches[exercise.exerciseId],
                 onDoneChanged: (value) => _toggleDone(exercise.exerciseId, value),
-                onHrrTap: () => _startHeartRateRecovery(
-                  context,
-                  exercise.exerciseId,
-                  exercise.name,
-                ),
-                hrr: hrr,
               );
             }),
+            const SizedBox(height: 16),
+
+            // ===== Delete Session Button =====
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: latestSession.hrReadings.isNotEmpty
+                    ? () {
+                        showDialog<void>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Delete Session'),
+                            content: const Text('Are you sure you want to delete this session?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  widget.viewModel.deleteLatestSession();
+                                  Navigator.pop(ctx);
+                                  Navigator.pop(context);
+                                },
+                                child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                    : null,
+                icon: const Icon(Icons.delete),
+                label: const Text('Delete Session'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: latestSession.hrReadings.isNotEmpty ? Colors.red : Colors.grey,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ),
             const SizedBox(height: 50),
           ],
         ),
       ),
     );
   }
+}
+
+String _formatDuration(Duration? duration) {
+  if (duration == null) return '--';
+  final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+  final hours = duration.inHours;
+  final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+  if (hours > 0) {
+    return '${hours.toString().padLeft(2, '0')}:$minutes:$seconds';
+  }
+  return '$minutes:$seconds';
 }
