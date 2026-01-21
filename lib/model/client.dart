@@ -8,7 +8,6 @@ class Client {
   final String gender;
   final int active;
   final String motivation;
-  /// Exercise templates owned by the client (copied into sessions when used)
   final List<Exercise> exerciseTemplates;
   final List<Session> sessions;
 
@@ -32,7 +31,6 @@ class Client {
     int? active,
     String? motivation,
     List<Exercise>? exerciseTemplates,
-
     List<Session>? sessions,
   }) {
     return Client(

@@ -1,10 +1,12 @@
 // Plugins
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 // Packages
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:sembast/sembast.dart';
 import 'package:sembast/sembast_io.dart';
 
 // Files
@@ -123,6 +125,43 @@ class ClientDataService {
   /// Get client count from the in-memory cache.
   int getClientCount() => _clients.length;
 
+  // ===== Data Export =====
+  /// Export all client data to a JSON file for analysis.
+  /// Returns the File object for sharing.
+  Future<File> dumpToJson() async {
+    await init();
+    
+    // Get the documents directory
+    final appDir = await getApplicationDocumentsDirectory();
+    final exportDir = Directory(p.join(appDir.path, 'stride_data', 'exports'));
+    await exportDir.create(recursive: true);
+    
+    // Create filename with timestamp
+    final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-');
+    final filePath = p.join(exportDir.path, 'stride_export_$timestamp.json');
+    
+    // Create export data structure
+    final exportData = await exportAsMap();
+    
+    // Write to file
+    final file = File(filePath);
+    final jsonString = JsonEncoder.withIndent('  ').convert(exportData);
+    await file.writeAsString(jsonString);
+    
+    return file;
+  }
+
+  /// Export all client data as a formatted JSON Map (for debugging or custom export).
+  Future<Map<String, dynamic>> exportAsMap() async {
+    await init();
+    
+    return {
+      'exportTimestamp': DateTime.now().toIso8601String(),
+      'clientCount': _clients.length,
+      'clients': _clients.map((client) => _clientToMap(client)).toList(),
+    };
+  }
+
   // ===== Serialization Helpers: Client =====
   Map<String, Object?> _clientToMap(Client client) {
     return {
@@ -229,7 +268,6 @@ class ClientDataService {
       'startTime': session.startTime,
       'endTime': session.endTime,
       'startLocationCity': session.startLocationCity,
-      'notes': session.notes,
       'exercisesPerformed':
         session.exercisesPerformed.map(_exerciseToMap).toList(),
       'hrReadings': session.hrReadings
@@ -264,7 +302,6 @@ class ClientDataService {
       hrReadings: hrReadings,
       startLocationCity: map['startLocationCity']?.toString(),
       exercisesPerformed: exercisesPerformed,
-      notes: map['notes']?.toString(),
     );
   }
 }

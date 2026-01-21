@@ -10,6 +10,7 @@ class Exercise {
   });
 }
 
+
 class CountableExercise extends Exercise {
   final int reps;
   final int sets;
@@ -23,8 +24,9 @@ class CountableExercise extends Exercise {
   });
 }
 
+
 class TimeableExercise extends Exercise {
-  final int time; // Duration in seconds
+  final int time; 
 
   TimeableExercise({
     required super.exerciseId,

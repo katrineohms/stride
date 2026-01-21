@@ -8,7 +8,6 @@ class Session {
   final List<HrReading> hrReadings;
   final String? startLocationCity; // city name from reverse geocoding
   final List<Exercise> exercisesPerformed;
-  final String? notes;
 
   Session({
     required this.sessionId,
@@ -17,7 +16,6 @@ class Session {
     required List<HrReading> hrReadings,
     this.startLocationCity,
     List<Exercise>? exercisesPerformed,
-    this.notes,
   })  : hrReadings = List.unmodifiable(hrReadings),
         exercisesPerformed = List.unmodifiable(exercisesPerformed ?? []);
 
@@ -36,7 +34,6 @@ class Session {
     List<HrReading>? hrReadings,
     String? startLocationCity,
     List<Exercise>? exercisesPerformed,
-    String? notes,
   }) {
     return Session(
       sessionId: sessionId ?? this.sessionId,
@@ -45,7 +42,6 @@ class Session {
       hrReadings: hrReadings ?? this.hrReadings,
       startLocationCity: startLocationCity ?? this.startLocationCity,
       exercisesPerformed: exercisesPerformed ?? this.exercisesPerformed,
-      notes: notes ?? this.notes,
     );
   }
 }

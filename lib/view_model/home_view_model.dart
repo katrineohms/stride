@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 // Files
 import '../model/_models.dart';
@@ -54,5 +55,10 @@ class HomeViewModel {
   /// Get clients who have a session on the given day
   List<Client> getClientsForDay(DateTime day) {
     return _dataService.getClientsForDay(day);
+  }
+
+  /// Export all data to JSON file
+  Future<File> exportDataToJson() async {
+    return await _dataService.dumpToJson();
   }
 }

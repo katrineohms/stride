@@ -80,7 +80,6 @@ class CreateClientViewModel {
       hrReadings: const [],
       startLocationCity: null,
       exercisesPerformed: const [],
-      notes: null,
     );
   }
 }

@@ -1,6 +1,7 @@
 // Packages
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:share_plus/share_plus.dart';
 
 // Files
 import '../model/_models.dart';
@@ -73,6 +74,58 @@ class _HomePageState extends State<HomePage> {
                 style: TextStyle(color: Colors.white, fontSize: 24),
               ),
             ),
+            // Export data option
+            ListTile(
+              leading: const Icon(Icons.share),
+              title: const Text('Export & Share Data'),
+              onTap: () async {
+                Navigator.pop(context); // close drawer
+                
+                // Show loading indicator
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+                
+                try {
+                  final file = await viewModel.exportDataToJson();
+                  
+                  // Close loading indicator
+                  if (context.mounted) Navigator.pop(context);
+                  
+                  // Share the file
+                  await Share.shareXFiles(
+                    [XFile(file.path)],
+                    subject: 'Stride HR Data Export',
+                    text: 'Heart rate monitoring data from Stride app',
+                  );
+                } catch (e) {
+                  // Close loading indicator
+                  if (context.mounted) Navigator.pop(context);
+                  
+                  // Show error message
+                  if (context.mounted) {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Export Failed'),
+                        content: Text('Error: $e'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+            const Divider(),
             // Client list in drawer
             ...viewModel.clients.map((client) {
               return ListTile(
