@@ -23,8 +23,6 @@ class SessionService extends ChangeNotifier {
   Timer? _saveTimer;
   Timer? _notificationTimer;
   final List<HrReading> _pendingReadings = [];
-  final List<int> _hrWindow = [];
-  static const int _medianWindowSize = 5;
   final GpsService _gpsService = GpsService();
 
   // Public accessors
@@ -78,13 +76,8 @@ class SessionService extends ChangeNotifier {
     _hrSubscription = hrStream.listen((hr) {
       if (hr > 0) {
         final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-        _hrWindow.add(hr);
-        if (_hrWindow.length > _medianWindowSize) {
-          _hrWindow.removeAt(0);
-        }
-        final filtered = _median(_hrWindow);
         _pendingReadings.add(
-          HrReading(timestamp: timestamp, heartRate: filtered),
+          HrReading(timestamp: timestamp, heartRate: hr),
         );
       }
     });
@@ -188,14 +181,6 @@ class SessionService extends ChangeNotifier {
     notifyListeners();
   }
 
-  int _median(List<int> values) {
-    if (values.isEmpty) return 0;
-    final sorted = List<int>.from(values)..sort();
-    final mid = sorted.length ~/ 2;
-    if (sorted.length.isOdd) return sorted[mid];
-    return ((sorted[mid - 1] + sorted[mid]) / 2).round();
-  }
-
   /// Get current HR for display
   int? get currentHeartRate {
     if (_pendingReadings.isEmpty) return null;
@@ -217,6 +202,13 @@ class SessionService extends ChangeNotifier {
       currentHr: currentHeartRate,
       duration: sessionDuration ?? Duration.zero,
     );
+  }
+
+  /// Update HRR data in the active session
+  void updateActiveSessionHrr(Map<String, HeartRateRecovery> hrrResults) {
+    if (_activeSession == null) return;
+    _activeSession = _activeSession!.copyWith(hrrResults: hrrResults);
+    notifyListeners();
   }
 
   @override

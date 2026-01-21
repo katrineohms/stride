@@ -322,17 +322,20 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
               if (isActive == false && displaySession.hrReadings.isNotEmpty)
                 ..._sessionExercises.map((exercise) {
                   // Check if this exercise was completed (exists in exercisesPerformed)
+                  final hrrResult = displaySession.hrrResults[exercise.exerciseId];
                   final isCompleted = displaySession.exercisesPerformed.any(
-                    (ex) => ex.exerciseId == exercise.exerciseId,
-                  );
+                        (ex) => ex.exerciseId == exercise.exerciseId,
+                      ) || hrrResult != null;
                   return ExerciseTemplateCard(
                     exercise: exercise,
                     isCompleted: isCompleted,
+                    hrrResult: hrrResult,
                   );
                 })
               // Show executable cards during active session or before start
               else
                 ..._sessionExercises.map((exercise) {
+                  final hrrResult = displaySession.hrrResults[exercise.exerciseId];
                   return ExecutableExerciseCard(
                     exercise: exercise,
                     isDone: widget.viewModel.isExerciseDone(exercise.exerciseId),
@@ -340,6 +343,13 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
                     onDoneChanged: (value) => widget.viewModel.toggleExerciseDone(
                       exercise.exerciseId,
                       value ?? false,
+                    ),
+                    hrrResult: hrrResult,
+                    heartRateStream: widget.viewModel.movesense.heartRateStream,
+                    onMeasureHrr: () => _startHeartRateRecovery(
+                      context,
+                      exercise.exerciseId,
+                      exercise.name,
                     ),
                   );
                 }),
@@ -407,6 +417,138 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
           ],
         ),
       ),
+    );
+  }
+
+  /// Collects heart rate samples for a fixed window and shows recovery stats.
+  Future<void> _startHeartRateRecovery(
+    BuildContext context,
+    String exerciseId,
+    String exerciseName,
+  ) async {
+    final movesense = widget.viewModel.movesense;
+    final hrStream = movesense.heartRateStream;
+
+    if (!movesense.isConnected || hrStream == null) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No Movesense device connected.')),
+      );
+      return;
+    }
+
+    const measurementDuration = Duration(seconds: 60); // standard HRR window
+    final readings = <int>[];
+    final timeLeft = ValueNotifier<int>(measurementDuration.inSeconds);
+    final lastHr = ValueNotifier<int?>(null);
+
+    StreamSubscription<int>? sub;
+    Timer? countdown;
+
+    // Show a blocking dialog while measuring.
+    if (!context.mounted) return;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text('Measuring HRR for $exerciseName'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 12),
+              ValueListenableBuilder<int>(
+                valueListenable: timeLeft,
+                builder: (_, seconds, _) => Text(
+                  'Time left: ${seconds}s',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
+              const SizedBox(height: 8),
+              ValueListenableBuilder<int?>(
+                valueListenable: lastHr,
+                builder: (_, hr, _) => Text(
+                  hr == null ? 'Waiting for data…' : 'Current HR: $hr',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    sub = hrStream.listen((hr) {
+      if (hr <= 0) return; // ignore invalid readings
+      readings.add(hr);
+      lastHr.value = hr;
+    });
+
+    countdown = Timer.periodic(const Duration(seconds: 1), (t) {
+      final remaining = measurementDuration.inSeconds - t.tick;
+      if (remaining >= 0) {
+        timeLeft.value = remaining;
+      }
+      if (remaining <= 0) {
+        t.cancel();
+      }
+    });
+
+    await Future.delayed(measurementDuration);
+
+    await sub.cancel();
+    countdown.cancel();
+    timeLeft.dispose();
+    lastHr.dispose();
+
+    if (!context.mounted) return;
+    Navigator.of(context, rootNavigator: true).pop();
+
+    if (readings.isEmpty) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No heart rate data captured.')),
+      );
+      return;
+    }
+
+    final maxHr = readings.reduce((a, b) => a > b ? a : b);
+    final minHr = readings.reduce((a, b) => a < b ? a : b);
+    final recovery = maxHr - minHr;
+
+    // Save HRR to the session via view model
+    await widget.viewModel.setHeartRateRecovery(
+      exerciseId,
+      HeartRateRecovery(high: maxHr, low: minHr),
+    );
+
+    if (!context.mounted) return;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Heart Rate Recovery'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Exercise: $exerciseName'),
+              const SizedBox(height: 8),
+              Text('Highest HR: $maxHr bpm'),
+              Text('Lowest HR: $minHr bpm'),
+              const SizedBox(height: 8),
+              Text('Recovery (high - low): $recovery bpm'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

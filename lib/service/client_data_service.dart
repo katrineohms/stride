@@ -273,6 +273,13 @@ class ClientDataService {
       'hrReadings': session.hrReadings
         .map((r) => {'timestamp': r.timestamp, 'heartRate': r.heartRate})
         .toList(),
+      'hrrResults': session.hrrResults.map((key, value) => MapEntry(
+            key,
+            {
+              'high': value.high,
+              'low': value.low,
+            },
+          )),
     };
   }
 
@@ -295,6 +302,18 @@ class ClientDataService {
             .toList() ??
         const <Exercise>[];
 
+    final hrrResults = <String, HeartRateRecovery>{};
+    final hrrMap = map['hrrResults'] as Map<String, Object?>?;
+    if (hrrMap != null) {
+      hrrMap.forEach((key, value) {
+        if (value is Map<String, Object?>) {
+          final high = (value['high'] as num?)?.toInt() ?? 0;
+          final low = (value['low'] as num?)?.toInt() ?? 0;
+          hrrResults[key] = HeartRateRecovery(high: high, low: low);
+        }
+      });
+    }
+
     return Session(
       sessionId: map['sessionId']?.toString() ?? 'unknown',
       startTime: (map['startTime'] as num?)?.toInt() ?? 0,
@@ -303,6 +322,7 @@ class ClientDataService {
       hrReadings: hrReadings,
       startLocationCity: map['startLocationCity']?.toString(),
       exercisesPerformed: exercisesPerformed,
+      hrrResults: hrrResults,
     );
   }
 }

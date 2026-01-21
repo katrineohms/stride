@@ -110,6 +110,39 @@ class SessionDetailViewModel extends ChangeNotifier {
     }
   }
 
+  /// Set HRR for a specific exercise in the current session
+  Future<void> setHeartRateRecovery(String exerciseId, HeartRateRecovery hrr) async {
+    try {
+      final latest = _dataService.getClientById(client.clientId) ?? client;
+      final targetSessionId = (_sessionService.activeSession?.sessionId) ?? session.sessionId;
+
+      final updatedSessions = latest.sessions.map((s) {
+        if (s.sessionId == targetSessionId) {
+          final updatedHrr = Map<String, HeartRateRecovery>.from(s.hrrResults)
+            ..[exerciseId] = hrr;
+          return s.copyWith(hrrResults: updatedHrr);
+        }
+        return s;
+      }).toList();
+
+      final updatedClient = latest.copyWith(sessions: updatedSessions);
+      await _dataService.updateClient(updatedClient);
+      
+      // Update the active session in SessionService if this is the active session
+      if (_sessionService.hasActiveSession && 
+          _sessionService.activeSession?.sessionId == targetSessionId) {
+        final updatedHrr = Map<String, HeartRateRecovery>.from(
+          _sessionService.activeSession!.hrrResults
+        )..[exerciseId] = hrr;
+        _sessionService.updateActiveSessionHrr(updatedHrr);
+      }
+      
+      notifyListeners();
+    } catch (e) {
+      events.emit(SnackBarEvent('Failed to save HRR: $e', isError: true));
+    }
+  }
+
   void _initializeCompletionFromSession() {
     final source = _sessionService.activeSession ?? session;
     _completedExerciseIds

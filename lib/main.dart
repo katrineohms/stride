@@ -24,7 +24,6 @@ class MyApp extends StatelessWidget {
         top: false,
         right: false,
         bottom: true,
-        minimum: const EdgeInsets.only(bottom: 50),
         child: child ?? const SizedBox.shrink(),
       ),
       theme: ThemeData(
