@@ -33,7 +33,9 @@ class SessionService extends ChangeNotifier {
   bool get hasActiveSession => _activeSession != null;
 
   /// Start a new session for a client
-  Future<void> startSession(String clientId) async {
+  /// If [scheduledSession] is provided, it will be reused (for scheduled sessions)
+  /// Otherwise, creates a new session immediately (for quick start)
+  Future<void> startSession(String clientId, {Session? scheduledSession}) async {
     if (_activeSession != null) {
       throw Exception('A session is already active. Stop it first.');
     }
@@ -45,17 +47,26 @@ class SessionService extends ChangeNotifier {
       throw Exception('No Movesense device connected.');
     }
 
-    final sessionId = const Uuid().v4();
-    final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-
     final startCity = await _gpsService.getLocationCityName();
 
-    _activeSession = Session(
-      sessionId: sessionId,
-      startTime: now,
-      hrReadings: [],
-      startLocationCity: startCity,
-    );
+    if (scheduledSession != null) {
+      // Reuse the scheduled session
+      _activeSession = scheduledSession.copyWith(
+        hrReadings: [],
+        startLocationCity: startCity,
+      );
+    } else {
+      // Quick start - create new session immediately
+      final sessionId = const Uuid().v4();
+      final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+      
+      _activeSession = Session(
+        sessionId: sessionId,
+        startTime: now,
+        hrReadings: [],
+        startLocationCity: startCity,
+      );
+    }
     _activeClientId = clientId;
     _pendingReadings.clear();
 

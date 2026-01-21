@@ -264,6 +264,31 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          await widget.viewModel.startSession();
+          if (context.mounted) {
+            // Navigate to session detail view
+            final latestClient = await widget.viewModel.getLatestClient();
+            final activeSession = widget.viewModel.sessionService.activeSession;
+            if (latestClient != null && activeSession != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SessionDetailPage(
+                    viewModel: SessionDetailViewModel(
+                      client: latestClient,
+                      session: activeSession,
+                    ),
+                  ),
+                ),
+              );
+            }
+          }
+        },
+        icon: const Icon(Icons.play_arrow),
+        label: const Text('Start Session'),
+      ),
     );
   }
 }

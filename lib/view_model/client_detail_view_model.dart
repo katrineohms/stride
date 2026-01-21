@@ -28,6 +28,9 @@ class ClientDetailViewModel extends ChangeNotifier {
   Client _client;
   bool _attached = false;
 
+  // Public accessor for SessionService
+  SessionService get sessionService => _sessionService;
+
   void _onSessionChanged() => notifyListeners();
 
   void attach() {
@@ -43,6 +46,16 @@ class ClientDetailViewModel extends ChangeNotifier {
   }
 
   Client get client => _client;
+
+  // ===== Client Data Refresh =====
+  Future<Client?> getLatestClient() async {
+    try {
+      return _dataService.getClientById(_client.clientId);
+    } catch (e) {
+      print('Error getting latest client: $e');
+    }
+    return null;
+  }
 
   // ===== Next Scheduled Session =====
   /// Returns the soonest future session by scheduled startTime
@@ -105,7 +118,7 @@ class ClientDetailViewModel extends ChangeNotifier {
     await updateClient(_client.copyWith(sessions: updatedSessions));
   }
 
-  /// Start a session and emit UI events for success or failure.
+  /// Quick start a session (creates new session immediately)
   Future<void> startSession() async {
     if (_sessionService.hasActiveSession &&
         _sessionService.activeClientId != _client.clientId) {
@@ -118,6 +131,7 @@ class ClientDetailViewModel extends ChangeNotifier {
       return;
     }
     try {
+      // Quick start - no scheduled session
       await _sessionService.startSession(_client.clientId);
       events.emit(const SnackBarEvent('Session started!'));
     } catch (e) {

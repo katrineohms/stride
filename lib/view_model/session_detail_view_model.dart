@@ -87,7 +87,7 @@ class SessionDetailViewModel extends ChangeNotifier {
   /// Start HR monitoring for this session
   Future<void> startSession() async {
     try {
-      await _sessionService.startSession(client.clientId);
+      await _sessionService.startSession(client.clientId, scheduledSession: session);
       events.emit(SnackBarEvent('Session started'));
       notifyListeners();
     } catch (e) {
