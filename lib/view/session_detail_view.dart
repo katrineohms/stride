@@ -1,10 +1,8 @@
 // Packages
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:stop_watch_timer/stop_watch_timer.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
 
 // Files
 import '../model/_models.dart';
@@ -20,7 +18,20 @@ import '../widgets/personal_info_card.dart';
 import '../widgets/executable_exercise_card.dart';
 import '../widgets/session_graph_card.dart';
 
-/// Session detail page - for executing a specific session from calendar
+/// ============================================
+/// SESSION DETAIL PAGE
+/// ============================================
+/// Drives a single training session workflow:
+/// - Shows client info and Movesense connection status
+/// - Starts/stops heart-rate recording with a live timer
+/// - Displays summary and graph after completion
+/// - Lists client exercise templates with execution controls
+/// - Allows deleting the last completed session
+///
+/// Notes:
+/// - Keeps the screen awake during an active session (WakelockPlus)
+/// - Uses `SessionDetailViewModel` for state and background tasks
+/// - Navigates back to the client detail view after stopping a session
 class SessionDetailPage extends StatefulWidget {
   final SessionDetailViewModel viewModel;
 
@@ -31,10 +42,10 @@ class SessionDetailPage extends StatefulWidget {
 }
 
 class _SessionDetailPageState extends State<SessionDetailPage> {
-  final Map<String, bool> _exerciseDone = {};
+  // ======= State =======
+  /// Tracks exercise completion and countdown timers for time-based exercises.
   final Map<String, StopWatchTimer> _stopWatches = {};
   late StreamSubscription<UiEvent> _eventSub;
-  Timer? _ticker;
   Session? _displaySession;
 
   Client get _client => widget.viewModel.client;
@@ -42,14 +53,11 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
   @override
   void initState() {
     super.initState();
-    // Keep screen on during session
-    WakelockPlus.enable();
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom]);
-    
+    // ======= Lifecycle: initState =======
+    /// Prepare UI + background behavior and subscribe to ViewModel events.
     widget.viewModel.attach();
     widget.viewModel.addListener(_onSessionChanged);
     _initializeExerciseState();
-    _startTicker();
     
     _eventSub = widget.viewModel.events.stream.listen((event) {
       if (!mounted) return;
@@ -66,7 +74,7 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
   }
 
   void _initializeExerciseState() {
-    _exerciseDone.clear();
+    /// Initialize per-exercise UI state and create timers for timeable ones.
     for (final ex in _stopWatches.values) {
       ex.dispose();
     }
@@ -74,9 +82,7 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
 
     // Use exercises from session's template (client's exerciseTemplates)
     for (final ex in _client.exerciseTemplates) {
-      if (ex is CountableExercise) {
-        _exerciseDone[ex.exerciseId] = false;
-      } else if (ex is TimeableExercise) {
+      if (ex is TimeableExercise) {
         _stopWatches[ex.exerciseId] = StopWatchTimer(
           mode: StopWatchMode.countDown,
           presetMillisecond: ex.time * 1000,
@@ -87,73 +93,50 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
 
   @override
   void dispose() {
-    // Re-enable screen auto-lock when leaving session view
-    WakelockPlus.disable();
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    
+    // ======= Lifecycle: dispose =======
+    /// Clean up timers, subscriptions, listeners.
     for (final timer in _stopWatches.values) {
       timer.dispose();
     }
-    _ticker?.cancel();
     _eventSub.cancel();
     widget.viewModel.removeListener(_onSessionChanged);
     widget.viewModel.dispose();
     super.dispose();
   }
 
-  void _toggleDone(String exerciseId, bool? value) {
-    setState(() {
-      _exerciseDone[exerciseId] = value ?? false;
-    });
-  }
-
   void _onSessionChanged() {
+    /// Refresh the UI when the ViewModel notifies of changes.
     if (mounted) {
       setState(() {});
     }
   }
 
-  void _startTicker() {
-    _ticker?.cancel();
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) {
-        _ticker?.cancel();
-        return;
-      }
-      if (widget.viewModel.isActiveForClient) {
-        setState(() {});
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
+    // ======= Build UI =======
+    /// Resolve session state used across child sections.
     final isActive = widget.viewModel.isActiveForClient;
     final displaySession = _displaySession ?? widget.viewModel.activeSession;
 
     return Scaffold(
+      // ======= App Bar =======
+      /// Title includes client name; actions show Movesense realtime status icon
       appBar: AppBar(
         title: Text('${_client.name} - Session'),
         centerTitle: true,
         actions: [
-          ListenableBuilder(
-            listenable: widget.viewModel.movesense,
-            builder: (context, _) {
-              return MovesenseStatusIcon(
-                connected: widget.viewModel.movesense.isConnected,
-                heartRate: 0,
-                heartRateStream: widget.viewModel.movesense.heartRateStream,
-              );
-            },
-          ),
+          MovesenseAppBarStatus(viewModel: widget.viewModel.movesense),
         ],
       ),
+      // ======= Body =======
+      /// Main content: connection card, client info, controls, summary, exercises
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ===== Movesense Card =====
+            /// Tap to open Movesense connection screen and manage pairing/connection
             ListenableBuilder(
               listenable: widget.viewModel.movesense,
               builder: (context, _) {
@@ -179,6 +162,7 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
             const SizedBox(height: 16),
 
             // ===== Client Info =====
+            /// Non-editable snapshot of the client’s personal information
             SizedBox(
               width: double.infinity,
               child: PersonalInfoCard(client: _client),
@@ -186,6 +170,7 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
             const SizedBox(height: 16),
 
             // ===== Session Timer =====
+            /// Visible only during an active session; updates each second
             if (isActive)
               Center(
                 child: Column(
@@ -209,6 +194,7 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
               const SizedBox(height: 16),
 
             // ===== HR Session Controls =====
+            /// Start/Stop button; on stop, navigates to refreshed client detail view
             if (!(isActive == false && displaySession.hrReadings.isNotEmpty))
               SizedBox(
                 width: double.infinity,
@@ -245,7 +231,8 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
             if (!(isActive == false && displaySession.hrReadings.isNotEmpty))
               const SizedBox(height: 16),
 
-            // Session Summary Card (only after session ends and has data)
+            // ===== Session Summary =====
+            /// Renders only when a session has ended and recorded HR data exists
             if (!isActive && displaySession.hrReadings.isNotEmpty) ...[
               SizedBox(
                 width: double.infinity,
@@ -284,6 +271,7 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
             ],
 
             // ===== Exercises =====
+            /// Execution list for the client’s exercise templates
             Text(
               'Exercises',
               style: Theme.of(context).textTheme.titleLarge,
@@ -292,14 +280,18 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
             ..._client.exerciseTemplates.map((exercise) {
               return ExecutableExerciseCard(
                 exercise: exercise,
-                isDone: _exerciseDone[exercise.exerciseId] ?? false,
+                isDone: widget.viewModel.isExerciseDone(exercise.exerciseId),
                 stopWatch: _stopWatches[exercise.exerciseId],
-                onDoneChanged: (value) => _toggleDone(exercise.exerciseId, value),
+                onDoneChanged: (value) => widget.viewModel.toggleExerciseDone(
+                  exercise.exerciseId,
+                  value ?? false,
+                ),
               );
             }),
             const SizedBox(height: 16),
 
-            // ===== Delete Session Button (only after session ends) =====
+            // ===== Delete Session Button =====
+            /// Available only after a session ends and has recorded data
             if (!isActive && displaySession.hrReadings.isNotEmpty)
               SizedBox(
                 width: double.infinity,

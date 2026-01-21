@@ -4,7 +4,6 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:share_plus/share_plus.dart';
 
 // Files
-import '../model/_models.dart';
 import '../view/client_list_view.dart';
 import 'client_detail_view.dart';
 import 'session_detail_view.dart';
@@ -17,7 +16,17 @@ import '../view/movesense_connect_view.dart';
 import '../widgets/client_card_widget.dart';
 import '../widgets/movesense_status_widget.dart';
 
-
+/// ============================================
+/// HOME PAGE
+/// ============================================
+/// Main landing page of the app featuring:
+/// - Welcome header
+/// - Client list navigation button
+/// - Movesense device connection status
+/// - Calendar with session indicators
+/// - Clients scheduled for selected day
+/// - Hamburger menu with client list and data export
+/// - Navigation to client details and session views
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -27,10 +36,10 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // ======= ViewModel =======
+  // ======= State =======
   late HomeViewModel viewModel;
 
-  // ======= Lifecycle =======
+  // ======= Lifecycle Methods =======
   @override
   void initState() {
     super.initState();
@@ -43,20 +52,11 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // ======= AppBar =======
+      // ======= App Bar =======
       appBar: AppBar(
         title: const Text('Stride'),
         actions: [
-          ListenableBuilder(
-            listenable: viewModel.movesense,
-            builder: (context, _) {
-              return MovesenseStatusIcon(
-                connected: viewModel.movesense.isConnected,
-                heartRate: 0,
-                heartRateStream: viewModel.movesense.heartRateStream,
-              );
-            },
-          ),
+          MovesenseAppBarStatus(viewModel: viewModel.movesense),
         ],
       ),
 
@@ -126,7 +126,7 @@ class _HomePageState extends State<HomePage> {
               },
             ),
             const Divider(),
-            // Client list in drawer
+            // ======= Client List in Drawer =======
             ...viewModel.clients.map((client) {
               return ListTile(
                 leading: const Icon(Icons.person),
@@ -153,6 +153,7 @@ class _HomePageState extends State<HomePage> {
       ),
 
       // ======= Body =======
+      /// Main scrollable content area
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -194,17 +195,8 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: 4),
 
-            // ======= WhatsApp Button =======
-            //ElevatedButton.icon(
-            //onPressed: () {
-            // TO DO: handle WhatsApp action
-            //},
-            //icon: const Icon(Icons.message),
-            //label: const Text('WhatsApp'),
-            //),
-            //const SizedBox(height: 4),
-
             // ======= Movesense Status =======
+            /// Shows connection status and battery level
             ListenableBuilder(
               listenable: viewModel.movesense,
               builder: (context, _) {
@@ -231,6 +223,7 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 4),
 
             // ======= Calendar =======
+            /// Interactive calendar with session markers
             TableCalendar(
               firstDay: DateTime.utc(2020, 1, 1),
               lastDay: DateTime.utc(2030, 12, 31),
@@ -287,6 +280,7 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 16),
 
             // ======= Clients for Selected Day =======
+            /// Displays client cards for sessions on the selected calendar day
             Builder(
               builder: (context) {
                 final selectedDay = viewModel.selectedDay ?? DateTime.now();
@@ -307,34 +301,8 @@ class _HomePageState extends State<HomePage> {
 
                 return Column(
                   children: clientsForDay.map((client) {
-                    // Find or create session for the selected day
-                    final selectedDayStart = DateTime(
-                      selectedDay.year,
-                      selectedDay.month,
-                      selectedDay.day,
-                    ).millisecondsSinceEpoch ~/ 1000;
-                    final selectedDayEnd = DateTime(
-                      selectedDay.year,
-                      selectedDay.month,
-                      selectedDay.day,
-                      23, 59, 59,
-                    ).millisecondsSinceEpoch ~/ 1000;
-                    
-                    // Try to find an existing session for this day
-                    Session? sessionForDay;
-                    try {
-                      sessionForDay = client.sessions.firstWhere(
-                        (s) => s.startTime >= selectedDayStart && s.startTime <= selectedDayEnd,
-                      );
-                    } catch (_) {
-                      // No session found for this day - create a new one
-                      sessionForDay = Session(
-                        sessionId: '${client.clientId}_$selectedDayStart',
-                        startTime: selectedDayStart,
-                        hrReadings: const [],
-                        exercisesPerformed: [],
-                      );
-                    }
+                    // Retrieve or construct a session object for the selected day via ViewModel
+                    final sessionForDay = viewModel.ensureSessionForDay(client, selectedDay);
 
                     return ClientCard(
                       client: client,
@@ -345,7 +313,7 @@ class _HomePageState extends State<HomePage> {
                             builder: (context) => SessionDetailPage(
                               viewModel: SessionDetailViewModel(
                                 client: client,
-                                session: sessionForDay!,
+                                session: sessionForDay,
                               ),
                             ),
                           ),

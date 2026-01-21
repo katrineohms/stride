@@ -61,4 +61,30 @@ class HomeViewModel {
   Future<File> exportDataToJson() async {
     return await _dataService.dumpToJson();
   }
+
+  // ======= Session Helpers =======
+  /// Return an existing session for the given day or a placeholder session
+  /// starting at the beginning of that day if none exists.
+  Session ensureSessionForDay(Client client, DateTime day) {
+    final dayStart = DateTime(day.year, day.month, day.day)
+            .millisecondsSinceEpoch ~/
+        1000;
+    final dayEnd = DateTime(day.year, day.month, day.day, 23, 59, 59)
+            .millisecondsSinceEpoch ~/
+        1000;
+
+    try {
+      return client.sessions.firstWhere(
+        (s) => s.startTime >= dayStart && s.startTime <= dayEnd,
+      );
+    } catch (_) {
+      // No session found for the day; create a placeholder
+      return Session(
+        sessionId: '${client.clientId}_$dayStart',
+        startTime: dayStart,
+        hrReadings: const [],
+        exercisesPerformed: const [],
+      );
+    }
+  }
 }

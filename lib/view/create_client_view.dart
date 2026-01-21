@@ -12,6 +12,16 @@ import '../widgets/movesense_status_widget.dart';
 import '../widgets/create_exercise_widget.dart';
 import '../widgets/session_schedule_widget.dart';
 
+/// ============================================
+/// CREATE CLIENT PAGE
+/// ============================================
+/// Form-based page for creating a new client with:
+/// - Personal information (name, age, gender, status)
+/// - Motivation notes
+/// - Exercise templates
+/// - Scheduled sessions
+/// - Form validation before submission
+
 /// Page for creating a new client
 class CreateClientPage extends StatefulWidget {
   final Function(Client) onCreate;
@@ -35,6 +45,7 @@ class _CreateClientPageState extends State<CreateClientPage> {
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _motivationController = TextEditingController();
 
+  // ======= Lifecycle Methods =======
   @override
   void initState() {
     super.initState();
@@ -51,37 +62,33 @@ class _CreateClientPageState extends State<CreateClientPage> {
     super.dispose();
   }
 
-  // ======= Sync form fields with view model =======
+  // ======= Form Synchronization =======
+  /// Sync form fields with view model for validation
   void _updateViewModel() {
     viewModel.name = _nameController.text;
     viewModel.age = int.tryParse(_ageController.text);
     viewModel.motivation = _motivationController.text;
   }
 
+  // ======= Build UI =======
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // ======= App Bar =======
       appBar: AppBar(
         title: const Text('Create Client'),
         actions: [
-          ListenableBuilder(
-            listenable: viewModel.movesense,
-            builder: (context, _) {
-              return MovesenseStatusIcon(
-                connected: viewModel.movesense.isConnected,
-                heartRate: 0,
-                heartRateStream: viewModel.movesense.heartRateStream,
-              );
-            },
-          ),
+          MovesenseAppBarStatus(viewModel: viewModel.movesense),
         ],
       ),
+      // ======= Body: Form =======
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
             children: [
+              // ======= Personal Information Card =======
               Card(
                 color: Theme.of(context).cardColor,
                 elevation: 4,
@@ -103,7 +110,7 @@ class _CreateClientPageState extends State<CreateClientPage> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Name + Age
+                      // ======= Name & Age Fields =======
                       Row(
                         children: [
                           Expanded(
@@ -138,7 +145,7 @@ class _CreateClientPageState extends State<CreateClientPage> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Gender + Status
+                      // ======= Gender & Status Dropdowns =======
                       Row(
                         children: [
                           Expanded(
@@ -148,20 +155,12 @@ class _CreateClientPageState extends State<CreateClientPage> {
                                 labelText: 'Gender',
                                 border: OutlineInputBorder(),
                               ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'Male',
-                                  child: Text('Male'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'Female',
-                                  child: Text('Female'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'Other',
-                                  child: Text('Other'),
-                                ),
-                              ],
+                              items: CreateClientViewModel.genderOptions
+                                  .map((gender) => DropdownMenuItem(
+                                        value: gender,
+                                        child: Text(gender),
+                                      ))
+                                  .toList(),
                               onChanged: (value) {
                                 if (value != null) {
                                   setState(() => viewModel.gender = value);
@@ -177,50 +176,22 @@ class _CreateClientPageState extends State<CreateClientPage> {
                                 labelText: 'Status',
                                 border: OutlineInputBorder(),
                               ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 0,
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.circle,
-                                        color: Colors.green,
-                                        size: 14,
-                                      ),
-                                      SizedBox(width: 6),
-                                      Text('Active'),
-                                    ],
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: 1,
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.circle,
-                                        color: Colors.yellow,
-                                        size: 14,
-                                      ),
-                                      SizedBox(width: 6),
-                                      Text('Caution'),
-                                    ],
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: 2,
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.circle,
-                                        color: Colors.red,
-                                        size: 14,
-                                      ),
-                                      SizedBox(width: 6),
-                                      Text('Inactive'),
-                                    ],
-                                  ),
-                                ),
-                              ],
+                              items: CreateClientViewModel.statusOptions.entries
+                                  .map((entry) => DropdownMenuItem(
+                                        value: entry.key,
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.circle,
+                                              color: CreateClientViewModel.getStatusColor(entry.key),
+                                              size: 14,
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Text(entry.value),
+                                          ],
+                                        ),
+                                      ))
+                                  .toList(),
                               onChanged: (v) {
                                 if (v != null) {
                                   setState(() => viewModel.active = v);
@@ -232,7 +203,7 @@ class _CreateClientPageState extends State<CreateClientPage> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Motivation
+                      // ======= Motivation Field =======
                       TextFormField(
                         controller: _motivationController,
                         decoration: const InputDecoration(
@@ -266,7 +237,7 @@ class _CreateClientPageState extends State<CreateClientPage> {
 
               const SizedBox(height: 12),
 
-              // Exercise form
+              // ======= Exercise Templates =======
               ExerciseFormWidget(
                 viewModel: exerciseFormViewModel,
                 onCreate: (exercise) {

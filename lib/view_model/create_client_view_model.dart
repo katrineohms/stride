@@ -11,6 +11,7 @@ class CreateClientViewModel {
   CreateClientViewModel({MovesenseConnectViewModel? movesense})
       : movesense = movesense ?? MovesenseService().viewModel;
 
+  // ======= Form Data =======
   String name = '';
   int? age;
   String gender = 'Male';
@@ -23,6 +24,32 @@ class CreateClientViewModel {
   // Exercise templates stored on the client
   List<Exercise> exerciseTemplates = [];
 
+  // ======= Constants =======
+  /// Available gender options for dropdown
+  static const List<String> genderOptions = ['Male', 'Female', 'Other'];
+
+  /// Status options with their integer values and display labels
+  static const Map<int, String> statusOptions = {
+    0: 'Active',
+    1: 'Caution',
+    2: 'Inactive',
+  };
+
+  /// Get color for status indicator
+  static Color getStatusColor(int status) {
+    switch (status) {
+      case 0:
+        return Colors.green;
+      case 1:
+        return Colors.yellow;
+      case 2:
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  // ======= Validation =======
   String? validateName() {
     if (name.isEmpty) return 'Enter a name';
     return null;

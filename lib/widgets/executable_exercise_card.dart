@@ -127,6 +127,12 @@ class ExecutableExerciseCard extends StatelessWidget {
                     value,
                     hours: false,
                   );
+                  // Auto-mark done when timer reaches 0
+                  if (value == 0 && !isDone) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      onDoneChanged?.call(true);
+                    });
+                  }
                   return Center(
                     child: Text(
                       displayTime,
@@ -140,6 +146,14 @@ class ExecutableExerciseCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
             ],
+            // Completion toggle for time-based exercise
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Checkbox(
+                value: isDone,
+                onChanged: onDoneChanged,
+              ),
+            ),
           ],
         ),
       ),

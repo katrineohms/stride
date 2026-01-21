@@ -15,8 +15,18 @@ import '../widgets/personal_info_card.dart';
 import '../widgets/movesense_status_widget.dart';
 import '../widgets/exercise_template_card.dart';
 
+/// ============================================
+/// CLIENT DETAIL PAGE
+/// ============================================
+/// Shows comprehensive view of a single client including:
+/// - Movesense connection status
+/// - Personal info (age, gender, motivation)
+/// - Upcoming scheduled sessions
+/// - Previous session history
+/// - Exercise templates
+/// - Quick start button for immediate session recording
 
-/// Client detail page - overview from client list or drawer
+// Client detail page - overview from client list or drawer
 class ClientDetailPage extends StatefulWidget {
   final ClientDetailViewModel viewModel;
 
@@ -27,8 +37,10 @@ class ClientDetailPage extends StatefulWidget {
 }
 
 class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBindingObserver {
+  // ======= Getters =======
   Client get _client => widget.viewModel.client;
 
+  // ======= Lifecycle Methods =======
   @override
   void initState() {
     super.initState();
@@ -53,26 +65,14 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
     super.dispose();
   }
 
+  // ======= UI Event Handlers =======
   void _onClientChanged() {
     if (mounted) {
       setState(() {});
     }
   }
 
-  List<Session> get _previousSessions {
-    return _client.sessions
-        .where((s) => s.endTime != null)
-        .toList()
-      ..sort((a, b) => b.endTime!.compareTo(a.endTime!));
-  }
-
-  List<Session> get _upcomingSessions {
-    return _client.sessions
-        .where((s) => s.endTime == null)
-        .toList()
-      ..sort((a, b) => a.startTime.compareTo(b.startTime));
-  }
-
+  // ======= Build UI =======
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -80,16 +80,7 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
         title: Text(_client.name),
         centerTitle: true,
         actions: [
-          ListenableBuilder(
-            listenable: widget.viewModel.movesense,
-            builder: (context, _) {
-              return MovesenseStatusIcon(
-                connected: widget.viewModel.movesense.isConnected,
-                heartRate: 0,
-                heartRateStream: widget.viewModel.movesense.heartRateStream,
-              );
-            },
-          ),
+          MovesenseAppBarStatus(viewModel: widget.viewModel.movesense),
         ],
       ),
       body: SingleChildScrollView(
@@ -156,7 +147,7 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
-            if (_upcomingSessions.isEmpty)
+            if (widget.viewModel.upcomingSessions.isEmpty)
               Card(
                 color: Theme.of(context).cardColor,
                 child: const Padding(
@@ -165,7 +156,7 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
                 ),
               )
             else
-              ..._upcomingSessions.map((session) {
+              ...widget.viewModel.upcomingSessions.map((session) {
                 final date = DateTime.fromMillisecondsSinceEpoch(
                   session.startTime * 1000,
                 );
@@ -200,7 +191,7 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
-            if (_previousSessions.isEmpty)
+            if (widget.viewModel.previousSessions.isEmpty)
               Card(
                 color: Theme.of(context).cardColor,
                 child: const Padding(
@@ -209,7 +200,7 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
                 ),
               )
             else
-              ..._previousSessions.take(5).map((session) {
+              ...widget.viewModel.previousSessions.take(5).map((session) {
                 final date = DateTime.fromMillisecondsSinceEpoch(
                   session.startTime * 1000,
                 );
@@ -264,6 +255,9 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
           ],
         ),
       ),
+      // ======= Quick Start Button =======
+      /// Floating action button for immediate session recording
+      /// Creates new session and navigates to session detail view
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           await widget.viewModel.startSession();

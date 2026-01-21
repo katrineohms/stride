@@ -1,5 +1,8 @@
 // Packages
+import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 // Files
 import '../model/_models.dart';
@@ -21,6 +24,10 @@ class SessionDetailViewModel extends ChangeNotifier {
   final ClientDataService _dataService = ClientDataService();
   final SessionService _sessionService = SessionService();
   bool _attached = false;
+  Timer? _uiTicker;
+
+  // Tracks completed exercise IDs for the targeted session
+  final Set<String> _completedExerciseIds = <String>{};
 
   SessionDetailViewModel({
     required this.client,
@@ -34,6 +41,13 @@ class SessionDetailViewModel extends ChangeNotifier {
     if (_attached) return;
     _attached = true;
     _sessionService.addListener(_onSessionChanged);
+    _initializeCompletionFromSession();
+
+    // Drive UI updates (e.g., live duration) once per second while attached
+    _uiTicker?.cancel();
+    _uiTicker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (_attached) notifyListeners();
+    });
   }
 
   void _onSessionChanged() {
@@ -54,6 +68,53 @@ class SessionDetailViewModel extends ChangeNotifier {
   /// Get the active session or fallback to the provided session
   Session get activeSession {
     return _sessionService.activeSession ?? session;
+  }
+
+  /// Whether a given exercise is marked completed for this session
+  bool isExerciseDone(String exerciseId) => _completedExerciseIds.contains(exerciseId);
+
+  /// Toggle completed state for an exercise and persist to the backing session
+  Future<void> toggleExerciseDone(String exerciseId, bool done) async {
+    if (done) {
+      _completedExerciseIds.add(exerciseId);
+    } else {
+      _completedExerciseIds.remove(exerciseId);
+    }
+
+    // Persist as a list of exercises performed (subset of client's templates)
+    final performed = client.exerciseTemplates
+        .where((ex) => _completedExerciseIds.contains(ex.exerciseId))
+        .toList(growable: false);
+
+    await _persistSessionExercises(performed);
+    notifyListeners();
+  }
+
+  Future<void> _persistSessionExercises(List<Exercise> performed) async {
+    try {
+      // Load latest client to avoid overwriting concurrent updates
+      final latest = _dataService.getClientById(client.clientId) ?? client;
+      final targetSessionId = (_sessionService.activeSession?.sessionId) ?? session.sessionId;
+
+      final updatedSessions = latest.sessions.map((s) {
+        if (s.sessionId == targetSessionId) {
+          return s.copyWith(exercisesPerformed: performed);
+        }
+        return s;
+      }).toList();
+
+      final updatedClient = latest.copyWith(sessions: updatedSessions);
+      await _dataService.updateClient(updatedClient);
+    } catch (e) {
+      events.emit(SnackBarEvent('Failed to persist exercises: $e', isError: true));
+    }
+  }
+
+  void _initializeCompletionFromSession() {
+    final source = _sessionService.activeSession ?? session;
+    _completedExerciseIds
+      ..clear()
+      ..addAll(source.exercisesPerformed.map((e) => e.exerciseId));
   }
 
   /// Get the latest session from the database for this session ID
@@ -85,9 +146,15 @@ class SessionDetailViewModel extends ChangeNotifier {
   }
 
   /// Start HR monitoring for this session
+  /// Manages screen awake state, system UI, and initializes exercise completion
   Future<void> startSession() async {
     try {
+      // Keep screen on during session
+      WakelockPlus.enable();
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom]);
+      
       await _sessionService.startSession(client.clientId, scheduledSession: session);
+      _initializeCompletionFromSession();
       events.emit(SnackBarEvent('Session started'));
       notifyListeners();
     } catch (e) {
@@ -96,8 +163,12 @@ class SessionDetailViewModel extends ChangeNotifier {
   }
 
   /// Stop HR monitoring and save session data
+  /// Restores screen auto-lock and system UI to normal state
   Future<void> stopSession() async {
     try {
+      WakelockPlus.disable();
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      
       await _sessionService.stopSession();
       events.emit(SnackBarEvent('Session stopped'));
       notifyListeners();
@@ -144,6 +215,7 @@ class SessionDetailViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _sessionService.removeListener(_onSessionChanged);
+    _uiTicker?.cancel();
     events.dispose();
     super.dispose();
   }

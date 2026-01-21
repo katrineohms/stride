@@ -2,6 +2,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+// Files
+import '../view_model/movesense_connect_view_model.dart';
+
+// ======= App Bar Status Widget =======
+/// Reusable wrapper for Movesense status in app bars across views.
+/// Subscribes to ViewModel and renders the connection/HR icon.
+class MovesenseAppBarStatus extends StatelessWidget {
+  final MovesenseConnectViewModel viewModel;
+
+  const MovesenseAppBarStatus({super.key, required this.viewModel});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: viewModel,
+      builder: (context, _) {
+        return MovesenseStatusIcon(
+          connected: viewModel.isConnected,
+          heartRate: 0,
+          heartRateStream: viewModel.heartRateStream,
+        );
+      },
+    );
+  }
+}
+
 class MoveSenseStatusCard extends StatelessWidget {
   // ======= Properties =======
   final bool connected;

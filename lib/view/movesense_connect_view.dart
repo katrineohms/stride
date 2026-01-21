@@ -7,7 +7,14 @@ import '../view_model/movesense_connect_view_model.dart';
 // Widgets
 import '../widgets/movesense_status_widget.dart';
 
-/// Movesense Connect Page
+/// ============================================
+/// MOVE SENSE CONNECT PAGE
+/// ============================================
+/// Page to pair/connect to a Movesense device with:
+/// - Connection status indicator
+/// - Scan action to discover devices
+/// - List of available devices to connect
+/// - Status icon in the App Bar
 class MovesenseConnectView extends StatefulWidget {
   const MovesenseConnectView({
     super.key,
@@ -26,21 +33,16 @@ class _MovesenseConnectViewState extends State<MovesenseConnectView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // ======= App Bar =======
+      /// Title and Movesense connection status icon
       appBar: AppBar(
         title: const Text('Connect'),
         actions: [
-          ListenableBuilder(
-            listenable: viewModel,
-            builder: (context, _) {
-              return MovesenseStatusIcon(
-                connected: viewModel.isConnected,
-                heartRate: 0,
-                heartRateStream: viewModel.heartRateStream,
-              );
-            },
-          ),
+          MovesenseAppBarStatus(viewModel: viewModel),
         ],
       ),
+      // ======= Body =======
+      /// Main content with status, actions, and scanned devices
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: ListenableBuilder(
@@ -49,7 +51,7 @@ class _MovesenseConnectViewState extends State<MovesenseConnectView> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Status
+                // ======= Status =======
                 Row(
                   children: [
                     const Text(
@@ -67,7 +69,7 @@ class _MovesenseConnectViewState extends State<MovesenseConnectView> {
                 ),
                 const SizedBox(height: 16),
 
-                // Scan Button
+                // ======= Actions =======
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
@@ -78,7 +80,7 @@ class _MovesenseConnectViewState extends State<MovesenseConnectView> {
                 ),
                 const SizedBox(height: 16),
 
-                // List of scanned devices
+                // ======= Available Devices =======
                 if (viewModel.scannedDevices.isNotEmpty)
                   const Text(
                     'Available Devices:',

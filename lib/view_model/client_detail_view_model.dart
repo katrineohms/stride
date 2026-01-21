@@ -47,6 +47,23 @@ class ClientDetailViewModel extends ChangeNotifier {
 
   Client get client => _client;
 
+  // ===== Session Filtering =====
+  /// Returns completed sessions sorted by end time (most recent first)
+  List<Session> get previousSessions {
+    return _client.sessions
+        .where((s) => s.endTime != null)
+        .toList()
+      ..sort((a, b) => b.endTime!.compareTo(a.endTime!));
+  }
+
+  /// Returns scheduled sessions (no end time) sorted by start time
+  List<Session> get upcomingSessions {
+    return _client.sessions
+        .where((s) => s.endTime == null)
+        .toList()
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
+  }
+
   // ===== Client Data Refresh =====
   Future<Client?> getLatestClient() async {
     try {

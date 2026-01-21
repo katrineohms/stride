@@ -12,6 +12,16 @@ import '../view_model/widgets_view_model/session_schedule_view_model.dart';
 import '../widgets/create_exercise_widget.dart';
 import '../widgets/session_schedule_widget.dart';
 
+/// ============================================
+/// EDIT CLIENT PAGE
+/// ============================================
+/// Form-based page for editing an existing client with:
+/// - Personal information (name, age, gender, status)
+/// - Motivation notes
+/// - Exercise templates (add/remove)
+/// - Scheduled sessions (add/remove)
+/// - Form validation before saving
+
 class EditClientPage extends StatefulWidget {
   final Client client;
 
@@ -29,10 +39,12 @@ class _EditClientPageState extends State<EditClientPage> {
   late final ExerciseFormViewModel exerciseFormViewModel;
   late final SessionScheduleViewModel sessionScheduleViewModel;
 
+  // ======= Controllers =======
   late TextEditingController _nameController;
   late TextEditingController _ageController;
   late TextEditingController _motivationController;
 
+  // ======= Lifecycle Methods =======
   @override
   void initState() {
     super.initState();
@@ -59,37 +71,33 @@ class _EditClientPageState extends State<EditClientPage> {
     super.dispose();
   }
 
+  // ======= Form Synchronization =======
+  /// Save text field values to ViewModel
   void _saveFieldsToViewModel() {
     viewModel.updateName(_nameController.text.trim());
     viewModel.updateAge(int.tryParse(_ageController.text) ?? viewModel.age);
     viewModel.updateMotivation(_motivationController.text.trim());
   }
 
+  // ======= Build UI =======
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // ======= App Bar =======
       appBar: AppBar(
         title: const Text('Edit Client'),
         actions: [
-          ListenableBuilder(
-            listenable: viewModel.movesense,
-            builder: (context, _) {
-              return MovesenseStatusIcon(
-                connected: viewModel.movesense.isConnected,
-                heartRate: 0,
-                heartRateStream: viewModel.movesense.heartRateStream,
-              );
-            },
-          ),
+          MovesenseAppBarStatus(viewModel: viewModel.movesense),
         ],
       ),
+      // ======= Body: Form =======
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
             children: [
-              // ===== Personal Info =====
+              // ======= Personal Information Card =======
               Card(
                 color: Theme.of(context).cardColor,
                 elevation: 4,
@@ -106,6 +114,7 @@ class _EditClientPageState extends State<EditClientPage> {
                           style: TextStyle(
                               fontSize: 18, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 12),
+                      // ======= Name & Age Fields =======
                       Row(
                         children: [
                           Expanded(
@@ -133,6 +142,7 @@ class _EditClientPageState extends State<EditClientPage> {
                         ],
                       ),
                       const SizedBox(height: 12),
+                      // ======= Gender & Status Dropdowns =======
                       Row(
                         children: [
                           Expanded(
@@ -142,20 +152,12 @@ class _EditClientPageState extends State<EditClientPage> {
                                 labelText: 'Gender',
                                 border: OutlineInputBorder(),
                               ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'Male',
-                                  child: Text('Male'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'Female',
-                                  child: Text('Female'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'Other',
-                                  child: Text('Other'),
-                                ),
-                              ],
+                              items: EditClientViewModel.genderOptions
+                                  .map((gender) => DropdownMenuItem(
+                                        value: gender,
+                                        child: Text(gender),
+                                      ))
+                                  .toList(),
                               onChanged: (value) {
                                 if (value != null) {
                                   setState(() => viewModel.updateGender(value));
@@ -171,38 +173,22 @@ class _EditClientPageState extends State<EditClientPage> {
                                 labelText: 'Status',
                                 border: OutlineInputBorder(),
                               ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 0,
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.circle, color: Colors.green, size: 14),
-                                      SizedBox(width: 6),
-                                      Text('Active'),
-                                    ],
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: 1,
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.circle, color: Colors.yellow, size: 14),
-                                      SizedBox(width: 6),
-                                      Text('Caution'),
-                                    ],
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: 2,
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.circle, color: Colors.red, size: 14),
-                                      SizedBox(width: 6),
-                                      Text('Inactive'),
-                                    ],
-                                  ),
-                                ),
-                              ],
+                              items: EditClientViewModel.statusOptions.entries
+                                  .map((entry) => DropdownMenuItem(
+                                        value: entry.key,
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.circle,
+                                              color: EditClientViewModel.getStatusColor(entry.key),
+                                              size: 14,
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Text(entry.value),
+                                          ],
+                                        ),
+                                      ))
+                                  .toList(),
                               onChanged: (v) {
                                 if (v != null) {
                                   setState(() => viewModel.updateActive(v));
@@ -213,6 +199,7 @@ class _EditClientPageState extends State<EditClientPage> {
                         ],
                       ),
                       const SizedBox(height: 12),
+                      // ======= Motivation Field =======
                       TextFormField(
                         controller: _motivationController,
                         decoration: const InputDecoration(
@@ -227,7 +214,7 @@ class _EditClientPageState extends State<EditClientPage> {
                 ),
               ),
 
-              // ===== Scheduled Sessions =====
+              // ======= Scheduled Sessions =======
               SessionScheduleWidget(
                 viewModel: sessionScheduleViewModel,
                 initialSessions: viewModel.sessions,
@@ -241,7 +228,7 @@ class _EditClientPageState extends State<EditClientPage> {
 
               const SizedBox(height: 12),
 
-              // ===== Exercises =====
+              // ======= Exercise Templates =======
               ExerciseFormWidget(
                 viewModel: exerciseFormViewModel,
                 initialExercises: viewModel.exerciseTemplates,
@@ -251,7 +238,7 @@ class _EditClientPageState extends State<EditClientPage> {
 
               const SizedBox(height: 16),
 
-              // ===== Save Button =====
+              // ======= Save Button =======
               ElevatedButton(
                 onPressed: () {
                   _saveFieldsToViewModel();
