@@ -122,21 +122,6 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
                     child: PersonalInfoCard(client: _client),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.edit),
-                  tooltip: 'Edit client',
-                  onPressed: () async {
-                    final updated = await Navigator.push<Client>(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => EditClientPage(client: _client),
-                      ),
-                    );
-                    if (updated != null) {
-                      await widget.viewModel.updateClient(updated);
-                    }
-                  },
-                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -148,11 +133,14 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
             ),
             const SizedBox(height: 8),
             if (widget.viewModel.upcomingSessions.isEmpty)
-              Card(
-                color: Theme.of(context).cardColor,
-                child: const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text('No upcoming sessions'),
+              SizedBox(
+                width: double.infinity,
+                child: Card(
+                  color: Theme.of(context).cardColor,
+                  child: const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text('No upcoming sessions'),
+                  ),
                 ),
               )
             else
@@ -183,7 +171,9 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
                   ),
                 );
               }),
-            Row(
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Row(
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
@@ -266,6 +256,7 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
                   ),
                 ),
               ],
+              ),
             ),
             const SizedBox(height: 16),
 
@@ -276,19 +267,24 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
             ),
             const SizedBox(height: 8),
             if (widget.viewModel.previousSessions.isEmpty)
-              Card(
-                color: Theme.of(context).cardColor,
-                child: const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text('No previous sessions'),
+              SizedBox(
+                width: double.infinity,
+                child: Card(
+                  color: Theme.of(context).cardColor,
+                  child: const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text('No previous sessions'),
+                  ),
                 ),
               )
             else
-              ...widget.viewModel.previousSessions.take(5).map((session) {
+              ...widget.viewModel.previousSessions.map((session) {
                 final date = DateTime.fromMillisecondsSinceEpoch(
                   session.startTime * 1000,
                 );
-                return Card(
+                return SizedBox(
+                  width: double.infinity,
+                  child: Card(
                   color: Theme.of(context).cardColor,
                   child: ListTile(
                     leading: const Icon(Icons.history),
@@ -313,6 +309,7 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
                       );
                     },
                   ),
+                  ),
                 );
               }),
             const SizedBox(height: 16),
@@ -335,7 +332,28 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
               ..._client.exerciseTemplates.map((exercise) {
                 return ExerciseTemplateCard(exercise: exercise);
               }),
-              const SizedBox(height: 50),
+            const SizedBox(height: 16),
+
+            // ===== Edit Button =====
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  final updated = await Navigator.push<Client>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EditClientPage(client: _client),
+                    ),
+                  );
+                  if (updated != null) {
+                    await widget.viewModel.updateClient(updated);
+                  }
+                },
+                icon: const Icon(Icons.edit),
+                label: const Text('Edit Client'),
+              ),
+            ),
+            const SizedBox(height: 50),
           ],
         ),
       ),
