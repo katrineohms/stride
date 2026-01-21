@@ -238,15 +238,61 @@ class _EditClientPageState extends State<EditClientPage> {
 
               const SizedBox(height: 16),
 
-              // ======= Save Button =======
-              ElevatedButton(
-                onPressed: () {
-                  _saveFieldsToViewModel();
-                  if (_formKey.currentState!.validate()) {
-                    Navigator.pop(context, viewModel.buildClient());
-                  }
-                },
-                child: const Text('Save Changes'),
+              // ======= Actions =======
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Theme.of(context).colorScheme.error,
+                        side: BorderSide(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                      onPressed: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Delete Client'),
+                            content: const Text(
+                                'Are you sure you want to delete this client? This cannot be undone.'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, true),
+                                child: const Text('Delete'),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (!context.mounted) return;
+                        if (confirm == true) {
+                          await viewModel.deleteClient();
+                          if (!context.mounted) return;
+                          Navigator.pop(context, 'deleted');
+                        }
+                      },
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('Delete Client'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        _saveFieldsToViewModel();
+                        if (_formKey.currentState!.validate()) {
+                          Navigator.pop(context, viewModel.buildClient());
+                        }
+                      },
+                      child: const Text('Save Changes'),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

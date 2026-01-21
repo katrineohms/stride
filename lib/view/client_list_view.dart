@@ -106,8 +106,8 @@ class _ClientOverviewPageState extends State<ClientOverviewPage> {
                   color: getStatusColor(client.active),
                 ),
                 // Tap handler
-                onTap: () {
-                  Navigator.push(
+                onTap: () async {
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => ClientDetailPage(
@@ -115,6 +115,8 @@ class _ClientOverviewPageState extends State<ClientOverviewPage> {
                       ),
                     ),
                   );
+                  if (!mounted) return;
+                  setState(() {}); // reload list after possible edits/deletion
                 },
               ),
             );

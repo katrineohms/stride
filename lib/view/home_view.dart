@@ -135,9 +135,9 @@ class _HomePageState extends State<HomePage> {
                   Icons.circle,
                   color: getStatusColor(client.active),
                 ),
-                onTap: () {
+                onTap: () async {
                   Navigator.pop(context); // close drawer
-                  Navigator.push(
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => ClientDetailPage(
@@ -145,6 +145,8 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   );
+                  if (!context.mounted) return;
+                  setState(() {}); // refresh list from data service after potential changes
                 },
               );
             }),
@@ -168,8 +170,8 @@ class _HomePageState extends State<HomePage> {
 
             // ======= Client List Button =======
             ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                await Navigator.push(
                   context,
                   PageRouteBuilder(
                     transitionDuration: const Duration(milliseconds: 400),
@@ -189,6 +191,8 @@ class _HomePageState extends State<HomePage> {
                         },
                   ),
                 );
+                if (!context.mounted) return;
+                setState(() {}); // refresh after returning from client list
               },
               icon: const Icon(Icons.people),
               label: const Text('Client list'),

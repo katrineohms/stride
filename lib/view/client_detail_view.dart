@@ -346,14 +346,19 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () async {
-                  final updated = await Navigator.push<Client>(
+                  final updated = await Navigator.push<dynamic>(
                     context,
                     MaterialPageRoute(
                       builder: (context) => EditClientPage(client: _client),
                     ),
                   );
-                  if (updated != null) {
+                  if (!context.mounted) return;
+                  if (updated is Client) {
                     await widget.viewModel.updateClient(updated);
+                  } else if (updated == 'deleted') {
+                    await widget.viewModel.deleteClient();
+                    if (!context.mounted) return;
+                    Navigator.pop(context);
                   }
                 },
                 icon: const Icon(Icons.edit),

@@ -121,6 +121,11 @@ class ClientDetailViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Delete the current client
+  Future<void> deleteClient() async {
+    await _dataService.deleteClient(_client.clientId);
+  }
+
   /// Remove the latest session (used by UI delete button)
   Future<void> deleteLatestSession() async {
     if (_client.sessions.isEmpty) return;

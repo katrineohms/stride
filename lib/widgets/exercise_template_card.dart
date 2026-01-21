@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 
 // Files
 import '../model/_models.dart';
-import '../model/heart_rate.dart';
 
 /// Exercise template card - read-only display for client overview
 class ExerciseTemplateCard extends StatelessWidget {

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../model/_models.dart';
 import '../view_model/movesense_connect_view_model.dart';
+import '../service/client_data_service.dart';
 
 // Services
 import '../service/movesense_service.dart';
@@ -14,6 +15,8 @@ class EditClientViewModel {
     required this.client,
     MovesenseConnectViewModel? movesense,
   }) : movesense = movesense ?? MovesenseService().viewModel;
+
+  final ClientDataService _dataService = ClientDataService();
 
   // ======= Form Data =======
   // Controllers for personal info
@@ -96,6 +99,11 @@ class EditClientViewModel {
       sessions: sessions,
       exerciseTemplates: exerciseTemplates,
     );
+  }
+
+  /// Delete this client from storage
+  Future<void> deleteClient() async {
+    await _dataService.deleteClient(client.clientId);
   }
 
   // ===== Sessions =====
