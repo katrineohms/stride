@@ -219,7 +219,8 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
                       await widget.viewModel.stopSession();
                       // Refresh client data with the newly completed session
                       final updatedClient = await widget.viewModel.getLatestClient();
-                      if (mounted && updatedClient != null) {
+                      if (!context.mounted) return;
+                      if (updatedClient != null) {
                         // Navigate to client detail view
                         Navigator.pushReplacement(
                           context,
@@ -384,10 +385,10 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
                               TextButton(
                                 onPressed: () async {
                                   final updatedClient = await widget.viewModel.deleteLatestSession();
+                                  if (!ctx.mounted) return;
                                   Navigator.pop(ctx);
-                                  if (mounted) {
-                                    Navigator.pop(context, updatedClient);
-                                  }
+                                  if (!context.mounted) return;
+                                  Navigator.pop(context, updatedClient);
                                 },
                                 child: const Text('Delete', style: TextStyle(color: Colors.red)),
                               ),

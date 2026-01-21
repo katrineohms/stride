@@ -1,4 +1,5 @@
 // Packages
+import 'dart:developer' show log;
 import 'package:flutter/foundation.dart';
 
 // Files
@@ -69,7 +70,7 @@ class ClientDetailViewModel extends ChangeNotifier {
     try {
       return _dataService.getClientById(_client.clientId);
     } catch (e) {
-      print('Error getting latest client: $e');
+      log('Error getting latest client', error: e);
     }
     return null;
   }

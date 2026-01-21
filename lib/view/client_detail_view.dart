@@ -179,26 +179,29 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
                   child: ElevatedButton.icon(
                     onPressed: () async {
                       await widget.viewModel.startSession();
-                      if (context.mounted) {
-                        // Navigate to session detail view
-                        final latestClient = await widget.viewModel.getLatestClient();
-                        final activeSession = widget.viewModel.sessionService.activeSession;
-                        if (latestClient != null && activeSession != null) {
-                          final updatedClient = await Navigator.push<Client>(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => SessionDetailPage(
-                                viewModel: SessionDetailViewModel(
-                                  client: latestClient,
-                                  session: activeSession,
-                                ),
+                      if (!mounted) return;
+
+                      // Navigate to session detail view
+                      final latestClient = await widget.viewModel.getLatestClient();
+                      final activeSession = widget.viewModel.sessionService.activeSession;
+                      if (!context.mounted) return;
+
+                      if (latestClient != null && activeSession != null) {
+                        final updatedClient = await Navigator.push<Client>(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SessionDetailPage(
+                              viewModel: SessionDetailViewModel(
+                                client: latestClient,
+                                session: activeSession,
                               ),
                             ),
-                          );
+                          ),
+                        );
 
-                          if (updatedClient != null && mounted) {
-                            await widget.viewModel.updateClient(updatedClient, persist: false);
-                          }
+                        if (!context.mounted) return;
+                        if (updatedClient != null) {
+                          await widget.viewModel.updateClient(updatedClient, persist: false);
                         }
                       }
                     },

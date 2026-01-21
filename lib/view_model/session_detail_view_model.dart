@@ -1,5 +1,6 @@
 // Packages
 import 'dart:async';
+import 'dart:developer' show log;
 import 'package:flutter/foundation.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -129,7 +130,7 @@ class SessionDetailViewModel extends ChangeNotifier {
         }
       }
     } catch (e) {
-      print('Error getting latest session: $e');
+      log('Error getting latest session', error: e);
     }
     return null;
   }
@@ -139,7 +140,7 @@ class SessionDetailViewModel extends ChangeNotifier {
     try {
       return _dataService.getClientById(client.clientId);
     } catch (e) {
-      print('Error getting latest client: $e');
+      log('Error getting latest client', error: e);
     }
     return null;
   }

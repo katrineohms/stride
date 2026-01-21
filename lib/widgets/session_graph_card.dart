@@ -38,13 +38,15 @@ class SessionGraphCard extends StatelessWidget {
     final maxHr = hrValues.isEmpty ? 0 : hrValues.reduce(max);
     final minHr = hrValues.isEmpty ? 0 : hrValues.reduce(min);
 
-    // Prepare chart data
+    // Prepare chart data and capture last X for tight bounds
     final spots = <FlSpot>[];
+    double maxDataX = 0;
     if (session.hrReadings.isNotEmpty) {
       final baseTime = session.actualStartTime ?? session.startTime;
       for (final reading in session.hrReadings) {
         final minutesElapsed = (reading.timestamp - baseTime) / 60.0;
         spots.add(FlSpot(minutesElapsed, reading.heartRate.toDouble()));
+        if (minutesElapsed > maxDataX) maxDataX = minutesElapsed;
       }
     }
 
@@ -106,15 +108,19 @@ class SessionGraphCard extends StatelessWidget {
             const SizedBox(height: 16),
             // Chart
             if (spots.isNotEmpty)
-              SizedBox(
-                height: 180,
-                child: LineChart(
+              Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: SizedBox(
+                  height: 180,
+                  width: double.infinity,
+                  // right-only padding to add 20px breathing room
+                  child: LineChart(
                   LineChartData(
                     gridData: FlGridData(
                       show: true,
                       drawVerticalLine: true,
                       horizontalInterval: 20,
-                      verticalInterval: 5,
+                      verticalInterval: 5, // TODO make dynamic based on duration? 
                     ),
                     titlesData: FlTitlesData(
                       bottomTitles: AxisTitles(
@@ -133,7 +139,7 @@ class SessionGraphCard extends StatelessWidget {
                       leftTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
-                          reservedSize: 40,
+                          reservedSize: 25,
                           interval: 20,
                           getTitlesWidget: (value, meta) {
                             return Text(
@@ -155,25 +161,24 @@ class SessionGraphCard extends StatelessWidget {
                       border: Border.all(color: Colors.grey.shade300),
                     ),
                     minX: 0,
-                    maxX: (duration.inSeconds > 0 
-                        ? (duration.inSeconds / 60.0) * 1.1
-                        : 5),
+                    // Snap X range to last data point to avoid trailing gap
+                    maxX: spots.isNotEmpty ? maxDataX : 5,
                     minY: max(minHr - 10, 40).toDouble(),
                     maxY: (maxHr + 10).toDouble(),
                     lineBarsData: [
                       LineChartBarData(
                         spots: spots,
                         isCurved: true,
-                        color: const Color.fromARGB(255, 210, 57, 62),
+                        color: Theme.of(context).primaryColor,
                         barWidth: 2,
                         dotData: const FlDotData(show: false),
                         belowBarData: BarAreaData(
                           show: true,
-                          color: const Color.fromARGB(255, 210, 57, 62)
-                              .withValues(alpha: 0.1),
+                          color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                         ),
                       ),
                     ],
+                  ),
                   ),
                 ),
               )
