@@ -49,20 +49,23 @@ class SessionService extends ChangeNotifier {
 
     final startCity = await _gpsService.getLocationCityName();
 
+    final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
     if (scheduledSession != null) {
-      // Reuse the scheduled session
+      // Reuse the scheduled session, keep scheduled startTime, set actualStartTime now
       _activeSession = scheduledSession.copyWith(
         hrReadings: [],
+        actualStartTime: now,
+        endTime: null,
         startLocationCity: startCity,
       );
     } else {
       // Quick start - create new session immediately
       final sessionId = const Uuid().v4();
-      final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-      
       _activeSession = Session(
         sessionId: sessionId,
         startTime: now,
+        actualStartTime: now,
         hrReadings: [],
         startLocationCity: startCity,
       );
@@ -123,15 +126,21 @@ class SessionService extends ChangeNotifier {
 
     // Mark session as ended
     final endTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    _activeSession = _activeSession!.copyWith(
-      endTime: endTime,
-    );
+    _activeSession = _activeSession!.copyWith(endTime: endTime);
 
     // Save session to client
     final client = ClientDataService().getClientById(_activeClientId!);
     if (client != null) {
-      final updatedSessions = List<Session>.from(client.sessions)
-        ..add(_activeSession!);
+      final updatedSessions = client.sessions.map((s) {
+        return s.sessionId == _activeSession!.sessionId ? _activeSession! : s;
+      }).toList();
+
+      // If it wasn't in the list (e.g., quick start), append it
+      final exists = updatedSessions.any((s) => s.sessionId == _activeSession!.sessionId);
+      if (!exists) {
+        updatedSessions.add(_activeSession!);
+      }
+
       final updatedClient = client.copyWith(sessions: updatedSessions);
       await ClientDataService().updateClient(updatedClient);
     }
@@ -179,7 +188,8 @@ class SessionService extends ChangeNotifier {
   Duration? get sessionDuration {
     if (_activeSession == null) return null;
     final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    return Duration(seconds: now - _activeSession!.startTime);
+    final start = _activeSession!.actualStartTime ?? _activeSession!.startTime;
+    return Duration(seconds: now - start);
   }
 
   /// Update notification with current session data

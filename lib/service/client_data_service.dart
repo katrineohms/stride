@@ -265,6 +265,7 @@ class ClientDataService {
     return {
       'sessionId': session.sessionId,
       'startTime': session.startTime,
+      'actualStartTime': session.actualStartTime,
       'endTime': session.endTime,
       'startLocationCity': session.startLocationCity,
       'exercisesPerformed':
@@ -297,6 +298,7 @@ class ClientDataService {
     return Session(
       sessionId: map['sessionId']?.toString() ?? 'unknown',
       startTime: (map['startTime'] as num?)?.toInt() ?? 0,
+      actualStartTime: (map['actualStartTime'] as num?)?.toInt(),
       endTime: (map['endTime'] as num?)?.toInt(),
       hrReadings: hrReadings,
       startLocationCity: map['startLocationCity']?.toString(),
