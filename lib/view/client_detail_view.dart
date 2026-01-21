@@ -183,6 +183,90 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
                   ),
                 );
               }),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      await widget.viewModel.startSession();
+                      if (context.mounted) {
+                        // Navigate to session detail view
+                        final latestClient = await widget.viewModel.getLatestClient();
+                        final activeSession = widget.viewModel.sessionService.activeSession;
+                        if (latestClient != null && activeSession != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => SessionDetailPage(
+                                viewModel: SessionDetailViewModel(
+                                  client: latestClient,
+                                  session: activeSession,
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text(
+                      'Start new session',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      // Show dialog to select date/time for new session
+                      final selectedDate = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      
+                      if (selectedDate != null && context.mounted) {
+                        final selectedTime = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.now(),
+                        );
+
+                        if (selectedTime != null && context.mounted) {
+                          final scheduledDateTime = DateTime(
+                            selectedDate.year,
+                            selectedDate.month,
+                            selectedDate.day,
+                            selectedTime.hour,
+                            selectedTime.minute,
+                          );
+                          
+                          final newSession = Session(
+                            sessionId: DateTime.now().millisecondsSinceEpoch.toString(),
+                            startTime: scheduledDateTime.millisecondsSinceEpoch ~/ 1000,
+                            endTime: null,
+                            hrReadings: [],
+                            exercisesPerformed: [],
+                            startLocationCity: '',
+                          );
+
+                          if (context.mounted) {
+                            await widget.viewModel.addScheduledSession(newSession);
+                            setState(() {});
+                          }
+                        }
+                      }
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text(
+                      'Schedule session',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
 
             // ===== Previous Sessions =====
@@ -235,7 +319,7 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
 
             // ===== Exercise Templates =====
             Text(
-              'Exercise Templates',
+              'Exercise Template',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
@@ -254,34 +338,6 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
               const SizedBox(height: 50),
           ],
         ),
-      ),
-      // ======= Quick Start Button =======
-      /// Floating action button for immediate session recording
-      /// Creates new session and navigates to session detail view
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          await widget.viewModel.startSession();
-          if (context.mounted) {
-            // Navigate to session detail view
-            final latestClient = await widget.viewModel.getLatestClient();
-            final activeSession = widget.viewModel.sessionService.activeSession;
-            if (latestClient != null && activeSession != null) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => SessionDetailPage(
-                    viewModel: SessionDetailViewModel(
-                      client: latestClient,
-                      session: activeSession,
-                    ),
-                  ),
-                ),
-              );
-            }
-          }
-        },
-        icon: const Icon(Icons.play_arrow),
-        label: const Text('Start Session'),
       ),
     );
   }

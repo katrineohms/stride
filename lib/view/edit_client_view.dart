@@ -217,7 +217,7 @@ class _EditClientPageState extends State<EditClientPage> {
               // ======= Scheduled Sessions =======
               SessionScheduleWidget(
                 viewModel: sessionScheduleViewModel,
-                initialSessions: viewModel.sessions,
+                initialSessions: viewModel.incompleteScheduledSessions,
                 onCreate: (session) => setState(() {
                   viewModel.addSession(session);
                 }),

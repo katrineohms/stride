@@ -101,4 +101,8 @@ class EditClientViewModel {
   // ===== Sessions =====
   void addSession(Session session) => sessions.add(session);
   void removeSession(Session session) => sessions.remove(session);
+
+  /// Scheduled sessions that haven't been completed yet (endTime == null)
+  List<Session> get incompleteScheduledSessions =>
+      sessions.where((s) => s.endTime == null).toList();
 }

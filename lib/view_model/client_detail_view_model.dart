@@ -182,6 +182,13 @@ class ClientDetailViewModel extends ChangeNotifier {
 
   int? get currentSessionHeartRate => _sessionService.currentHeartRate;
 
+  /// Create a new scheduled session and add it to the client
+  Future<void> addScheduledSession(Session session) async {
+    final updatedSessions = List<Session>.from(_client.sessions)..add(session);
+    await updateClient(_client.copyWith(sessions: updatedSessions));
+    events.emit(const SnackBarEvent('Session scheduled!'));
+  }
+
   @override
   void dispose() {
     detach();
