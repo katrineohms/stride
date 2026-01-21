@@ -155,8 +155,8 @@ class SessionGraphCard extends StatelessWidget {
                       border: Border.all(color: Colors.grey.shade300),
                     ),
                     minX: 0,
-                    maxX: (duration.inMinutes > 0 
-                        ? duration.inMinutes.toDouble() * 1.1
+                    maxX: (duration.inSeconds > 0 
+                        ? (duration.inSeconds / 60.0) * 1.1
                         : 5),
                     minY: max(minHr - 10, 40).toDouble(),
                     maxY: (maxHr + 10).toDouble(),

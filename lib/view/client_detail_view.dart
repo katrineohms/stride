@@ -153,7 +153,7 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
                   child: ListTile(
                     leading: const Icon(Icons.calendar_today),
                     title: Text(DateFormat('MMMM d, y').format(date)),
-                    subtitle: Text(DateFormat('h:mm a').format(date)),
+                    subtitle: Text(DateFormat('HH:mm').format(date)),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () {
                       Navigator.push(
@@ -373,14 +373,14 @@ String _formatHm(Duration d) {
 String _formatTimeRange(Session session) {
   final startSeconds = session.actualStartTime ?? session.startTime;
   final start = DateTime.fromMillisecondsSinceEpoch(startSeconds * 1000);
-  final startStr = DateFormat('h:mm a').format(start);
+  final startStr = DateFormat('HH:mm').format(start);
 
   if (session.endTime == null) {
     return '$startStr - In progress';
   }
 
   final end = DateTime.fromMillisecondsSinceEpoch(session.endTime! * 1000);
-  final endStr = DateFormat('h:mm a').format(end);
+  final endStr = DateFormat('HH:mm').format(end);
   final durationStr = _formatHm(session.duration);
   return '$startStr - $endStr • Duration: $durationStr';
 }

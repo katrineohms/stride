@@ -47,7 +47,8 @@ class SessionService extends ChangeNotifier {
       throw Exception('No Movesense device connected.');
     }
 
-    final startCity = await _gpsService.getLocationCityName();
+    // Fetch GPS location in background (don't block session start)
+    _fetchAndUpdateLocation();
 
     final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
@@ -57,7 +58,7 @@ class SessionService extends ChangeNotifier {
         hrReadings: [],
         actualStartTime: now,
         endTime: null,
-        startLocationCity: startCity,
+        startLocationCity: null, // Will be updated async
       );
     } else {
       // Quick start - create new session immediately
@@ -67,7 +68,7 @@ class SessionService extends ChangeNotifier {
         startTime: now,
         actualStartTime: now,
         hrReadings: [],
-        startLocationCity: startCity,
+        startLocationCity: null, // Will be updated async
       );
     }
     _activeClientId = clientId;
@@ -106,6 +107,23 @@ class SessionService extends ChangeNotifier {
     await _updateNotification();
 
     notifyListeners();
+  }
+
+  /// Fetch GPS location in background and update active session when available
+  Future<void> _fetchAndUpdateLocation() async {
+    try {
+      final startCity = await _gpsService.getLocationCityName();
+      if (_activeSession != null && startCity != null) {
+        _activeSession = _activeSession!.copyWith(
+          startLocationCity: startCity,
+        );
+        notifyListeners();
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Failed to fetch location: $e');
+      }
+    }
   }
 
   /// Stop the active session
