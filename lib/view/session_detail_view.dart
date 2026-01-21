@@ -11,12 +11,15 @@ import '../view_model/client_detail_view_model.dart';
 import '../view_model/widgets_view_model/ui_event.dart';
 import '../view/movesense_connect_view.dart';
 import '../view/client_detail_view.dart';
+import '../view_model/widgets_view_model/exercise_form_view_model.dart';
 
 // Widgets
 import '../widgets/movesense_status_widget.dart';
 import '../widgets/personal_info_card.dart';
 import '../widgets/executable_exercise_card.dart';
 import '../widgets/session_graph_card.dart';
+import '../widgets/create_exercise_widget.dart';
+import '../widgets/exercise_template_card.dart';
 
 /// ============================================
 /// SESSION DETAIL PAGE
@@ -47,6 +50,9 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
   final Map<String, StopWatchTimer> _stopWatches = {};
   late StreamSubscription<UiEvent> _eventSub;
   Session? _displaySession;
+  bool _isEditingExercises = false;
+  final ExerciseFormViewModel _exerciseFormViewModel = ExerciseFormViewModel();
+  List<Exercise> _sessionExercises = [];
 
   Client get _client => widget.viewModel.client;
 
@@ -80,8 +86,14 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
     }
     _stopWatches.clear();
 
-    // Use exercises from session's template (client's exerciseTemplates)
-    for (final ex in _client.exerciseTemplates) {
+    // Get session exercises - use exercisesPerformed if set, otherwise use client templates
+    final displaySession = _displaySession ?? widget.viewModel.activeSession;
+    _sessionExercises = displaySession.exercisesPerformed.isNotEmpty
+        ? List.from(displaySession.exercisesPerformed)
+        : List.from(_client.exerciseTemplates);
+
+    // Create timers for timeable exercises
+    for (final ex in _sessionExercises) {
       if (ex is TimeableExercise) {
         _stopWatches[ex.exerciseId] = StopWatchTimer(
           mode: StopWatchMode.countDown,
@@ -137,29 +149,32 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
           children: [
             // ===== Movesense Card =====
             /// Tap to open Movesense connection screen and manage pairing/connection
-            ListenableBuilder(
-              listenable: widget.viewModel.movesense,
-              builder: (context, _) {
-                return MoveSenseStatusCard(
-                  connected: widget.viewModel.movesense.isConnected,
-                  heartRate: 0,
-                  heartRateStream: widget.viewModel.movesense.heartRateStream,
-                  batteryOk: true,
-                  batteryStream: widget.viewModel.movesense.batteryStream,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MovesenseConnectView(
-                          viewModel: widget.viewModel.movesense,
+            /// Only visible when session is not completed (no HR data recorded yet)
+            if (!(isActive == false && displaySession.hrReadings.isNotEmpty))
+              ListenableBuilder(
+                listenable: widget.viewModel.movesense,
+                builder: (context, _) {
+                  return MoveSenseStatusCard(
+                    connected: widget.viewModel.movesense.isConnected,
+                    heartRate: 0,
+                    heartRateStream: widget.viewModel.movesense.heartRateStream,
+                    batteryOk: true,
+                    batteryStream: widget.viewModel.movesense.batteryStream,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MovesenseConnectView(
+                            viewModel: widget.viewModel.movesense,
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-            const SizedBox(height: 16),
+                      );
+                    },
+                  );
+                },
+              ),
+            if (!(isActive == false && displaySession.hrReadings.isNotEmpty))
+              const SizedBox(height: 16),
 
             // ===== Client Info =====
             /// Non-editable snapshot of the client’s personal information
@@ -272,22 +287,81 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
 
             // ===== Exercises =====
             /// Execution list for the client’s exercise templates
-            Text(
-              'Exercises',
-              style: Theme.of(context).textTheme.titleLarge,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Exercises',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                if (!(isActive == false && displaySession.hrReadings.isNotEmpty))
+                  TextButton.icon(
+                    onPressed: () async {
+                      if (_isEditingExercises) {
+                        // Refresh session data when exiting edit mode
+                        final latestSession = await widget.viewModel.getLatestSession();
+                        if (latestSession != null) {
+                          _displaySession = latestSession;
+                        }
+                        _initializeExerciseState();
+                      }
+                      setState(() {
+                        _isEditingExercises = !_isEditingExercises;
+                      });
+                    },
+                    icon: Icon(_isEditingExercises ? Icons.check : Icons.edit),
+                    label: Text(_isEditingExercises ? 'Done' : 'Edit'),
+                  ),
+              ],
             ),
             const SizedBox(height: 8),
-            ..._client.exerciseTemplates.map((exercise) {
-              return ExecutableExerciseCard(
-                exercise: exercise,
-                isDone: widget.viewModel.isExerciseDone(exercise.exerciseId),
-                stopWatch: _stopWatches[exercise.exerciseId],
-                onDoneChanged: (value) => widget.viewModel.toggleExerciseDone(
-                  exercise.exerciseId,
-                  value ?? false,
-                ),
-              );
-            }),
+            
+            if (!_isEditingExercises) ...[
+              // Show read-only template cards when session is completed
+              if (isActive == false && displaySession.hrReadings.isNotEmpty)
+                ..._sessionExercises.map((exercise) {
+                  // Check if this exercise was completed (exists in exercisesPerformed)
+                  final isCompleted = displaySession.exercisesPerformed.any(
+                    (ex) => ex.exerciseId == exercise.exerciseId,
+                  );
+                  return ExerciseTemplateCard(
+                    exercise: exercise,
+                    isCompleted: isCompleted,
+                  );
+                })
+              // Show executable cards during active session or before start
+              else
+                ..._sessionExercises.map((exercise) {
+                  return ExecutableExerciseCard(
+                    exercise: exercise,
+                    isDone: widget.viewModel.isExerciseDone(exercise.exerciseId),
+                    stopWatch: _stopWatches[exercise.exerciseId],
+                    onDoneChanged: (value) => widget.viewModel.toggleExerciseDone(
+                      exercise.exerciseId,
+                      value ?? false,
+                    ),
+                  );
+                }),
+            ] else
+              ExerciseFormWidget(
+                viewModel: _exerciseFormViewModel,
+                initialExercises: _sessionExercises,
+                onCreate: (ex) async {
+                  final updatedExercises = List<Exercise>.from(_sessionExercises)..add(ex);
+                  await widget.viewModel.updateSessionExercises(updatedExercises);
+                  _initializeExerciseState();
+                  if (mounted) setState(() {});
+                },
+                onRemove: (ex) async {
+                  final updatedExercises = _sessionExercises
+                      .where((e) => e.exerciseId != ex.exerciseId)
+                      .toList();
+                  await widget.viewModel.updateSessionExercises(updatedExercises);
+                  _initializeExerciseState();
+                  if (mounted) setState(() {});
+                },
+              ),
+            
             const SizedBox(height: 16),
 
             // ===== Delete Session Button =====

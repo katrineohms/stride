@@ -7,10 +7,12 @@ import '../model/_models.dart';
 /// Exercise template card - read-only display for client overview
 class ExerciseTemplateCard extends StatelessWidget {
   final Exercise exercise;
+  final bool isCompleted;
 
   const ExerciseTemplateCard({
     super.key,
     required this.exercise,
+    this.isCompleted = false,
   });
 
   @override
@@ -28,8 +30,16 @@ class ExerciseTemplateCard extends StatelessWidget {
       color: Theme.of(context).cardColor,
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
-        leading: const Icon(Icons.fitness_center),
-        title: Text(exercise.name),
+        leading: Icon(
+          isCompleted ? Icons.check_circle : Icons.fitness_center,
+          color: isCompleted ? Colors.green : null,
+        ),
+        title: Text(
+          exercise.name,
+          style: isCompleted
+              ? const TextStyle(decoration: TextDecoration.lineThrough)
+              : null,
+        ),
         subtitle: Text(subtitle),
       ),
     );
