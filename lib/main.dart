@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:stride/service/client_data_service.dart';
+import 'package:flutter/services.dart';
 import 'package:stride/view/home_view.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ClientDataService().init();
+  // Enable immersive sticky system UI across the entire app
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   runApp(const MyApp());
 }
 
@@ -16,6 +19,14 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Stride',
+      builder: (context, child) => SafeArea(
+        left: false,
+        top: false,
+        right: false,
+        bottom: true,
+        minimum: const EdgeInsets.only(bottom: 50),
+        child: child ?? const SizedBox.shrink(),
+      ),
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
             seedColor: const Color.fromARGB(255, 107, 151, 92)),

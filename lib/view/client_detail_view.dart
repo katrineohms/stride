@@ -353,7 +353,6 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
                 label: const Text('Edit Client'),
               ),
             ),
-            const SizedBox(height: 50),
           ],
         ),
       ),

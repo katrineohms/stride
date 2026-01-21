@@ -250,7 +250,7 @@ class _CreateClientPageState extends State<CreateClientPage> {
               SizedBox(height: 4),
 
               // ======= Create Button =======
-              ElevatedButton(
+              ElevatedButton.icon(
                 onPressed: () {
                   _updateViewModel();
                   if (_formKey.currentState!.validate() &&
@@ -267,7 +267,12 @@ class _CreateClientPageState extends State<CreateClientPage> {
                     );
                   }
                 },
-                child: const Text('Create Client'),
+                icon: const Icon(Icons.check),
+                label: const Text('Create Client'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 107, 151, 92),
+                  foregroundColor: Colors.white,
+                ),
               ),
             ],
           ),

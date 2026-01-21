@@ -223,6 +223,13 @@ class _ExerciseFormView extends StatelessWidget {
                     Switch(
                       value: isCountable,
                       onChanged: (_) => onToggleExerciseType(),
+                      // Keep green styling in both states
+                      activeTrackColor: const Color.fromARGB(255, 107, 151, 92),
+                      inactiveTrackColor: Color.fromARGB(255, 107, 151, 92).withOpacity(0.7),
+                      activeColor: Colors.white,
+                      inactiveThumbColor: Colors.white,
+                      // Ensure the thumb (white dot) looks identical in both states
+                      thumbIcon: MaterialStateProperty.resolveWith<Icon?>((_) => null),
                     ),
                     const Text('Countable'),
                   ],
@@ -322,9 +329,10 @@ class _ExerciseFormView extends StatelessWidget {
                   const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
+                    child: ElevatedButton.icon(
                       onPressed: onAddExercise,
-                      child: const Text('Add Exercise'),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add Exercise'),
                     ),
                   ),
                 ],

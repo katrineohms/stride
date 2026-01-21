@@ -327,7 +327,6 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 50),
           ],
         ),
       ),

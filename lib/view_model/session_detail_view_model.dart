@@ -1,7 +1,6 @@
 // Packages
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 // Files
@@ -151,7 +150,6 @@ class SessionDetailViewModel extends ChangeNotifier {
     try {
       // Keep screen on during session
       WakelockPlus.enable();
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom]);
       
       await _sessionService.startSession(client.clientId, scheduledSession: session);
       _initializeCompletionFromSession();
@@ -167,7 +165,6 @@ class SessionDetailViewModel extends ChangeNotifier {
   Future<void> stopSession() async {
     try {
       WakelockPlus.disable();
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
       
       await _sessionService.stopSession();
       events.emit(SnackBarEvent('Session stopped'));

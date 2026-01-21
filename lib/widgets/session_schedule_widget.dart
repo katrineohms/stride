@@ -117,7 +117,7 @@ class _SessionScheduleView extends StatelessWidget {
               ),
             SizedBox(
               width: double.infinity,
-              child: TextButton.icon(
+              child: ElevatedButton.icon(
                 onPressed: onAddSession,
                 icon: const Icon(Icons.add),
                 label: const Text('Add Session'),
