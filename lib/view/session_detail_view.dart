@@ -252,12 +252,12 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Date: ${DateFormat('MMMM d, y - HH:mm').format(DateTime.fromMillisecondsSinceEpoch(displaySession.startTime * 1000))}',
+                          'Scheduled: ${DateFormat('MMMM d, y - HH:mm').format(DateTime.fromMillisecondsSinceEpoch(displaySession.startTime * 1000))}',
                           style: const TextStyle(fontSize: 14),
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Duration: ${displaySession.duration.inHours}:${(displaySession.duration.inMinutes.remainder(60)).toString().padLeft(2, '0')}',
+                          'Duration: ${_formatHm(displaySession.duration)}',
                           style: const TextStyle(fontSize: 14),
                         ),
                       ],
@@ -265,7 +265,7 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               SessionGraphCard(session: displaySession),
               const SizedBox(height: 16),
             ],
@@ -308,10 +308,12 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
                                 child: const Text('Cancel'),
                               ),
                               TextButton(
-                                onPressed: () {
-                                  widget.viewModel.deleteLatestSession();
+                                onPressed: () async {
+                                  final updatedClient = await widget.viewModel.deleteLatestSession();
                                   Navigator.pop(ctx);
-                                  Navigator.pop(context);
+                                  if (mounted) {
+                                    Navigator.pop(context, updatedClient);
+                                  }
                                 },
                                 child: const Text('Delete', style: TextStyle(color: Colors.red)),
                               ),
@@ -343,4 +345,10 @@ String _formatDuration(Duration? duration) {
     return '${hours.toString().padLeft(2, '0')}:$minutes:$seconds';
   }
   return '$minutes:$seconds';
+}
+
+String _formatHm(Duration d) {
+  final hours = d.inHours;
+  final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+  return '$hours:$minutes';
 }

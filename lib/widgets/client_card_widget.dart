@@ -37,17 +37,33 @@ DateTime? getNextSessionTime(Client client) {
 class ClientCard extends StatelessWidget {
   final Client client;
   final VoidCallback? onTap;
+  final Session? session;
 
-  const ClientCard({super.key, required this.client, this.onTap});
+  const ClientCard({
+    super.key,
+    required this.client,
+    this.onTap,
+    this.session,
+  });
 
   @override
   Widget build(BuildContext context) {
-      final nextSession = getNextSessionTime(client);
+    final DateTime? displayTime;
+    final String timeStr;
 
-      final timeStr = nextSession != null
-      ? '${nextSession.hour.toString().padLeft(2, '0')}:'
-        '${nextSession.minute.toString().padLeft(2, '0')}'
-      : 'No upcoming';
+    if (session != null) {
+      // Use the specific session time if provided
+      displayTime = DateTime.fromMillisecondsSinceEpoch(session!.startTime * 1000);
+      timeStr = '${displayTime.hour.toString().padLeft(2, '0')}:'
+          '${displayTime.minute.toString().padLeft(2, '0')}';
+    } else {
+      // Fall back to next upcoming session
+      final nextSession = getNextSessionTime(client);
+      timeStr = nextSession != null
+          ? '${nextSession.hour.toString().padLeft(2, '0')}:'
+            '${nextSession.minute.toString().padLeft(2, '0')}'
+          : 'No upcoming';
+    }
 
     return Card(
       color: Theme.of(context).cardColor,

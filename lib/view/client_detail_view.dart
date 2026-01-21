@@ -184,7 +184,7 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
                         final latestClient = await widget.viewModel.getLatestClient();
                         final activeSession = widget.viewModel.sessionService.activeSession;
                         if (latestClient != null && activeSession != null) {
-                          Navigator.push(
+                          final updatedClient = await Navigator.push<Client>(
                             context,
                             MaterialPageRoute(
                               builder: (context) => SessionDetailPage(
@@ -195,6 +195,10 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
                               ),
                             ),
                           );
+
+                          if (updatedClient != null && mounted) {
+                            await widget.viewModel.updateClient(updatedClient, persist: false);
+                          }
                         }
                       }
                     },
@@ -289,14 +293,10 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
                   child: ListTile(
                     leading: const Icon(Icons.history),
                     title: Text(DateFormat('MMMM d, y').format(date)),
-                    subtitle: Text(
-                      session.endTime != null
-                          ? 'Duration: ${session.duration ~/ 60} min'
-                          : 'In progress',
-                    ),
+                    subtitle: Text(_formatTimeRange(session)),
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      Navigator.push(
+                    onTap: () async {
+                      final updatedClient = await Navigator.push<Client>(
                         context,
                         MaterialPageRoute(
                           builder: (context) => SessionDetailPage(
@@ -307,6 +307,10 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
                           ),
                         ),
                       );
+
+                      if (updatedClient != null && mounted) {
+                        await widget.viewModel.updateClient(updatedClient, persist: false);
+                      }
                     },
                   ),
                   ),
@@ -358,4 +362,25 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
       ),
     );
   }
+}
+
+String _formatHm(Duration d) {
+  final hours = d.inHours;
+  final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+  return '$hours:$minutes';
+}
+
+String _formatTimeRange(Session session) {
+  final startSeconds = session.actualStartTime ?? session.startTime;
+  final start = DateTime.fromMillisecondsSinceEpoch(startSeconds * 1000);
+  final startStr = DateFormat('h:mm a').format(start);
+
+  if (session.endTime == null) {
+    return '$startStr - In progress';
+  }
+
+  final end = DateTime.fromMillisecondsSinceEpoch(session.endTime! * 1000);
+  final endStr = DateFormat('h:mm a').format(end);
+  final durationStr = _formatHm(session.duration);
+  return '$startStr - $endStr • Duration: $durationStr';
 }

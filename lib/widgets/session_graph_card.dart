@@ -21,7 +21,9 @@ class SessionGraphCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final startTime = DateTime.fromMillisecondsSinceEpoch(session.startTime * 1000);
+    final actualStart = DateTime.fromMillisecondsSinceEpoch(
+      (session.actualStartTime ?? session.startTime) * 1000,
+    );
     final endTime = session.endTime != null
         ? DateTime.fromMillisecondsSinceEpoch(session.endTime! * 1000)
         : DateTime.now();
@@ -39,7 +41,7 @@ class SessionGraphCard extends StatelessWidget {
     // Prepare chart data
     final spots = <FlSpot>[];
     if (session.hrReadings.isNotEmpty) {
-      final baseTime = session.startTime;
+      final baseTime = session.actualStartTime ?? session.startTime;
       for (final reading in session.hrReadings) {
         final minutesElapsed = (reading.timestamp - baseTime) / 60.0;
         spots.add(FlSpot(minutesElapsed, reading.heartRate.toDouble()));
@@ -77,8 +79,8 @@ class SessionGraphCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              '${startTime.hour.toString().padLeft(2, '0')}:'
-              '${startTime.minute.toString().padLeft(2, '0')} - '
+              '${actualStart.hour.toString().padLeft(2, '0')}:'
+              '${actualStart.minute.toString().padLeft(2, '0')} - '
               '${endTime.hour.toString().padLeft(2, '0')}:'
               '${endTime.minute.toString().padLeft(2, '0')} '
               '(${duration.inMinutes} min)',

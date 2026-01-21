@@ -300,26 +300,29 @@ class _HomePageState extends State<HomePage> {
                 }
 
                 return Column(
-                  children: clientsForDay.map((client) {
-                    // Retrieve or construct a session object for the selected day via ViewModel
-                    final sessionForDay = viewModel.ensureSessionForDay(client, selectedDay);
+                  children: clientsForDay.expand((client) {
+                    // Get all sessions for this client on the selected day
+                    final sessionsForDay = viewModel.getSessionsForDay(client, selectedDay);
 
-                    return ClientCard(
-                      client: client,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => SessionDetailPage(
-                              viewModel: SessionDetailViewModel(
-                                client: client,
-                                session: sessionForDay,
+                    return sessionsForDay.map((session) {
+                      return ClientCard(
+                        client: client,
+                        session: session,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => SessionDetailPage(
+                                viewModel: SessionDetailViewModel(
+                                  client: client,
+                                  session: session,
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
-                    );
+                          );
+                        },
+                      );
+                    });
                   }).toList(),
                 );
               },

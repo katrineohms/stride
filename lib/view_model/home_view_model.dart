@@ -63,9 +63,8 @@ class HomeViewModel {
   }
 
   // ======= Session Helpers =======
-  /// Return an existing session for the given day or a placeholder session
-  /// starting at the beginning of that day if none exists.
-  Session ensureSessionForDay(Client client, DateTime day) {
+  /// Return all sessions for a client on the given day
+  List<Session> getSessionsForDay(Client client, DateTime day) {
     final dayStart = DateTime(day.year, day.month, day.day)
             .millisecondsSinceEpoch ~/
         1000;
@@ -73,18 +72,28 @@ class HomeViewModel {
             .millisecondsSinceEpoch ~/
         1000;
 
-    try {
-      return client.sessions.firstWhere(
-        (s) => s.startTime >= dayStart && s.startTime <= dayEnd,
-      );
-    } catch (_) {
+    final sessions = client.sessions
+        .where((s) => s.startTime >= dayStart && s.startTime <= dayEnd)
+        .toList();
+    
+    if (sessions.isEmpty) {
       // No session found for the day; create a placeholder
-      return Session(
-        sessionId: '${client.clientId}_$dayStart',
-        startTime: dayStart,
-        hrReadings: const [],
-        exercisesPerformed: const [],
-      );
+      return [
+        Session(
+          sessionId: '${client.clientId}_$dayStart',
+          startTime: dayStart,
+          hrReadings: const [],
+          exercisesPerformed: const [],
+        ),
+      ];
     }
+    
+    return sessions;
+  }
+
+  /// Return an existing session for the given day or a placeholder session
+  /// starting at the beginning of that day if none exists.
+  Session ensureSessionForDay(Client client, DateTime day) {
+    return getSessionsForDay(client, day).first;
   }
 }

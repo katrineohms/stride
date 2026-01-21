@@ -174,20 +174,29 @@ class SessionDetailViewModel extends ChangeNotifier {
     }
   }
 
-  /// Delete the latest session for this client
-  Future<void> deleteLatestSession() async {
+  /// Delete this session and return the updated client (if persisted)
+  Future<Client?> deleteLatestSession() async {
     try {
-      final updatedSessions = client.sessions.toList();
-      if (updatedSessions.isNotEmpty) {
-        updatedSessions.removeLast();
+      // Work off the latest stored client to avoid overwriting concurrent edits
+      final latest = _dataService.getClientById(client.clientId) ?? client;
+      final updatedSessions = latest.sessions
+          .where((s) => s.sessionId != session.sessionId)
+          .toList();
+
+      if (updatedSessions.length == latest.sessions.length) {
+        events.emit(const SnackBarEvent('Session not found to delete', isError: true));
+        return latest;
       }
-      final updatedClient = client.copyWith(sessions: updatedSessions);
+
+      final updatedClient = latest.copyWith(sessions: updatedSessions);
       await _dataService.updateClient(updatedClient);
-      events.emit(SnackBarEvent('Session deleted'));
+      events.emit(const SnackBarEvent('Session deleted'));
       notifyListeners();
+      return updatedClient;
     } catch (e) {
       events.emit(SnackBarEvent('Failed to delete session: $e', isError: true));
     }
+    return null;
   }
 
   /// Update the session with completed exercises
