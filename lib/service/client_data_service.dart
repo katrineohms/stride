@@ -278,6 +278,7 @@ class ClientDataService {
             {
               'high': value.high,
               'low': value.low,
+              'timestamp': value.timestamp,
             },
           )),
     };
@@ -309,7 +310,8 @@ class ClientDataService {
         if (value is Map<String, Object?>) {
           final high = (value['high'] as num?)?.toInt() ?? 0;
           final low = (value['low'] as num?)?.toInt() ?? 0;
-          hrrResults[key] = HeartRateRecovery(high: high, low: low);
+          final timestamp = (value['timestamp'] as num?)?.toInt() ?? 0;
+          hrrResults[key] = HeartRateRecovery(high: high, low: low, timestamp: timestamp);
         }
       });
     }

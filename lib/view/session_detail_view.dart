@@ -520,7 +520,11 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
     // Save HRR to the session via view model
     await widget.viewModel.setHeartRateRecovery(
       exerciseId,
-      HeartRateRecovery(high: maxHr, low: minHr),
+      HeartRateRecovery(
+        high: maxHr,
+        low: minHr,
+        timestamp: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      ),
     );
 
     if (!context.mounted) return;

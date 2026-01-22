@@ -178,6 +178,19 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () async {
+                      // Check Movesense connection
+                      if (!widget.viewModel.movesense.isConnected) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Movesense sensor not connected. Please connect the device first.'),
+                            backgroundColor: Colors.red,
+                            duration: Duration(seconds: 3),
+                          ),
+                        );
+                        return;
+                      }
+
                       await widget.viewModel.startSession();
                       if (!mounted) return;
 

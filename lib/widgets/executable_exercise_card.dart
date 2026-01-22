@@ -106,6 +106,11 @@ class ExecutableExerciseCard extends StatelessWidget {
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
+                                Text(
+                                  'Measured: '
+                                  '${DateTime.fromMillisecondsSinceEpoch(hrrResult!.timestamp * 1000)}',
+                                  style: const TextStyle(fontSize: 10, fontStyle: FontStyle.italic),
+                                ),
                               ],
                             ),
                           ),

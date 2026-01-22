@@ -1,9 +1,15 @@
 // Currently unused
+
 class HeartRateRecovery {
   final int high;
   final int low;
+  final int timestamp; // Unix timestamp (seconds)
 
-  const HeartRateRecovery({required this.high, required this.low});
+  const HeartRateRecovery({
+    required this.high,
+    required this.low,
+    required this.timestamp,
+  });
 
   int get delta => high - low;
 }

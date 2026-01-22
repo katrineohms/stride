@@ -61,6 +61,11 @@ class ExerciseTemplateCard extends StatelessWidget {
                     'HRR: ${hrrResult!.delta}',
                     style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                   ),
+                  Text(
+                    'Measured: '
+                    '${DateTime.fromMillisecondsSinceEpoch(hrrResult!.timestamp * 1000)}',
+                    style: const TextStyle(fontSize: 10, fontStyle: FontStyle.italic),
+                  ),
                 ],
               ),
       ),
