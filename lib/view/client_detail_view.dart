@@ -102,7 +102,7 @@ class _ClientDetailPageState extends State<ClientDetailPage> with WidgetsBinding
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => MovesenseConnectView(
+                        builder: (context) => MovesenseConnectPage(
                           viewModel: widget.viewModel.movesense,
                         ),
                       ),

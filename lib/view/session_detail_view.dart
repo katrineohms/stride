@@ -164,7 +164,7 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => MovesenseConnectView(
+                          builder: (context) => MovesenseConnectPage(
                             viewModel: widget.viewModel.movesense,
                           ),
                         ),

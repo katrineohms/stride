@@ -214,7 +214,7 @@ class _HomePageState extends State<HomePage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => MovesenseConnectView(
+                        builder: (context) => MovesenseConnectPage(
                           viewModel: viewModel.movesense,
                         ),
                       ),

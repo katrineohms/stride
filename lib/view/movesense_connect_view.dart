@@ -15,8 +15,8 @@ import '../widgets/movesense_status_widget.dart';
 /// - Scan action to discover devices
 /// - List of available devices to connect
 /// - Status icon in the App Bar
-class MovesenseConnectView extends StatefulWidget {
-  const MovesenseConnectView({
+class MovesenseConnectPage extends StatefulWidget {
+  const MovesenseConnectPage({
     super.key,
     required this.viewModel,
   });
@@ -24,10 +24,10 @@ class MovesenseConnectView extends StatefulWidget {
   final MovesenseConnectViewModel viewModel;
 
   @override
-  State<MovesenseConnectView> createState() => _MovesenseConnectViewState();
+  State<MovesenseConnectPage> createState() => _MovesenseConnectPageState();
 }
 
-class _MovesenseConnectViewState extends State<MovesenseConnectView> {
+class _MovesenseConnectPageState extends State<MovesenseConnectPage> {
   MovesenseConnectViewModel get viewModel => widget.viewModel;
 
   @override
