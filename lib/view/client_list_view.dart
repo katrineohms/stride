@@ -1,8 +1,25 @@
+// Packages
 import 'package:flutter/material.dart';
-import 'package:stride/model/clients.dart';
-import 'package:stride/view/create_client_view.dart';
-import 'package:stride/view/client_card_view.dart';
-import 'package:stride/view_model/client_list_view_model.dart';
+
+// Files
+import '../model/_models.dart';
+import '../view/create_client_view.dart';
+import 'client_detail_view.dart';
+import '../view_model/client_list_view_model.dart';
+import '../view_model/client_detail_view_model.dart';
+
+// Widgets
+import '../widgets/client_card_widget.dart';
+import '../widgets/movesense_status_widget.dart';
+
+/// ============================================
+/// CLIENT OVERVIEW PAGE
+/// ============================================
+/// Displays a scrollable list of all clients in the system with:
+/// - Client creation button
+/// - Client cards showing name and status
+/// - Navigation to individual client detail pages
+/// - Movesense connection status indicator
 
 /// Page displaying a list of all clients
 class ClientOverviewPage extends StatefulWidget {
@@ -17,6 +34,7 @@ class ClientOverviewPage extends StatefulWidget {
 class _ClientOverviewPageState extends State<ClientOverviewPage> {
   late ClientOverviewViewModel viewModel;
 
+  // ======= Lifecycle Methods =======
   @override
   void initState() {
     super.initState();
@@ -24,18 +42,23 @@ class _ClientOverviewPageState extends State<ClientOverviewPage> {
     viewModel = ClientOverviewViewModel(initialClients: widget.clients);
   }
 
+  // ======= Build UI =======
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // ======= App Bar =======
       appBar: AppBar(
         title: const Text('Clients'),
         centerTitle: true,
+        actions: [
+          MovesenseAppBarStatus(viewModel: viewModel.movesense),
+        ],
       ),
+      // ======= Body: Scrollable Client List =======
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // ======= Action Buttons =======
-          // Create client button
+          // ======= Create Client Button =======
           ElevatedButton.icon(
             onPressed: () {
               Navigator.push(
@@ -56,22 +79,15 @@ class _ClientOverviewPageState extends State<ClientOverviewPage> {
           ),
           const SizedBox(height: 8),
 
-          // Search button (placeholder)
-          ElevatedButton.icon(
-            onPressed: () {
-              // TODO: implement search functionality
-            },
-            label: const Text('Search'),
-            icon: const Icon(Icons.search),
-          ),
-          const SizedBox(height: 16),
-
-          // ======= Client List =======
+          // ======= Client Cards =======
+          /// Maps each client to a card with avatar, name, and status
           ...viewModel.clients.map((client) {
             return Card(
+              color: Theme.of(context).cardColor,
               elevation: 2,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                borderRadius: BorderRadius.circular(12),
+              ),
               margin: const EdgeInsets.symmetric(vertical: 6),
               child: ListTile(
                 // Avatar
@@ -87,11 +103,11 @@ class _ClientOverviewPageState extends State<ClientOverviewPage> {
                 // Status indicator
                 trailing: Icon(
                   Icons.circle,
-                  color: viewModel.getStatusColor(client.active),
+                  color: getStatusColor(client.active),
                 ),
-                // Tap to view details
-                onTap: () {
-                  Navigator.push(
+                // Tap handler
+                onTap: () async {
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => ClientDetailPage(
@@ -99,6 +115,8 @@ class _ClientOverviewPageState extends State<ClientOverviewPage> {
                       ),
                     ),
                   );
+                  if (!mounted) return;
+                  setState(() {}); // reload list after possible edits/deletion
                 },
               ),
             );

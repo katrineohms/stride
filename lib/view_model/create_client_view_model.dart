@@ -1,14 +1,64 @@
-import '../model/clients.dart';
+// ===============================
+// Packages
+// ===============================
+import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
+import '../model/_models.dart';
+import '../view_model/movesense_connect_view_model.dart';
 
+// ===============================
+// Services
+// ===============================
+import '../service/movesense_service.dart';
+
+// ===============================
+// CreateClientViewModel
+// ===============================
 class CreateClientViewModel {
+  // ======= Constructor =======
+  CreateClientViewModel({MovesenseConnectViewModel? movesense})
+      : movesense = movesense ?? MovesenseService().viewModel;
+
+  // ======= Form Data =======
   String name = '';
   int? age;
   String gender = 'Male';
   int active = 0; // 0 = green, 1 = yellow, 2 = red
-  DateTime? nextAppointment;
   String motivation = '';
+  final List<Session> scheduledSessions = [];
+  final MovesenseConnectViewModel movesense;
+  final _uuid = const Uuid();
 
-  // Validation methods
+  // ======= Exercise Templates =======
+  // Exercise templates stored on the client
+  List<Exercise> exerciseTemplates = [];
+
+  // ======= Constants =======
+  /// Available gender options for dropdown
+  static const List<String> genderOptions = ['Male', 'Female', 'Other'];
+
+  /// Status options with their integer values and display labels
+  static const Map<int, String> statusOptions = {
+    0: 'Active',
+    1: 'Caution',
+    2: 'Inactive',
+  };
+
+  /// Get color for status indicator
+  static Color getStatusColor(int status) {
+    switch (status) {
+      case 0:
+        return Colors.green;
+      case 1:
+        return Colors.yellow;
+      case 2:
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  // ======= Validation =======
   String? validateName() {
     if (name.isEmpty) return 'Enter a name';
     return null;
@@ -19,19 +69,11 @@ class CreateClientViewModel {
     return null;
   }
 
-  String? validateNextAppointment() {
-    if (nextAppointment == null) return 'Pick a next appointment';
-    return null;
-  }
-
   bool validateAll() {
     return validateName() == null &&
-        validateAge() == null &&
-        validateNextAppointment() == null;
+        validateAge() == null;
   }
 
-
-  // Create new Client object
   Client createClient() {
     if (!validateAll()) {
       throw Exception('Cannot create client: invalid data');
@@ -43,8 +85,111 @@ class CreateClientViewModel {
       age: age!,
       gender: gender,
       active: active,
-      nextAppointment: nextAppointment!.millisecondsSinceEpoch ~/ 1000,
       motivation: motivation,
+      exerciseTemplates: exerciseTemplates,
+      sessions: List.unmodifiable(scheduledSessions),
     );
+  }
+
+  void addScheduledSession(Session session) {
+    scheduledSessions.add(session);
+  }
+
+  void removeScheduledSession(Session session) {
+    scheduledSessions.remove(session);
+  }
+
+  Session buildSessionFromPick(DateTime date, TimeOfDay time) {
+    final ts = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+    ).millisecondsSinceEpoch ~/
+        1000;
+
+    return Session(
+      sessionId: _uuid.v4(),
+      startTime: ts,
+      endTime: null,
+      hrReadings: const [],
+      startLocationCity: null,
+      exercisesPerformed: const [],
+    );
+  }
+}
+
+// ===============================
+// CreateExerciseViewModel
+// ===============================
+class CreateExerciseViewModel {
+  // ======= Form Data =======
+  String name = '';
+  String description = '';
+  int sets = 0;
+  int reps = 0;
+  int time = 0; // in seconds
+
+  /// true = repetition-based (sets & reps)
+  /// false = time-based (time)
+  bool isCountable = true;
+
+  // ======= Validation =======
+  String? validateName() {
+    if (name.isEmpty) return 'Enter an exercise name';
+    return null;
+  }
+
+  String? validateSets() {
+    if (!isCountable) return null;
+    if (sets <= 0) return 'Enter sets';
+    return null;
+  }
+
+  String? validateReps() {
+    if (!isCountable) return null;
+    if (reps <= 0) return 'Enter reps';
+    return null;
+  }
+
+  String? validateTime() {
+    if (isCountable) return null;
+    if (time <= 0) return 'Enter time in seconds';
+    return null;
+  }
+
+  bool validateAll() {
+    return validateName() == null &&
+        validateSets() == null &&
+        validateReps() == null &&
+        validateTime() == null;
+  }
+
+  
+
+  Exercise createExercise() {
+    if (!validateAll()) {
+      throw Exception('Cannot create exercise: invalid data');
+    }
+
+    final exerciseId = DateTime.now().millisecondsSinceEpoch.toString();
+
+    if (isCountable) {
+      return CountableExercise(
+        exerciseId: exerciseId,
+        name: name,
+        description: description,
+        sets: sets,
+        reps: reps,
+      );
+    } else {
+      return TimeableExercise(
+        exerciseId: exerciseId,
+        name: name,
+        description: description,
+        time: time,
+      );
+    }
   }
 }

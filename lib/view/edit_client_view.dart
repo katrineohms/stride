@@ -1,57 +1,66 @@
 // Packages
 import 'package:flutter/material.dart';
+import 'package:stride/widgets/movesense_status_widget.dart';
 
 // Files
 import '../model/_models.dart';
-import '../view_model/create_client_view_model.dart';
+import '../view_model/edit_client_view_model.dart';
 import '../view_model/widgets_view_model/exercise_form_view_model.dart';
 import '../view_model/widgets_view_model/session_schedule_view_model.dart';
 
 // Widgets
-import '../widgets/movesense_status_widget.dart';
 import '../widgets/create_exercise_widget.dart';
 import '../widgets/session_schedule_widget.dart';
 
 /// ============================================
-/// CREATE CLIENT PAGE
+/// EDIT CLIENT PAGE
 /// ============================================
-/// Form-based page for creating a new client with:
+/// Form-based page for editing an existing client with:
 /// - Personal information (name, age, gender, status)
 /// - Motivation notes
-/// - Exercise templates
-/// - Scheduled sessions
-/// - Form validation before submission
+/// - Exercise templates (add/remove)
+/// - Scheduled sessions (add/remove)
+/// - Form validation before saving
 
-/// Page for creating a new client
-class CreateClientPage extends StatefulWidget {
-  final Function(Client) onCreate;
+class EditClientPage extends StatefulWidget {
+  final Client client;
 
-  const CreateClientPage({super.key, required this.onCreate});
+  const EditClientPage({super.key, required this.client});
 
   @override
-  State<CreateClientPage> createState() => _CreateClientPageState();
+  State<EditClientPage> createState() => _EditClientPageState();
 }
 
-class _CreateClientPageState extends State<CreateClientPage> {
+class _EditClientPageState extends State<EditClientPage> {
   final _formKey = GlobalKey<FormState>();
-  final CreateClientViewModel viewModel = CreateClientViewModel();
+  late EditClientViewModel viewModel;
   
   // ======= Form ViewModels =======
   late final ExerciseFormViewModel exerciseFormViewModel;
   late final SessionScheduleViewModel sessionScheduleViewModel;
 
   // ======= Controllers =======
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _ageController = TextEditingController();
-  final TextEditingController _motivationController = TextEditingController();
+  late TextEditingController _nameController;
+  late TextEditingController _ageController;
+  late TextEditingController _motivationController;
 
   // ======= Lifecycle Methods =======
   @override
   void initState() {
     super.initState();
+
+    viewModel = EditClientViewModel(client: widget.client);
+    viewModel.init();
+    
     // Initialize form ViewModels
     exerciseFormViewModel = ExerciseFormViewModel();
     sessionScheduleViewModel = SessionScheduleViewModel();
+    sessionScheduleViewModel.initialize(viewModel.sessions);
+
+    _nameController = TextEditingController(text: viewModel.name);
+    _ageController = TextEditingController(text: viewModel.age.toString());
+    _motivationController =
+        TextEditingController(text: viewModel.motivation);
   }
 
   @override
@@ -63,11 +72,11 @@ class _CreateClientPageState extends State<CreateClientPage> {
   }
 
   // ======= Form Synchronization =======
-  /// Sync form fields with view model for validation
-  void _updateViewModel() {
-    viewModel.name = _nameController.text;
-    viewModel.age = int.tryParse(_ageController.text);
-    viewModel.motivation = _motivationController.text;
+  /// Save text field values to ViewModel
+  void _saveFieldsToViewModel() {
+    viewModel.updateName(_nameController.text.trim());
+    viewModel.updateAge(int.tryParse(_ageController.text) ?? viewModel.age);
+    viewModel.updateMotivation(_motivationController.text.trim());
   }
 
   // ======= Build UI =======
@@ -76,7 +85,7 @@ class _CreateClientPageState extends State<CreateClientPage> {
     return Scaffold(
       // ======= App Bar =======
       appBar: AppBar(
-        title: const Text('Create Client'),
+        title: const Text('Edit Client'),
         actions: [
           MovesenseAppBarStatus(viewModel: viewModel.movesense),
         ],
@@ -101,15 +110,10 @@ class _CreateClientPageState extends State<CreateClientPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Personal Info',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      const Text('Personal Info',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 12),
-
                       // ======= Name & Age Fields =======
                       Row(
                         children: [
@@ -120,10 +124,7 @@ class _CreateClientPageState extends State<CreateClientPage> {
                                 labelText: 'Name',
                                 border: OutlineInputBorder(),
                               ),
-                              validator: (_) {
-                                _updateViewModel();
-                                return viewModel.validateName();
-                              },
+                              validator: (_) => viewModel.validateName(),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -135,16 +136,12 @@ class _CreateClientPageState extends State<CreateClientPage> {
                                 border: OutlineInputBorder(),
                               ),
                               keyboardType: TextInputType.number,
-                              validator: (_) {
-                                _updateViewModel();
-                                return viewModel.validateAge();
-                              },
+                              validator: (_) => viewModel.validateAge(),
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
-
                       // ======= Gender & Status Dropdowns =======
                       Row(
                         children: [
@@ -155,7 +152,7 @@ class _CreateClientPageState extends State<CreateClientPage> {
                                 labelText: 'Gender',
                                 border: OutlineInputBorder(),
                               ),
-                              items: CreateClientViewModel.genderOptions
+                              items: EditClientViewModel.genderOptions
                                   .map((gender) => DropdownMenuItem(
                                         value: gender,
                                         child: Text(gender),
@@ -163,7 +160,7 @@ class _CreateClientPageState extends State<CreateClientPage> {
                                   .toList(),
                               onChanged: (value) {
                                 if (value != null) {
-                                  setState(() => viewModel.gender = value);
+                                  setState(() => viewModel.updateGender(value));
                                 }
                               },
                             ),
@@ -176,14 +173,14 @@ class _CreateClientPageState extends State<CreateClientPage> {
                                 labelText: 'Status',
                                 border: OutlineInputBorder(),
                               ),
-                              items: CreateClientViewModel.statusOptions.entries
+                              items: EditClientViewModel.statusOptions.entries
                                   .map((entry) => DropdownMenuItem(
                                         value: entry.key,
                                         child: Row(
                                           children: [
                                             Icon(
                                               Icons.circle,
-                                              color: CreateClientViewModel.getStatusColor(entry.key),
+                                              color: EditClientViewModel.getStatusColor(entry.key),
                                               size: 14,
                                             ),
                                             const SizedBox(width: 6),
@@ -194,7 +191,7 @@ class _CreateClientPageState extends State<CreateClientPage> {
                                   .toList(),
                               onChanged: (v) {
                                 if (v != null) {
-                                  setState(() => viewModel.active = v);
+                                  setState(() => viewModel.updateActive(v));
                                 }
                               },
                             ),
@@ -202,13 +199,11 @@ class _CreateClientPageState extends State<CreateClientPage> {
                         ],
                       ),
                       const SizedBox(height: 12),
-
                       // ======= Motivation Field =======
                       TextFormField(
                         controller: _motivationController,
                         decoration: const InputDecoration(
                           labelText: 'Motivation',
-                          hintText: 'Optional motivation notes',
                           border: OutlineInputBorder(),
                           alignLabelWithHint: true,
                         ),
@@ -222,17 +217,13 @@ class _CreateClientPageState extends State<CreateClientPage> {
               // ======= Scheduled Sessions =======
               SessionScheduleWidget(
                 viewModel: sessionScheduleViewModel,
-                initialSessions: viewModel.scheduledSessions,
-                onCreate: (session) {
-                  setState(() {
-                    viewModel.addScheduledSession(session);
-                  });
-                },
-                onRemove: (session) {
-                  setState(() {
-                    viewModel.removeScheduledSession(session);
-                  });
-                },
+                initialSessions: viewModel.incompleteScheduledSessions,
+                onCreate: (session) => setState(() {
+                  viewModel.addSession(session);
+                }),
+                onRemove: (session) => setState(() {
+                  viewModel.removeSession(session);
+                }),
               ),
 
               const SizedBox(height: 12),
@@ -240,39 +231,68 @@ class _CreateClientPageState extends State<CreateClientPage> {
               // ======= Exercise Templates =======
               ExerciseFormWidget(
                 viewModel: exerciseFormViewModel,
-                onCreate: (exercise) {
-                  setState(() {
-                    // Add the exercise to the client in the view model
-                    viewModel.exerciseTemplates.add(exercise);
-                  });
-                },
+                initialExercises: viewModel.exerciseTemplates,
+                onCreate: (ex) => setState(() => viewModel.addExercise(ex)),
+                onRemove: (ex) => setState(() => viewModel.removeExercise(ex)),
               ),
-              SizedBox(height: 4),
 
-              // ======= Create Button =======
-              ElevatedButton.icon(
-                onPressed: () {
-                  _updateViewModel();
-                  if (_formKey.currentState!.validate() &&
-                      viewModel.validateAll()) {
-                    final client = viewModel.createClient();
-                    widget.onCreate(client);
-                    Navigator.pop(context);
-                  } else {
-                    // Show error snackbar
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please fix the errors in the form'),
+              const SizedBox(height: 16),
+
+              // ======= Actions =======
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Theme.of(context).colorScheme.error,
+                        side: BorderSide(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
                       ),
-                    );
-                  }
-                },
-                icon: const Icon(Icons.check),
-                label: const Text('Create Client'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 107, 151, 92),
-                  foregroundColor: Colors.white,
-                ),
+                      onPressed: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Delete Client'),
+                            content: const Text(
+                                'Are you sure you want to delete this client? This cannot be undone.'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, true),
+                                child: const Text('Delete'),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (!context.mounted) return;
+                        if (confirm == true) {
+                          await viewModel.deleteClient();
+                          if (!context.mounted) return;
+                          Navigator.pop(context, 'deleted');
+                        }
+                      },
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('Delete Client'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        _saveFieldsToViewModel();
+                        if (_formKey.currentState!.validate()) {
+                          Navigator.pop(context, viewModel.buildClient());
+                        }
+                      },
+                      child: const Text('Save Changes'),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

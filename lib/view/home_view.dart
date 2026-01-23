@@ -1,12 +1,32 @@
+// Packages
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
-import '../widgets/client_card_widget.dart';
-import 'package:stride/view/client_list_view.dart';
-import 'package:stride/model/clients.dart';
-import 'package:stride/view/client_card_view.dart';
-import 'package:stride/view_model/home_view_model.dart';
-//import 'package:stride/model/clients.dart';
+import 'package:share_plus/share_plus.dart';
 
+// Files
+import '../view/client_list_view.dart';
+import 'client_detail_view.dart';
+import 'session_detail_view.dart';
+import '../view_model/home_view_model.dart';
+import '../view_model/client_detail_view_model.dart';
+import '../view_model/session_detail_view_model.dart';
+import '../view/movesense_connect_view.dart';
+
+// Widgets
+import '../widgets/client_card_widget.dart';
+import '../widgets/movesense_status_widget.dart';
+
+/// ============================================
+/// HOME PAGE
+/// ============================================
+/// Main landing page of the app featuring:
+/// - Welcome header
+/// - Client list navigation button
+/// - Movesense device connection status
+/// - Calendar with session indicators
+/// - Clients scheduled for selected day
+/// - Hamburger menu with client list and data export
+/// - Navigation to client details and session views
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -16,71 +36,28 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // ======= ViewModel =======
+  // ======= State =======
   late HomeViewModel viewModel;
 
-  // ======= Lifecycle =======
+  // ======= Lifecycle Methods =======
   @override
   void initState() {
     super.initState();
 
-    // Initialize view model with dummy clients
-    viewModel = HomeViewModel(initialClients: [
-      Client(
-        clientId: '1',
-        name: 'AnnaDummy',
-        age: 25,
-        gender: 'Female',
-        active: 0,
-        nextAppointment: 1672531200,
-        motivation: 'Motivated',
-        exercises: [
-          Exercise(
-            exerciseId: 'e1',
-            name: 'Squats',
-            description: 'Bodyweight squats',
-            sets: 3,
-            reps: 12,
-            time: 0,
-          ),
-          Exercise(
-            exerciseId: 'e2',
-            name: 'Plank',
-            description: 'Core stability hold',
-            sets: 3,
-            reps: 0,
-            time: 30,
-          ),
-        ],
-      ),
-      Client(
-        clientId: '2',
-        name: 'MarkDummy',
-        age: 30,
-        gender: 'Male',
-        active: 1,
-        nextAppointment: 1672531200,
-        motivation: 'Needs support',
-      ),
-      Client(
-        clientId: '3',
-        name: 'SophiaDummy',
-        age: 28,
-        gender: 'Female',
-        active: 2,
-        nextAppointment: 1672531200,
-        motivation: 'Struggling',
-      ),
-    ]);
+    // Initialize view model (dummy data is handled by data service)
+    viewModel = HomeViewModel();
   }
 
   // ======= Build UI =======
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // ======= AppBar =======
+      // ======= App Bar =======
       appBar: AppBar(
         title: const Text('Stride'),
+        actions: [
+          MovesenseAppBarStatus(viewModel: viewModel.movesense),
+        ],
       ),
 
       // ======= Drawer / Hamburger Menu =======
@@ -88,30 +65,79 @@ class _HomePageState extends State<HomePage> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            const DrawerHeader(
+            DrawerHeader(
               decoration: BoxDecoration(
-                color: Color.fromARGB(255, 97, 164, 97),
+                color: Theme.of(context).primaryColor,
               ),
-              child: Text(
+              child: const Text(
                 'Clients',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
+                style: TextStyle(color: Colors.white, fontSize: 24),
               ),
             ),
-            // Client list in drawer
+            // Export data option
+            ListTile(
+              leading: const Icon(Icons.share),
+              title: const Text('Export & Share Data'),
+              onTap: () async {
+                Navigator.pop(context); // close drawer
+                
+                // Show loading indicator
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+                
+                try {
+                  final file = await viewModel.exportDataToJson();
+                  
+                  // Close loading indicator
+                  if (context.mounted) Navigator.pop(context);
+                  
+                  // Share the file
+                  await Share.shareXFiles(
+                    [XFile(file.path)],
+                    subject: 'Stride HR Data Export',
+                    text: 'Heart rate monitoring data from Stride app',
+                  );
+                } catch (e) {
+                  // Close loading indicator
+                  if (context.mounted) Navigator.pop(context);
+                  
+                  // Show error message
+                  if (context.mounted) {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Export Failed'),
+                        content: Text('Error: $e'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+            const Divider(),
+            // ======= Client List in Drawer =======
             ...viewModel.clients.map((client) {
               return ListTile(
                 leading: const Icon(Icons.person),
                 title: Text(client.name),
                 trailing: Icon(
-                  Icons.circle, 
+                  Icons.circle,
                   color: getStatusColor(client.active),
                 ),
-                onTap: () {
+                onTap: () async {
                   Navigator.pop(context); // close drawer
-                  Navigator.push(
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => ClientDetailPage(
@@ -119,6 +145,8 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   );
+                  if (!context.mounted) return;
+                  setState(() {}); // refresh list from data service after potential changes
                 },
               );
             }),
@@ -127,6 +155,7 @@ class _HomePageState extends State<HomePage> {
       ),
 
       // ======= Body =======
+      /// Main scrollable content area
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -135,17 +164,14 @@ class _HomePageState extends State<HomePage> {
             // ======= Header =======
             const Text(
               'Welcome',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
 
             // ======= Client List Button =======
             ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                await Navigator.push(
                   context,
                   PageRouteBuilder(
                     transitionDuration: const Duration(milliseconds: 400),
@@ -153,40 +179,62 @@ class _HomePageState extends State<HomePage> {
                         ClientOverviewPage(clients: viewModel.clients),
                     transitionsBuilder:
                         (context, animation, secondaryAnimation, child) {
-                      final tween =
-                          Tween(begin: const Offset(0, 1), end: Offset.zero)
-                              .chain(CurveTween(curve: Curves.easeOutQuad));
+                          final tween = Tween(
+                            begin: const Offset(0, 1),
+                            end: Offset.zero,
+                          ).chain(CurveTween(curve: Curves.easeOutQuad));
 
-                      return SlideTransition(
-                        position: animation.drive(tween),
-                        child: child,
-                      );
-                    },
+                          return SlideTransition(
+                            position: animation.drive(tween),
+                            child: child,
+                          );
+                        },
                   ),
                 );
+                if (!context.mounted) return;
+                setState(() {}); // refresh after returning from client list
               },
               icon: const Icon(Icons.people),
               label: const Text('Client list'),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
 
-            // ======= WhatsApp Button =======
-            ElevatedButton.icon(
-              onPressed: () {
-                // TODO: handle WhatsApp action
+            // ======= Movesense Status =======
+            /// Shows connection status and battery level
+            ListenableBuilder(
+              listenable: viewModel.movesense,
+              builder: (context, _) {
+                return MoveSenseStatusCard(
+                  connected: viewModel.movesense.isConnected,
+                  heartRate: 0,
+                  heartRateStream: viewModel.movesense.heartRateStream,
+                  batteryOk: true,
+                  batteryStream: viewModel.movesense.batteryStream,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MovesenseConnectPage(
+                          viewModel: viewModel.movesense,
+                        ),
+                      ),
+                    );
+                  },
+                );
               },
-              icon: const Icon(Icons.message),
-              label: const Text('WhatsApp'),
             ),
-            const SizedBox(height: 24),
+
+            const SizedBox(height: 4),
 
             // ======= Calendar =======
+            /// Interactive calendar with session markers
             TableCalendar(
               firstDay: DateTime.utc(2020, 1, 1),
               lastDay: DateTime.utc(2030, 12, 31),
               focusedDay: viewModel.focusedDay,
               selectedDayPredicate: (day) =>
-                  isSameDay(viewModel.selectedDay, day),
+                  isSameDay(viewModel.selectedDay ?? DateTime.now(), day),
+              eventLoader: (day) => viewModel.getClientsForDay(day),
               onDaySelected: (selectedDay, focusedDay) {
                 setState(() {
                   viewModel.selectDay(selectedDay);
@@ -199,45 +247,93 @@ class _HomePageState extends State<HomePage> {
                 formatButtonVisible: false,
                 titleCentered: true,
               ),
-            ),
-            const SizedBox(height: 16),
-
-            // ======= Clients for Selected Day =======
-            ...viewModel
-                .getClientsForDay(viewModel.selectedDay ?? DateTime.now())
-                .map((client) {
-              return ClientCard(
-                client: client,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ClientDetailPage(
-                        viewModel: ClientDetailViewModel(client: client),
+              calendarStyle: CalendarStyle(
+                selectedDecoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary,
+                  shape: BoxShape.circle,
+                ),
+                todayDecoration: BoxDecoration(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primary
+                      .withValues(alpha: 0.35),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              calendarBuilders: CalendarBuilders(
+                markerBuilder: (context, day, events) {
+                  if (events.isEmpty) return const SizedBox.shrink();
+                  final isSelected =
+                      isSameDay(viewModel.selectedDay ?? DateTime.now(), day);
+                  return Positioned(
+                    bottom: 10,
+                    child: Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? Colors.white
+                            : Theme.of(context).colorScheme.primary,
+                        shape: BoxShape.circle,
                       ),
                     ),
                   );
                 },
-              );
-            }),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // ======= Clients for Selected Day =======
+            /// Displays client cards for sessions on the selected calendar day
+            Builder(
+              builder: (context) {
+                final selectedDay = viewModel.selectedDay ?? DateTime.now();
+                final clientsForDay = viewModel.getClientsForDay(selectedDay);
+
+                if (clientsForDay.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Text(
+                      'No sessions scheduled today',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  );
+                }
+
+                return Column(
+                  children: clientsForDay.expand((client) {
+                    // Get all sessions for this client on the selected day
+                    final sessionsForDay = viewModel.getSessionsForDay(client, selectedDay);
+
+                    return sessionsForDay.map((session) {
+                      return ClientCard(
+                        client: client,
+                        session: session,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => SessionDetailPage(
+                                viewModel: SessionDetailViewModel(
+                                  client: client,
+                                  session: session,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    });
+                  }).toList(),
+                );
+              },
+            ),
           ],
         ),
       ),
     );
-  }
-}
-
-// ======= Helper Methods =======
-/// Convert client activity to color
-Color getStatusColor(int active) {
-  switch (active) {
-    case 0:
-      return Colors.green;
-    case 1:
-      return Colors.yellow;
-    case 2:
-      return Colors.red;
-    default:
-      return Colors.grey;
   }
 }
