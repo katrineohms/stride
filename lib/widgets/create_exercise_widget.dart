@@ -1,11 +1,17 @@
+// ===============================
 // Packages
+// ===============================
 import 'package:flutter/material.dart';
 
+// ===============================
 // Files
+// ===============================
 import '../model/_models.dart';
 import '../view_model/widgets_view_model/exercise_form_view_model.dart';
 
-// ============= SMART WIDGET (Container) =============
+// ===============================
+// ExerciseFormWidget (Smart Widget)
+// ===============================
 /// Manages exercise form logic, state, and form controllers
 class ExerciseFormWidget extends StatefulWidget {
   final ExerciseFormViewModel viewModel;
@@ -27,7 +33,11 @@ class ExerciseFormWidget extends StatefulWidget {
   State<ExerciseFormWidget> createState() => _ExerciseFormWidgetState();
 }
 
+// ===============================
+// _ExerciseFormWidgetState
+// ===============================
 class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
+  // ====== Form Key and Controllers ======
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _nameController = TextEditingController();
@@ -52,6 +62,7 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
     super.dispose();
   }
 
+  // ====== Form Sync and Clear ======
   void _syncFormToViewModel() {
     widget.viewModel.updateName(_nameController.text);
     widget.viewModel.updateDescription(_descriptionController.text);
@@ -68,6 +79,7 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
     _timeController.clear();
   }
 
+  // ====== Add Exercise ======
   void _addExercise() {
     _syncFormToViewModel();
 
@@ -84,6 +96,7 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
     }
   }
 
+  // ====== Edit Exercise ======
   Future<void> _editExercise(Exercise ex) async {
     widget.viewModel.populateFormFromExercise(ex);
     _nameController.text = widget.viewModel.name;
@@ -132,6 +145,7 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
     widget.viewModel.resetForm();
   }
 
+  // ====== Remove Exercise ======
   void _removeExercise(Exercise ex) {
     setState(() {
       widget.viewModel.removeExercise(ex);
@@ -141,7 +155,7 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // Pass state and callbacks to dumb view widget
+    // Pass state and callbacks to view widget
     return _ExerciseFormView(
       formKey: _formKey,
       exercises: widget.viewModel.exercises,
@@ -164,7 +178,9 @@ class _ExerciseFormWidgetState extends State<ExerciseFormWidget> {
   }
 }
 
-// ============= DUMB WIDGET (Presentational) =============
+// ===============================
+// _ExerciseFormView 
+// ===============================
 /// Pure UI widget for rendering the exercise form
 class _ExerciseFormView extends StatelessWidget {
   final GlobalKey<FormState> formKey;
@@ -345,7 +361,7 @@ class _ExerciseFormView extends StatelessWidget {
   }
 }
 
-// ============= DUMB DIALOG WIDGET (Presentational) =============
+
 /// Pure UI widget for the exercise edit dialog
 class _ExerciseEditDialog extends StatelessWidget {
   final String name;

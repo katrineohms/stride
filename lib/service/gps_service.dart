@@ -3,6 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 
+// ===============================
+// GpsService
+// ===============================
 class GpsService {
   /// Get current location and city name via reverse geocoding
   /// Returns a city name string, or null if unavailable
@@ -10,7 +13,7 @@ class GpsService {
     Duration timeout = const Duration(seconds: 10),
   }) async {
     try {
-      // Check location services enabled
+      // ====== Check if location services are enabled ======
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         if (kDebugMode) {
@@ -19,7 +22,7 @@ class GpsService {
         return null;
       }
 
-      // Check and request permissions
+      // ====== Check and request location permissions ======
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -32,12 +35,12 @@ class GpsService {
         }
       }
 
-      // Get current position with timeout
+      // ====== Get current position with timeout ======
       final position = await Geolocator.getCurrentPosition(
         timeLimit: timeout,
       );
 
-      // Reverse geocode to get city name
+      // ====== Reverse geocode to get city name ======
       final placemarks = await placemarkFromCoordinates(
         position.latitude,
         position.longitude,

@@ -1,13 +1,21 @@
+// ===============================
 // Packages
+// ===============================
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import '../model/_models.dart';
 import '../view_model/movesense_connect_view_model.dart';
 
+// ===============================
 // Services
+// ===============================
 import '../service/movesense_service.dart';
 
+// ===============================
+// CreateClientViewModel
+// ===============================
 class CreateClientViewModel {
+  // ======= Constructor =======
   CreateClientViewModel({MovesenseConnectViewModel? movesense})
       : movesense = movesense ?? MovesenseService().viewModel;
 
@@ -21,6 +29,7 @@ class CreateClientViewModel {
   final MovesenseConnectViewModel movesense;
   final _uuid = const Uuid();
 
+  // ======= Exercise Templates =======
   // Exercise templates stored on the client
   List<Exercise> exerciseTemplates = [];
 
@@ -110,7 +119,12 @@ class CreateClientViewModel {
     );
   }
 }
+
+// ===============================
+// CreateExerciseViewModel
+// ===============================
 class CreateExerciseViewModel {
+  // ======= Form Data =======
   String name = '';
   String description = '';
   int sets = 0;
@@ -121,7 +135,7 @@ class CreateExerciseViewModel {
   /// false = time-based (time)
   bool isCountable = true;
 
-  // Validation
+  // ======= Validation =======
   String? validateName() {
     if (name.isEmpty) return 'Enter an exercise name';
     return null;
@@ -151,6 +165,8 @@ class CreateExerciseViewModel {
         validateReps() == null &&
         validateTime() == null;
   }
+
+  
 
   Exercise createExercise() {
     if (!validateAll()) {

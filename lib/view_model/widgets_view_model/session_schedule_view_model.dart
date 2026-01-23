@@ -5,19 +5,26 @@ import 'package:uuid/uuid.dart';
 // Files
 import '../../model/_models.dart';
 
+/// ===============================
+/// SessionScheduleViewModel
+/// ===============================
 /// ViewModel for managing session scheduling state and logic.
 class SessionScheduleViewModel {
+  // ====== Private Fields ======
   final List<Session> _sessions = [];
   final _uuid = const Uuid();
 
+  // ====== Public Getters ======
   List<Session> get sessions => List.unmodifiable(_sessions);
 
+  // ====== Initialization ======
   void initialize(List<Session> initialSessions) {
     _sessions
       ..clear()
       ..addAll(initialSessions);
   }
 
+  // ====== Session Creation ======
   Session createScheduledSession(
     DateTime pickedDate,
     TimeOfDay pickedTime, {
@@ -42,6 +49,7 @@ class SessionScheduleViewModel {
     );
   }
 
+  // ====== Session Management ======
   void addSession(Session session) {
     _sessions.add(session);
   }
@@ -50,6 +58,7 @@ class SessionScheduleViewModel {
     _sessions.remove(session);
   }
 
+  // ====== Utilities ======
   /// Format timestamp to readable string (YYYY-MM-DD HH:MM).
   String formatTimestamp(int timestamp) {
     final dt = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);

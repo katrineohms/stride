@@ -1,21 +1,31 @@
+// ===============================
 // Files
+// ===============================
 import 'package:flutter/material.dart';
 import '../model/_models.dart';
 import '../view_model/movesense_connect_view_model.dart';
 import '../service/client_data_service.dart';
 
+// ===============================
 // Services
+// ===============================
 import '../service/movesense_service.dart';
 
+// ===============================
+// EditClientViewModel
+// ===============================
 class EditClientViewModel {
+  // ======= Client Reference =======
   late Client client;
   final MovesenseConnectViewModel movesense;
 
+  // ======= Constructor =======
   EditClientViewModel({
     required this.client,
     MovesenseConnectViewModel? movesense,
   }) : movesense = movesense ?? MovesenseService().viewModel;
 
+  // ======= Data Service =======
   final ClientDataService _dataService = ClientDataService();
 
   // ======= Form Data =======
@@ -26,7 +36,7 @@ class EditClientViewModel {
   late String motivation = client.motivation;
   late int active = client.active;
 
-  // Sessions & exercise templates
+  // ======= Sessions & Exercise Templates =======
   List<Session> sessions = [];
   List<Exercise> exerciseTemplates = [];
 

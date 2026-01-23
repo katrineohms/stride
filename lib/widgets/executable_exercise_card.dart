@@ -1,13 +1,21 @@
+// ===============================
 // Packages
+// ===============================
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:stop_watch_timer/stop_watch_timer.dart';
 
+// ===============================
 // Files
+// ===============================
 import '../model/_models.dart';
 
+// ===============================
+// ExecutableExerciseCard Widget
+// ===============================
 /// Executable exercise card - with timers and checkboxes
 class ExecutableExerciseCard extends StatelessWidget {
+  // ====== Fields ======
   final Exercise exercise;
   final bool isDone;
   final StopWatchTimer? stopWatch;
@@ -16,6 +24,7 @@ class ExecutableExerciseCard extends StatelessWidget {
   final Stream<int>? heartRateStream;
   final VoidCallback? onMeasureHrr;
 
+  // ====== Constructor ======
   const ExecutableExerciseCard({
     super.key,
     required this.exercise,
@@ -27,6 +36,7 @@ class ExecutableExerciseCard extends StatelessWidget {
     this.onMeasureHrr,
   });
 
+  // ====== Build Method ======
   @override
   Widget build(BuildContext context) {
     if (exercise is CountableExercise) {
@@ -37,6 +47,7 @@ class ExecutableExerciseCard extends StatelessWidget {
     return const SizedBox.shrink();
   }
 
+  // ====== Countable Card Builder ======
   Widget _buildCountableCard(BuildContext context, CountableExercise ex) {
     return Card(
       color: Theme.of(context).cardColor,
@@ -128,6 +139,7 @@ class ExecutableExerciseCard extends StatelessWidget {
     );
   }
 
+  // ====== Timeable Card Builder ======
   Widget _buildTimeableCard(BuildContext context, TimeableExercise ex) {
     return Card(
       color: Theme.of(context).cardColor,
@@ -272,6 +284,7 @@ class ExecutableExerciseCard extends StatelessWidget {
     );
   }
 
+  // ====== HRR Button Builder ======
   /// Build heart button that changes style after HRR is captured
   Widget _buildHrrButton(BuildContext context) {
     final hasHrr = hrrResult != null;

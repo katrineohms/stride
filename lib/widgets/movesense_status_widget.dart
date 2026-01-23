@@ -1,11 +1,19 @@
+// ===============================
 // Packages
+// ===============================
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+// ===============================
 // Files
+// ===============================
 import '../view_model/movesense_connect_view_model.dart';
 
-// ======= App Bar Status Widget =======
+// ===============================
+// Movesense Status Widgets
+// ===============================
+
+// ====== App Bar Status Widget ======
 /// Reusable wrapper for Movesense status in app bars across views.
 /// Subscribes to ViewModel and renders the connection/HR icon.
 class MovesenseAppBarStatus extends StatelessWidget {
@@ -28,8 +36,9 @@ class MovesenseAppBarStatus extends StatelessWidget {
   }
 }
 
+// ====== Status Card Widget ======
 class MoveSenseStatusCard extends StatelessWidget {
-  // ======= Properties =======
+  // ====== Properties ======
   final bool connected;
   final int heartRate;
   final Stream<int>? heartRateStream;

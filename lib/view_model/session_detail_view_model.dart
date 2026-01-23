@@ -1,34 +1,47 @@
+// ===============================
 // Packages
+// ===============================
 import 'dart:async';
 import 'dart:developer' show log;
 import 'package:flutter/foundation.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+// ===============================
 // Files
+// ===============================
 import '../model/_models.dart';
 import '../view_model/movesense_connect_view_model.dart';
 import 'widgets_view_model/ui_event.dart';
 
+// ===============================
 // Services
+// ===============================
 import '../service/client_data_service.dart';
 import '../service/session_service.dart';
 import '../service/movesense_service.dart';
 
+// ===============================
+// SessionDetailViewModel
+// ===============================
 /// ViewModel for session detail view - manages a specific session execution
 class SessionDetailViewModel extends ChangeNotifier {
+  // ====== Fields ======
   final Client client;
   final Session session;
   final MovesenseConnectViewModel movesense;
   final UiEventNotifier events;
 
+  // ====== Services ======
   final ClientDataService _dataService = ClientDataService();
   final SessionService _sessionService = SessionService();
   bool _attached = false;
   Timer? _uiTicker;
 
+  // ====== State Tracking ======
   // Tracks completed exercise IDs for the targeted session
   final Set<String> _completedExerciseIds = <String>{};
 
+  // ====== Constructor ======
   SessionDetailViewModel({
     required this.client,
     required this.session,
@@ -37,6 +50,7 @@ class SessionDetailViewModel extends ChangeNotifier {
   })  : movesense = movesenseViewModel ?? MovesenseService().viewModel,
         events = eventNotifier ?? UiEventNotifier();
 
+  // ====== Lifecycle Methods ======
   void attach() {
     if (_attached) return;
     _attached = true;
@@ -54,6 +68,9 @@ class SessionDetailViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ===============================
+  // Getters
+  // ===============================
   /// Check if there's an active session for this client
   bool get isActiveForClient {
     return _sessionService.hasActiveSession && 
@@ -73,6 +90,9 @@ class SessionDetailViewModel extends ChangeNotifier {
   /// Whether a given exercise is marked completed for this session
   bool isExerciseDone(String exerciseId) => _completedExerciseIds.contains(exerciseId);
 
+  // ===============================
+  // Setters
+  // ===============================
   /// Toggle completed state for an exercise and persist to the backing session
   Future<void> toggleExerciseDone(String exerciseId, bool done) async {
     if (done) {
@@ -143,6 +163,9 @@ class SessionDetailViewModel extends ChangeNotifier {
     }
   }
 
+  // ===============================
+  // Initialization
+  // ===============================
   void _initializeCompletionFromSession() {
     final source = _sessionService.activeSession ?? session;
     _completedExerciseIds
@@ -150,6 +173,9 @@ class SessionDetailViewModel extends ChangeNotifier {
       ..addAll(source.exercisesPerformed.map((e) => e.exerciseId));
   }
 
+  // ===============================
+  // Data Fetching
+  // ===============================
   /// Get the latest session from the database for this session ID
   Future<Session?> getLatestSession() async {
     try {
@@ -178,6 +204,9 @@ class SessionDetailViewModel extends ChangeNotifier {
     return null;
   }
 
+  // ===============================
+  // Session Control
+  // ===============================
   /// Start HR monitoring for this session
   /// Manages screen awake state, system UI, and initializes exercise completion
   Future<void> startSession() async {

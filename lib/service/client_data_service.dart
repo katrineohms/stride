@@ -1,34 +1,49 @@
+// ===============================
 // Plugins
+// ===============================
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+// ===============================
 // Packages
+// ===============================
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sembast/sembast_io.dart';
 
+// ===============================
 // Files
+// ===============================
 import '../model/_models.dart';
 
-/// ============= Client Data Service =============
+// ===============================
+// ClientDataService
+// ===============================
+/// Handles all client data storage, retrieval, and persistence.
+/// Uses Sembast for local NoSQL database management.
 class ClientDataService {
-  // Singleton instance
+  // ====== Singleton Instance ======
   static final ClientDataService _instance = ClientDataService._internal();
 
-  // Local cache for fast reads
+  // ====== Local Cache ======
+  // In-memory cache for fast client access
   final List<Client> _clients = [];
 
-  // Sembast database and store references
+  // ====== Database References ======
+  // Sembast store and database references
   final StoreRef<String, Map<String, Object?>> _store =
       stringMapStoreFactory.store('clients');
   Database? _db;
   Future<void>? _initFuture;
 
+  // ====== Constructor ======
   ClientDataService._internal();
 
   factory ClientDataService() => _instance;
 
+  // ====== Initialization ======
+  /// Initializes the database and loads clients into cache.
   Future<void> init() {
     _initFuture ??= _openAndLoad();
     return _initFuture!;

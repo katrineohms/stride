@@ -1,24 +1,37 @@
+// ===============================
 // Plugins
+// ===============================
 import 'dart:math';
 
+// ===============================
 // Packages
+// ===============================
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 
+// ===============================
 // Files
+// ===============================
 import '../model/_models.dart';
+
+// ===============================
+// SessionGraphCard Widget
+// ===============================
 
 /// Session graph card - displays heart rate data from a completed session
 class SessionGraphCard extends StatelessWidget {
+  // ====== Fields ======
   final Session session;
   final VoidCallback? onDelete;
 
+  // ====== Constructor ======
   const SessionGraphCard({
     super.key,
     required this.session,
     this.onDelete,
   });
 
+  // ====== Build Method ======
   @override
   Widget build(BuildContext context) {
     final actualStart = DateTime.fromMillisecondsSinceEpoch(
@@ -30,6 +43,7 @@ class SessionGraphCard extends StatelessWidget {
     final duration = session.duration;
     final startCity = session.startLocationCity;
 
+    // ====== Heart Rate Stats ======
     // Calculate stats
     final hrValues = session.hrReadings.map((r) => r.heartRate).toList();
     final avgHr = hrValues.isEmpty

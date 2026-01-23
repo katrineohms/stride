@@ -1,38 +1,48 @@
+// ===============================
 // Plugins
+// ===============================
 import 'dart:async';
 import 'dart:developer' as developer;
 import 'dart:io';
 
+// ===============================
 // Packages
+// ===============================
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:movesense_plus/movesense_plus.dart';
 
-
+// ===============================
+// Enums
+// ===============================
 enum ConnectionStatus { idle, connecting, connected, failed }
 
+// ===============================
+// MovesenseConnectViewModel
+// ===============================
 /// ViewModel for managing Movesense device connection
 class MovesenseConnectViewModel extends ChangeNotifier {
-  // State variables
+  // ====== State Variables ======
   ConnectionStatus connectionStatus = ConnectionStatus.idle;
   List<MovesenseDevice> scannedDevices = [];
   MovesenseDevice? connectedDevice;
   bool isConnected = false;
   
+  // ====== Device Connection States ======
   // Track connection states by device address
   final Map<String, bool> deviceConnectionStates = {};
   
-  // Streams and subscriptions
+  // ====== Streams and Subscriptions ======
   StreamSubscription<MovesenseDevice>? _deviceScanSubscription;
   StreamSubscription<dynamic>? _heartRateSubscription;
   Timer? _batteryCheckTimer;
   
-  // Heart rate stream
+  // ====== Heart Rate Stream ======
   Stream<int>? heartRateStream;
   StreamController<int>? _heartRateController;
   
-  // Battery stream
+  // ====== Battery Stream ======
   Stream<String>? batteryStream;
   StreamController<String>? _batteryController;
 
