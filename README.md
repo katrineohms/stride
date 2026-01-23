@@ -43,6 +43,3 @@ See `pubspec.yaml` for full details.
 ## AI Assistance Declaration
 
 Some code and UI sections were generated or refactored with the help of Generative AI (GitHub Copilot), including repetitive tasks, error fixes, and section titling for clarity.
-
-
-![Description of screenshot](assets/screenshots/your_screenshot.png)
